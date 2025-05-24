@@ -1,6 +1,30 @@
 # Funcoes relacionadas com Socket:
 
 ---
+## O que sao sockets?
+**Sockets sao uma abstracao providenciada pelo OS para permitir comunicacao entre processos diferentes, seja na mesma maquina ou atraves de uma network**
+
+**Eles agem como endpoints em two-way communication channels, entao quando duas aplicacoes precisam se comunicar (estando na mesma maquina ou atraves da internet) cada uma precisara ter um socket aberto**
+
+**E um socket eh essencialmente um software construct que contem uma combinacao de protocolo (TCP no nosso caso), um endereco IP e uma porta**
+
+### Existem 2 tipos principais de Sockets: TCP e UDP
+**TCP (Transmission Control Protocol) Socket:**
+ - orientado a conexao
+ - a transmissao de dados eh ordenada, confiavel e previnida de erros
+
+**UDP (User Datagram Protocol):**
+ - nao tem conexao
+ - nao eh confiavel
+ - envia os diagramas de dados para o IP e porta sem nenhuma confirmacao
+ - nao ha nenhuma garantia de entrega, ordenamento ou integridade
+ - ***entretanto ele eh muito mais rapido e mais leve (ideal para real-time apps, streams, videogames, etc)*** 
+
+## Socket life-cycle:
+
+![lifecycle](assets/socket_life_cycle.png)
+
+---
 
 ## 🔌 1. `socket`
 
