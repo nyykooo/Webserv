@@ -210,6 +210,8 @@ Retorno: número de descritores prontos, 0 em timeout, -1 em erro.
 int epoll_create1(int flags);
 ```
  - flags: Geralmente 0 ou EPOLL_CLOEXEC.
+ 
+Obs: Usar a EPOLL_CLOEXEC impede processos filhos de acessarem os fds abertos pelos pais, isso pode atrapalhar se precisarmos acessar algum socket dentro do processo filho.
 
 Retorno: Um file descriptor para o epoll, ou -1 em caso de erro.
 
