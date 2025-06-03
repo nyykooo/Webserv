@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/05/28 15:56:38 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/05/30 20:58:07 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 # include <sys/types.h>		// includes types like sockaddr, socklen_t, etc.
 # include <sys/epoll.h>		// includes epoll_create(), epoll_ctl(), epoll_wait(), etc.
 
+# include "macros.hpp"
 # include "Socket.hpp"
 # include "HTTPServer.hpp"
 

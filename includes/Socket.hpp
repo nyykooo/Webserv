@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 15:53:12 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/05/28 17:23:50 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/05/30 18:44:18 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ class Socket
 	// ### SETTERS ###
 		void				setSocketFd(int fd);
 		void				setAddress(struct sockaddr addr);
-		void				setEvent(struct epoll_event event);
+		void				setEvent(int event, int fd);
 		void				setRes(struct addrinfo *res);
 		void				setHints(struct addrinfo hints);
 };

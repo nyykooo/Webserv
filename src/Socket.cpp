@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/05/29 09:36:20 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/03 18:03:33 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,8 +85,9 @@ void Socket::setAddress(struct sockaddr addr) {
 	_addr = addr;
 }
 
-void Socket::setEvent(struct epoll_event event) {
-	_event = event;
+void Socket::setEvent(int events, int fd) {
+	_event.events = events; // Define os eventos que o epoll irá monitorar
+	_event.data.fd = fd; // Define o file descriptor associado ao evento
 }
 
 void Socket::setRes(struct addrinfo *res) {
