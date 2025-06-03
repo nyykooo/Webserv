@@ -34,14 +34,14 @@ int main()
 		return 1;
 	}
 
-	struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
-	char ip_str[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(addr->sin_addr), ip_str, INET_ADDRSTRLEN);
-	std::cout << "IP: " << ip_str << std::endl;
+	// struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
+	// char ip_str[INET_ADDRSTRLEN];
+	// inet_ntop(AF_INET, &(addr->sin_addr), ip_str, INET_ADDRSTRLEN);
+	// std::cout << "IP: " << ip_str << std::endl;
 
 	connect(socket_fd, res->ai_addr, res->ai_addrlen);
 
-	const char *http_get = "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
+	const char *http_get = "GET / HTTP/1.1\nHost: localhost\nUser-Agent: MeuclientCPP\nConnection: close\n\nheyyyyyyyyyyy";
 	ssize_t sent = send(socket_fd, http_get, strlen(http_get), 0);
 	if (sent < 0)
 	{
