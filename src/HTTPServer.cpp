@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPServer.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/03 20:14:50 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/05 18:09:45 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,33 @@
 
 // ### ORTHODOX CANONICAL FORM ###
 
-HTTPServer::HTTPServer() {
+HTTPServer::HTTPServer()
+{
 	std::cout << "Iniciando o servidor HTTP..." << std::endl;
-	// Cria o socket epoll
-	_epoll_fd = epoll_create(1); // pesquisar possibilidade de usar a EPOLL_CLOEXEC
+
+	// Cria o socket epoll mantido pelo kernel para armazenar o conjunto de descritores a serem monitorados
+	_epoll_fd = epoll_create(1);
+	if (_epoll_fd == -1)
+	{
+		std::cerr << "Erro ao criar epoll" << std::endl;
+		return ;
+	}
+	
+	// Pegar as flags do epoll_fd e adicionar a flag FD_CLOEXEC
+	int flags = fcntl(_epoll_fd, F_GETFD);
+	if (flags == -1)
+	{
+		std::cerr << "Erro ao obter flags do epoll_fd" << std::endl;
+		close(_epoll_fd);
+		return ;
+	}
+	flags |= FD_CLOEXEC;
+	if (fcntl(_epoll_fd, F_SETFD, flags) == -1)
+	{
+		std::cerr << "Erro ao definir flags do epoll_fd" << std::endl;
+		close(_epoll_fd);
+		return ;
+	}
 
 	_events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
 
