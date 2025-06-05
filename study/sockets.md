@@ -201,18 +201,60 @@ struct timeval *timeout);
 Retorno: número de descritores prontos, 0 em timeout, -1 em erro.
 
 ---
-## 🔁 13. poll
-**Alternativa moderna a select.**
+## 🔁 13. epoll
+**Alternativa mais eficiente que poll para monitorar múltiplos descritores.**
+
+### Funcoes principais
+#### 13.1 - Criacao do epoll
 ```cpp
-int poll(struct pollfd fds[], nfds_t nfds, int timeout);
+int epoll_create1(int flags);
 ```
- - fds: array de estruturas pollfd.
+ - flags: Geralmente 0 ou EPOLL_CLOEXEC.
+ 
+Obs: Usar a EPOLL_CLOEXEC impede processos filhos de acessarem os fds abertos pelos pais, isso pode atrapalhar se precisarmos acessar algum socket dentro do processo filho.
 
- - nfds: número de elementos em fds.
+Retorno: Um file descriptor para o epoll, ou -1 em caso de erro.
 
- - timeout: milissegundos (ou -1 para infinito).
+#### 13.2 Adicionar/Remover/Modificar descritores:
+```cpp
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+```
+ - epfd: File descriptor do epoll.
+ - op: Operação (EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL).
+ - fd: File descriptor a ser monitorado.
+ - event: Estrutura que define os eventos a serem monitorados.
 
-Retorno: número de descritores prontos, -1 em erro.
+#### 13.3 Esperar por eventos:
+```cpp
+int epoll_wait(int epfd, struct epoll_event events[], int maxevents, int timeout);
+```
+ - epfd: File descriptor do epoll.
+ - events: Array de estruturas epoll_event para armazenar os eventos prontos.
+ - maxevents: Número máximo de eventos a retornar.
+ - timeout: Milissegundos (ou -1 para infinito).
+
+Retorno: Número de eventos prontos, ou -1 em caso de erro.
+
+### Obs:
+
+**Estrutura epoll_event:**
+
+```cpp
+	struct epoll_event {
+    	uint32_t events; // Eventos a monitorar (ex.: EPOLLIN, EPOLLOUT)
+    	epoll_data_t data; // Dados associados ao descritor (ex.: fd)
+	};
+```
+**Diferenças principais:**
+
+ - Persistência: Ao contrário de poll, você não precisa passar a lista de descritores toda vez. Os descritores são registrados no epoll com epoll_ctl.
+ - Escalabilidade: Melhor desempenho com muitos descritores, pois usa uma estrutura baseada em eventos.
+
+**Exemplo básico:**
+
+ - Crie o epoll com epoll_create1.
+ - Adicione descritores com epoll_ctl.
+ - Espere por eventos com epoll_wait.
 
 ---
 ## 🛠️ 14. fcntl
