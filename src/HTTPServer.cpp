@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/07 12:46:03 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/07 12:47:43 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,29 +96,6 @@ HTTPServer &HTTPServer::operator=(const HTTPServer &other) {
 
 HTTPServer::~HTTPServer() {
 }
-
-// // ### INIT SERVER ###
-// void HTTPServer::initServer()
-// {
-// 	// Cria o socket
-// 	_server_fd;
-
-//     // // Cria o socket
-// 	// _server_fd = socket(_res->ai_family, _res->ai_socktype, _res->ai_protocol);
-//     // if (_server_fd == -1) {
-//     //     std::cerr << "Erro ao criar o socket" << std::endl;
-//     //     freeaddrinfo(_res);
-//     //     return;
-//     // }
-
-//     // // Faz o bind
-//     // if (bind(_server_fd, _res->ai_addr, _res->ai_addrlen) == -1) {
-//     //     std::cerr << "Erro ao fazer bind" << std::endl;
-//     //     close(_server_fd);
-//     //     freeaddrinfo(_res);
-//     //     return ;
-//     // }
-// }
 
 // ### PRINT SERVER INFO ###
 void HTTPServer::printServer()
