@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/03 20:14:50 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/06 19:01:24 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,10 @@ HTTPServer::HTTPServer() {
 		freeaddrinfo(_server_fd.getRes());
 		return ;
 	}
+
+	// Torna o server socket nao bloqueante
+	int flags = fcntl(_server_fd.getSocketFd(), F_GETFL, 0);
+	fcntl(_server_fd.getSocketFd(), F_SETFL, flags | O_NONBLOCK);
 
 	// Faz o bind
 	if (bind(_server_fd.getSocketFd(), _server_fd.getRes()->ai_addr, _server_fd.getRes()->ai_addrlen) == -1) {
@@ -137,7 +141,7 @@ void HTTPServer::startServer()
 			{
 				handleNewClient();
 			} else {
-				receiveData(_events[i].data.fd, i);
+				receiveData(_events[i].data.fd);
 			}
 		}
 		
@@ -145,7 +149,7 @@ void HTTPServer::startServer()
 }
 
 // ### RECEIVE DATA FROM CLIENT ###
-void	HTTPServer::receiveData(int client_fd, int i)
+void	HTTPServer::receiveData(int client_fd)
 {
 	// Recebe dados do cliente
 	ssize_t bytes_received = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
@@ -153,59 +157,66 @@ void	HTTPServer::receiveData(int client_fd, int i)
 		_buffer[bytes_received] = '\0'; // Garante que o buffer é uma string
 		std::cout << "Dados recebidos do cliente " << client_fd << ": \n" << _buffer << std::endl;
 
+
+		// parsing bruno -> retorna objeto ha HTTPRequest com as informacoes que precisamos
+		// parsing da estrutura HTTPRequest para processar a requisicao valida ou nao
+
+
 		// logica para realizar o send depois
 		// // Envio de resposta padrao ao cliente sem processamento de requisicao
-		// const char *html_body = 
-		// 	"<!DOCTYPE html>"
-		// 	"<html lang=\"en\">"
-		// 	"<head>"
-		// 	"<meta charset=\"UTF-8\">"
-		// 	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-		// 	"<title>Bem-vindo</title>"
-		// 	"<style>"
-		// 	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-		// 	"h1 { color: #333; }"
-		// 	"</style>"
-		// 	"</head>"
-		// 	"<body>"
-		// 	"<h1>Bem-vindo ao WebServr de ncampbel, bruhenr dioalexa</h1>"
-		// 	"</body>"
-		// 	"</html>";
+		const char *html_body = 
+			"<!DOCTYPE html>"
+			"<html lang=\"en\">"
+			"<head>"
+			"<meta charset=\"UTF-8\">"
+			"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+			"<title>Bem-vindo</title>"
+			"<style>"
+			"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
+			"h1 { color: #333; }"
+			"</style>"
+			"</head>"
+			"<body>"
+			"<h1>Bem-vindo ao WebServr de ncampbel, bruhenr dioalexa</h1>"
+			"</body>"
+			"</html>";
 
-		// size_t content_length = strlen(html_body);
+		size_t content_length = strlen(html_body);
 
-		// const char *response_header = 
-		// 	"HTTP/1.1 200 OK\r\n"
-		// 	"Content-Type: text/html\r\n"
-		// 	"Content-Length: ";
+		const char *response_header = 
+			"HTTP/1.1 200 OK\r\n"
+			"Content-Type: text/html\r\n"
+			"Content-Length: ";
+			// "Set-Cookie: sessionId=1234567890; Path=/; HttpOnly\r\n";
 
-		// char response[1024];
-		// snprintf(response, sizeof(response), "%s%zu\r\n\r\n%s", response_header, content_length, html_body);
+		char response[1024];
+		snprintf(response, sizeof(response), "%s%zu\r\n\r\n%s", response_header, content_length, html_body);
 		// ssize_t sent_bytes = send(_events[i].data.fd, response, strlen(response), 0);
+		ssize_t sent_bytes = send(client_fd, response, strlen(response), 0);
 
-		// if (sent_bytes == -1) {
-		// 	std::cerr << "Erro ao enviar resposta ao cliente " << _events[i].data.fd << std::endl;
-		// } else {
-		// 	std::cout << "Resposta enviada ao cliente " << _events[i].data.fd << ": \n" << response << std::endl;
-		// }
+		if (sent_bytes == -1) {
+			std::cerr << "Erro ao enviar resposta ao cliente " << client_fd << std::endl;
+		} else {
+			std::cout << "Resposta enviada ao cliente " << client_fd << ": \n";
+		}
 
 		
-		// // Configurar o socket para monitorar eventos de leitura (EPOLLIN) novamente
-		// struct epoll_event ev;
-		// ev.events = EPOLLIN | EPOLLET; // EPOLLIN para leitura, EPOLLET para edge-triggered
-		// ev.data.fd = _events[i].data.fd;
-		// if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &ev) == -1) {
-		// 	std::cerr << "Erro ao modificar socket para EPOLLIN: " << _events[i].data.fd << std::endl;
-		// 	close(_events[i].data.fd);
-		// 	return;
-		// }
+		// Configurar o socket para monitorar eventos de leitura (EPOLLIN) novamente
+		struct epoll_event ev;
+		ev.events = EPOLLIN; // EPOLLIN para leitura
+		ev.data.fd = client_fd;
+		if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, client_fd, &ev) == -1) {
+			std::cerr << "Erro ao modificar socket para EPOLLIN: " << client_fd << std::endl;
+			close(client_fd);
+			return;
+		}
 	} else if (bytes_received == 0) {
 		std::cout << "Cliente desconectado - _client_fd: " << client_fd << std::endl;
 		close(client_fd);
 		// Remove o cliente do vetor e do epoll
-		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, _events[i].data.fd, NULL);
+		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
 		for (std::vector<Socket *>::iterator it = _client_fds.begin(); it != _client_fds.end(); ++it) {
-			if ((*it)->getSocketFd() == _events[i].data.fd) {
+			if ((*it)->getSocketFd() == client_fd) {
 				delete *it; // Libera a memória do socket
 				_client_fds.erase(it); // Remove o socket do vetor
 				break; // Sai do loop após encontrar e remover o cliente
@@ -223,7 +234,7 @@ void	HTTPServer::handleNewClient()
 	Socket *client_fd = new Socket();
 	socklen_t addr_len = sizeof(client_fd->getAddress());
 	int socket = accept(_server_fd.getSocketFd(), &client_fd->getAddress(), &addr_len);
-	std::cout << "Novo socket aceito: " << socket << std::endl;
+	std::cout << "\n### Novo socket aceito: " << socket << "\n\n";
 	client_fd->setSocketFd(socket);
 	client_fd->setEvent(EPOLLIN, client_fd->getSocketFd());
 	if (client_fd->getSocketFd() == -1) {
@@ -232,6 +243,5 @@ void	HTTPServer::handleNewClient()
 	}
 	// Adiciona o novo socket no vector e no epoll
 	_client_fds.push_back(client_fd);
-	std::cout << "Novo cliente conectado - _client_fd: " << client_fd->getSocketFd() << std::endl;
 	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_fd->getSocketFd(), &client_fd->getEvent());
 }

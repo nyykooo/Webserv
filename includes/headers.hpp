@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/05/30 20:58:07 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/04 19:41:04 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 #define HEADERS_HPP
 
 # include <iostream>
+# include <iomanip>			// includes std::setw(), std::setfill(), etc.
+# include <fcntl.h>			// includes fcntl(), O_NONBLOCK, etc.
 # include <fstream>			// includes std::ifstream, std::ofstream, std::fstream, etc.
 # include <sstream>			// includes std::stringstream, std::istringstream, etc.
 # include <string>			// includes std::string, std::to_string(), etc.

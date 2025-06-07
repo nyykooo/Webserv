@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/25 12:10:32 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/03 19:57:08 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/04 19:06:48 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ class HTTPServer {
 	void	printServer();
 	void	startServer();
 	void	handleNewClient();
-	void	receiveData(int client_fd, int i);
+	void	receiveData(int client_fd);
 };
 
 #endif
