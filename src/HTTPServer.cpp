@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/06 19:01:24 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/07 12:46:03 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,33 @@
 
 // ### ORTHODOX CANONICAL FORM ###
 
-HTTPServer::HTTPServer() {
+HTTPServer::HTTPServer()
+{
 	std::cout << "Iniciando o servidor HTTP..." << std::endl;
-	// Cria o socket epoll
-	_epoll_fd = epoll_create(1); // pesquisar possibilidade de usar a EPOLL_CLOEXEC
+
+	// Cria o socket epoll mantido pelo kernel para armazenar o conjunto de descritores a serem monitorados
+	_epoll_fd = epoll_create(1);
+	if (_epoll_fd == -1)
+	{
+		std::cerr << "Erro ao criar epoll" << std::endl;
+		return ;
+	}
+	
+	// Pegar as flags do epoll_fd e adicionar a flag FD_CLOEXEC
+	int epoll_flags = fcntl(_epoll_fd, F_GETFD);
+	if (epoll_flags == -1)
+	{
+		std::cerr << "Erro ao obter flags do epoll_fd" << std::endl;
+		close(_epoll_fd);
+		return ;
+	}
+	epoll_flags |= FD_CLOEXEC;
+	if (fcntl(_epoll_fd, F_SETFD, epoll_flags) == -1)
+	{
+		std::cerr << "Erro ao definir flags do epoll_fd" << std::endl;
+		close(_epoll_fd);
+		return ;
+	}
 
 	_events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
 
@@ -155,7 +178,7 @@ void	HTTPServer::receiveData(int client_fd)
 	ssize_t bytes_received = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
 	if (bytes_received > 0) {
 		_buffer[bytes_received] = '\0'; // Garante que o buffer é uma string
-		std::cout << "Dados recebidos do cliente " << client_fd << ": \n" << _buffer << std::endl;
+		// std::cout << "Dados recebidos do cliente " << client_fd << ": \n" << _buffer << std::endl;
 
 
 		// parsing bruno -> retorna objeto ha HTTPRequest com as informacoes que precisamos

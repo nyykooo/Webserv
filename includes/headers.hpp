@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/04 19:41:04 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/07 12:43:58 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 # include <netdb.h>			// includes getaddrinfo(), getnameinfo(), etc.
 # include <sys/types.h>		// includes types like sockaddr, socklen_t, etc.
 # include <sys/epoll.h>		// includes epoll_create(), epoll_ctl(), epoll_wait(), etc.
+# include <fcntl.h>			// includes fcntl(), open(), O_RDONLY, O_WRONLY, etc.
 
 # include "macros.hpp"
 # include "Socket.hpp"
