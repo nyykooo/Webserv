@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/07 12:47:43 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/07 13:44:46 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,9 @@
 
 // ### ORTHODOX CANONICAL FORM ###
 
-HTTPServer::HTTPServer()
+HttpServer::HttpServer()
 {
-	std::cout << "Iniciando o servidor HTTP..." << std::endl;
+	std::cout << "Iniciando o servidor Http..." << std::endl;
 
 	// Cria o socket epoll mantido pelo kernel para armazenar o conjunto de descritores a serem monitorados
 	_epoll_fd = epoll_create(1);
@@ -81,11 +81,11 @@ HTTPServer::HTTPServer()
 	}
 }
 
-HTTPServer::HTTPServer(const HTTPServer &other) {
+HttpServer::HttpServer(const HttpServer &other) {
 	*this = other; // Chama o operador de atribuição
 }
 
-HTTPServer &HTTPServer::operator=(const HTTPServer &other) {
+HttpServer &HttpServer::operator=(const HttpServer &other) {
 	if (this != &other) {
 		_server_fd = other._server_fd;
 		_epoll_fd = other._epoll_fd;
@@ -94,11 +94,11 @@ HTTPServer &HTTPServer::operator=(const HTTPServer &other) {
 	return *this;
 }
 
-HTTPServer::~HTTPServer() {
+HttpServer::~HttpServer() {
 }
 
 // ### PRINT SERVER INFO ###
-void HTTPServer::printServer()
+void HttpServer::printServer()
 {
 
 	// Converte o endereço para string legível
@@ -124,7 +124,7 @@ void HTTPServer::printServer()
 }
 
 // ### START SERVER ###
-void HTTPServer::startServer()
+void HttpServer::startServer()
 {
 	// Aceita novas conexões
 	while (true) {
@@ -149,7 +149,7 @@ void HTTPServer::startServer()
 }
 
 // ### RECEIVE DATA FROM CLIENT ###
-void	HTTPServer::receiveData(int client_fd)
+void	HttpServer::receiveData(int client_fd)
 {
 	// Recebe dados do cliente
 	ssize_t bytes_received = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
@@ -158,8 +158,8 @@ void	HTTPServer::receiveData(int client_fd)
 		// std::cout << "Dados recebidos do cliente " << client_fd << ": \n" << _buffer << std::endl;
 
 
-		// parsing bruno -> retorna objeto ha HTTPRequest com as informacoes que precisamos
-		// parsing da estrutura HTTPRequest para processar a requisicao valida ou nao
+		// parsing bruno -> retorna objeto ha HttpRequest com as informacoes que precisamos
+		// parsing da estrutura HttpRequest para processar a requisicao valida ou nao
 
 
 		// logica para realizar o send depois
@@ -184,7 +184,7 @@ void	HTTPServer::receiveData(int client_fd)
 		size_t content_length = strlen(html_body);
 
 		const char *response_header = 
-			"HTTP/1.1 200 OK\r\n"
+			"Http/1.1 200 OK\r\n"
 			"Content-Type: text/html\r\n"
 			"Content-Length: ";
 			// "Set-Cookie: sessionId=1234567890; Path=/; HttpOnly\r\n";
@@ -228,7 +228,7 @@ void	HTTPServer::receiveData(int client_fd)
 }
 
 // ### HANDLE NEW CLIENT ###
-void	HTTPServer::handleNewClient()
+void	HttpServer::handleNewClient()
 {
 	// Nova conexao
 	Socket *client_fd = new Socket();
