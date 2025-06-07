@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/03 18:03:33 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/06 18:55:23 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,14 +16,17 @@
 Socket::Socket() :_socket_fd(-1) {
 
 	std::cout << "Iniciando o socket..." << std::endl;
+	
+    memset(&_addr, 0, sizeof(_addr)); // Zero-initialize _addr
+    memset(&_event, 0, sizeof(_event)); // Zero-initialize _event
+    memset(&_hints, 0, sizeof(_hints)); // Zero-initialize _hints
 
-	memset(&_hints, 0, sizeof(_hints));
 	_hints.ai_family = AF_INET; // IPv4
 	_hints.ai_socktype = SOCK_STREAM; // TCP
 	_hints.ai_flags = AI_PASSIVE; // Use my IP
 
 	// Obtém informações de endereço
-    if (getaddrinfo("127.0.0.0", "8080", &_hints, &_res) != 0) {
+    if (getaddrinfo("0.0.0.0", "8080", &_hints, &_res) != 0) {
         std::cerr << "Erro em getaddrinfo" << std::endl;
     }
 }
