@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 15:53:12 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/04 18:59:43 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/09 17:00:39 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ class Socket
 	private:
 		int					_socket_fd; // armazena o file descriptor do socket
 		struct sockaddr		_addr; // armazena o endereço do socket
-		struct epoll_event	_event; // armazena o evento do epoll para usar nas funcoes
+		struct epoll_event	_event; // armazena o evento do epoll para usar nas funcoes.
 		struct addrinfo		_hints, *_res; // armazena as informações de endereço para o socket
 		
 	public:
@@ -39,7 +39,7 @@ class Socket
 	// ### SETTERS ###
 		void				setSocketFd(int fd);
 		void				setAddress(struct sockaddr addr);
-		void				setEvent(int event, int fd);
+		void				setEvent(int event_flags, int fd);
 		void				setRes(struct addrinfo *res);
 		void				setHints(struct addrinfo hints);
 };

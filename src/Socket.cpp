@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/06 18:55:23 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/09 17:01:59 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ Socket::Socket() :_socket_fd(-1) {
 
 	_hints.ai_family = AF_INET; // IPv4
 	_hints.ai_socktype = SOCK_STREAM; // TCP
-	_hints.ai_flags = AI_PASSIVE; // Use my IP
+	_hints.ai_flags = AI_PASSIVE; // Use my IP. Isso é adeqiado para o servidor, pois ele irá escutar em todas as interfaces de rede disponíveis.
 
 	// Obtém informações de endereço
     if (getaddrinfo("0.0.0.0", "8080", &_hints, &_res) != 0) {
@@ -71,7 +71,8 @@ struct epoll_event &Socket::getEvent() {
 	return _event;
 }
 
-struct addrinfo *Socket::getRes() {
+struct addrinfo *Socket::getRes()
+{
 	return _res;
 }
 
@@ -88,8 +89,9 @@ void Socket::setAddress(struct sockaddr addr) {
 	_addr = addr;
 }
 
-void Socket::setEvent(int events, int fd) {
-	_event.events = events; // Define os eventos que o epoll irá monitorar
+void Socket::setEvent(int event_flags, int fd)
+{
+	_event.events = event_flags; // Define os eventos que o epoll irá monitorar
 	_event.data.fd = fd; // Define o file descriptor associado ao evento
 }
 
