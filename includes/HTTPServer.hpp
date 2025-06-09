@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPServer.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/25 12:10:32 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/03 19:57:08 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/06 13:17:25 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,9 @@ class Socket;
 class HTTPServer {
 	private:
 		int								_epoll_fd; // armazena o fd do epoll para usar nas funcoes
-		Socket							_server_fd;
+		Socket							_server_fd; // mudar pra server_socket para ficar mais claro
 		std::vector<Socket *>			_client_fds;
-		std::vector<struct epoll_event>	_events; // armazena os eventos do epoll
+		std::vector<struct epoll_event>	_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
 		char 							_buffer[BUFFER_SIZE]; // buffer para leitura de dados
 		
 	public:

@@ -6,7 +6,7 @@
 /*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/05 18:09:45 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/06/06 13:51:51 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,8 +45,9 @@ HTTPServer::HTTPServer()
 	_events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
 
 	// Cria o socket
-	_server_fd.setSocketFd( socket(_server_fd.getRes()->ai_family, _server_fd.getRes()->ai_socktype, _server_fd.getRes()->ai_protocol));
-	if (_server_fd.getSocketFd() == -1) {
+	_server_fd.setSocketFd(socket(_server_fd.getRes()->ai_family, _server_fd.getRes()->ai_socktype, _server_fd.getRes()->ai_protocol));
+	if (_server_fd.getSocketFd() == -1)
+	{
 		std::cerr << "Erro ao criar o socket" << std::endl;
 		freeaddrinfo(_server_fd.getRes());
 		return ;

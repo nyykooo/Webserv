@@ -6,7 +6,7 @@
 /*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/06/03 16:01:02 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/06/06 19:48:08 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ static bool ft_isspace(char c)
 {
 	return (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f');
 }
+
 
 void HttpRequest::parse_headers(std::istringstream &stream)
 {
@@ -72,7 +73,7 @@ void HttpRequest::parse_requestline(const std::string& request_line)
 	{
 		throw std::invalid_argument("Unsupported or non-existent HTTP method: " + method);
 	}
-	else if (version != "HTTP/1.1" && version != "HTTP/1.0")
+	else if (version != "HTTP/1.1" && version != "HTTP/1.0")// se a version for mais moderna, rodar com o HTTP/1.1? E HTTP/1.0 é possível?
 	{
 		throw std::invalid_argument("Unsupported or non-existent HTTP version: " + version);
 	}
