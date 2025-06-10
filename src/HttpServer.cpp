@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/10 15:48:43 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/10 16:32:56 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,10 +19,26 @@ HttpServer::HttpServer()
 	std::cout << "Iniciando o servidor Http..." << std::endl;
 
 	// Cria o socket epoll mantido pelo kernel para armazenar o conjunto de descritores a serem monitorados
-	_epoll_fd = epoll_create(FD_CLOEXEC);
+	_epoll_fd = epoll_create(1);
 	if (_epoll_fd == -1)
 	{
 		std::cerr << "Erro ao criar epoll" << std::endl;
+		return ;
+	}
+	
+	// Pegar as flags do epoll_fd e adicionar a flag FD_CLOEXEC
+	int epoll_flags = fcntl(_epoll_fd, F_GETFD);
+	if (epoll_flags == -1)
+	{
+		std::cerr << "Erro ao obter flags do epoll_fd" << std::endl;
+		close(_epoll_fd);
+		return ;
+	}
+	epoll_flags |= FD_CLOEXEC;
+	if (fcntl(_epoll_fd, F_SETFD, epoll_flags) == -1)
+	{
+		std::cerr << "Erro ao definir flags do epoll_fd" << std::endl;
+		close(_epoll_fd);
 		return ;
 	}
 
