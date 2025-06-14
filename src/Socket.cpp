@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/09 17:01:59 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/06/13 19:03:25 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,16 +19,7 @@ Socket::Socket() :_socket_fd(-1) {
 	
     memset(&_addr, 0, sizeof(_addr)); // Zero-initialize _addr
     memset(&_event, 0, sizeof(_event)); // Zero-initialize _event
-    memset(&_hints, 0, sizeof(_hints)); // Zero-initialize _hints
-
-	_hints.ai_family = AF_INET; // IPv4
-	_hints.ai_socktype = SOCK_STREAM; // TCP
-	_hints.ai_flags = AI_PASSIVE; // Use my IP. Isso é adeqiado para o servidor, pois ele irá escutar em todas as interfaces de rede disponíveis.
-
-	// Obtém informações de endereço
-    if (getaddrinfo("0.0.0.0", "8080", &_hints, &_res) != 0) {
-        std::cerr << "Erro em getaddrinfo" << std::endl;
-    }
+	_res = NULL; // Inicializa _res como nullptr
 }
 
 Socket::Socket(const Socket &other) {
