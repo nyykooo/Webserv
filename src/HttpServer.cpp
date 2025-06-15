@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/13 20:22:08 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/15 12:15:43 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,20 +106,47 @@ void HttpServer::startServer()
 // ### RECEIVE DATA FROM CLIENT ###
 void	HttpServer::receiveData(int client_fd)
 {
-	// Recebe dados do cliente
-	ssize_t bytes_received = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
-	if (bytes_received > 0) {
-		_buffer[bytes_received] = '\0'; // Garante que o buffer é uma string
-		// std::cout << "Dados recebidos do cliente " << client_fd << ": \n" << _buffer << std::endl;
+	// reescrevendo metodo para aplicar a logica do edge-triggered (EPOLLET)
+	while (true)
+	{
+		ssize_t bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
+		// se bytes for -1 significa que houve um erro
+		if (bytes == -1)
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
+				// fim do evento
+				break ;
+			}
+		}
+		// se bytes for 0 significa que houve desconexao
+		else if (bytes == 0)
+		{
+			// criar metodo para desconectar o cliente
+			std::cout << "Cliente desconectado - _client_fd: " << client_fd << std::endl;
+			close(client_fd);
+			// Remove o cliente do vetor e do epoll
+			epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
+			for (std::vector<Socket *>::iterator it = _client_fds.begin(); it != _client_fds.end(); ++it) {
+				if ((*it)->getSocketFd() == client_fd) {
+					delete *it; // Libera a memória do socket
+					_client_fds.erase(it); // Remove o socket do vetor
+					break; // Sai do loop após encontrar e remover o cliente
+				}
+			}
+			break ;
+		}
+		else
+		{
+			// lidar com a leitura e envio de resposta
+			_buffer[bytes] = '\0'; // Garante que o buffer é uma string
 
 
-		// parsing bruno -> retorna objeto ha HttpRequest com as informacoes que precisamos
-		// parsing da estrutura HttpRequest para processar a requisicao valida ou nao
+			// fazer o parsing do buffer recebido
 
 
-		// logica para realizar o send depois
-		// // Envio de resposta padrao ao cliente sem processamento de requisicao
-		const char *html_body = 
+			// resposta padrao
+			std::string responseBody = 
 			"<!DOCTYPE html>"
 			"<html lang=\"en\">"
 			"<head>"
@@ -135,50 +162,24 @@ void	HttpServer::receiveData(int client_fd)
 			"<h1>Bem-vindo ao WebServr de ncampbel, bruhenr dioalexa</h1>"
 			"</body>"
 			"</html>";
+			
+			std::ostringstream header;
+			header << "HTTP/1.1 200 OK\r\n";
+			header << "Content-Type: text/html\r\n";
+			header << "Content-Length: " << responseBody.size() << "\r\n";
+			header << "\r\n";
 
-		size_t content_length = strlen(html_body);
+			std::string response = header.str() + responseBody;
 
-		const char *response_header = 
-			"Http/1.1 200 OK\r\n"
-			"Content-Type: text/html\r\n"
-			"Content-Length: ";
-			// "Set-Cookie: sessionId=1234567890; Path=/; HttpOnly\r\n";
+			// envia a resposta ao cliente
+			ssize_t sent_bytes = send(client_fd, response.c_str(), response.size(), 0);
 
-		char response[1024];
-		snprintf(response, sizeof(response), "%s%zu\r\n\r\n%s", response_header, content_length, html_body);
-		// ssize_t sent_bytes = send(_events[i].data.fd, response, strlen(response), 0);
-		ssize_t sent_bytes = send(client_fd, response, strlen(response), 0);
-
-		if (sent_bytes == -1) {
-			std::cerr << "Erro ao enviar resposta ao cliente " << client_fd << std::endl;
-		} else {
-			std::cout << "Resposta enviada ao cliente " << client_fd << ": \n";
-		}
-
-		
-		// Configurar o socket para monitorar eventos de leitura (EPOLLIN) novamente
-		struct epoll_event ev;
-		ev.events = EPOLLIN; // EPOLLIN para leitura
-		ev.data.fd = client_fd;
-		if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, client_fd, &ev) == -1) {
-			std::cerr << "Erro ao modificar socket para EPOLLIN: " << client_fd << std::endl;
-			close(client_fd);
-			return;
-		}
-	} else if (bytes_received == 0) {
-		std::cout << "Cliente desconectado - _client_fd: " << client_fd << std::endl;
-		close(client_fd);
-		// Remove o cliente do vetor e do epoll
-		epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
-		for (std::vector<Socket *>::iterator it = _client_fds.begin(); it != _client_fds.end(); ++it) {
-			if ((*it)->getSocketFd() == client_fd) {
-				delete *it; // Libera a memória do socket
-				_client_fds.erase(it); // Remove o socket do vetor
-				break; // Sai do loop após encontrar e remover o cliente
+			if (sent_bytes == -1) {
+				std::cerr << "Erro ao enviar resposta ao cliente " << client_fd << std::endl;
+			} else {
+				std::cout << "Resposta enviada com sucesso ao cliente " << client_fd << std::endl;
 			}
 		}
-	} else {
-		std::cerr << "Erro ao receber dados do cliente " << client_fd << std::endl;
 	}
 }
 
@@ -300,7 +301,7 @@ Socket *HttpServer::initClientSocket()
 		return NULL;
 	}
 	client_fd->setSocketFd(socket);
-	int events = EPOLLIN; // Monitorar eventos de leitura
+	int events = EPOLLIN | EPOLLET; // Monitorar eventos de leitura (EPOLLIN) e usar o modo edge-triggered (EPOLLET)
 	client_fd->setEvent(events, client_fd->getSocketFd());
 
 	// adicionar o non-blocking ao socket do cliente
