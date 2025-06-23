@@ -6,7 +6,7 @@
 #    By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/10 19:46:12 by ncampbel          #+#    #+#              #
-#    Updated: 2025/06/07 13:44:46 by ncampbel         ###   ########.fr        #
+#    Updated: 2025/06/20 17:58:45 by ncampbel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,7 @@ CXX= c++
 
 CXXFLAGS= -Wall -Wextra -Werror -g -std=c++98
 
-SRC = main.cpp src/HttpServer.cpp src/Socket.cpp
+SRC = main.cpp src/HttpServer.cpp src/Socket.cpp src/HttpRequest.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

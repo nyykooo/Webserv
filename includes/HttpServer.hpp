@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/25 12:10:32 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/13 18:50:13 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/21 17:48:55 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,17 @@
 
 // Declaração antecipada da classe Socket
 class Socket;
+
+// std::vector servers;
+
+// servers.push_back(new HttpServer());
+
+
+// class Conf {
+// 	public:
+// 		std::map<std::string, std::vector<HttpServer *>> servers; // mapeia o nome do servidor para uma lista de servidores
+// };
+
 
 class HttpServer {
 	private:

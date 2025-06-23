@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/15 12:15:43 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/21 18:44:37 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,11 +139,29 @@ void	HttpServer::receiveData(int client_fd)
 		else
 		{
 			// lidar com a leitura e envio de resposta
-			_buffer[bytes] = '\0'; // Garante que o buffer é uma string
-
+			std::string requestBuffer(_buffer);
 
 			// fazer o parsing do buffer recebido
-
+			HttpRequest request(requestBuffer);
+			try
+			{
+				HttpRequest request(requestBuffer);
+				std::cout << "Method: " << request.getMethod() << std::endl;
+				std::cout << "Path: " << request.getPath() << std::endl;
+				std::cout << "Version: " << request.getVersion() << std::endl;
+				std::cout << "Headers:" << std::endl;
+				std::map<std::string, std::string> headers = request.getHeaders();
+				for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
+				{
+					std::cout << "  " << it->first << ": " << it->second << std::endl;
+				}
+				std::cout << "Body: " << request.getBody() << std::endl;
+			}
+			catch (const std::exception &e)
+			{
+				std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
+				return; 
+			}
 
 			// resposta padrao
 			std::string responseBody = 
