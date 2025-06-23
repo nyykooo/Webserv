@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/21 18:44:37 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/23 18:59:20 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,21 +141,9 @@ void	HttpServer::receiveData(int client_fd)
 			// lidar com a leitura e envio de resposta
 			std::string requestBuffer(_buffer);
 
-			// fazer o parsing do buffer recebido
-			HttpRequest request(requestBuffer);
 			try
 			{
 				HttpRequest request(requestBuffer);
-				std::cout << "Method: " << request.getMethod() << std::endl;
-				std::cout << "Path: " << request.getPath() << std::endl;
-				std::cout << "Version: " << request.getVersion() << std::endl;
-				std::cout << "Headers:" << std::endl;
-				std::map<std::string, std::string> headers = request.getHeaders();
-				for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
-				{
-					std::cout << "  " << it->first << ": " << it->second << std::endl;
-				}
-				std::cout << "Body: " << request.getBody() << std::endl;
 			}
 			catch (const std::exception &e)
 			{
@@ -261,7 +249,7 @@ void	HttpServer::initServerSocket()
 	_server_fd->setHints(hints); // Armazena as hints no socket
 
 	// Obtém informações de endereço
-    if (getaddrinfo("127.0.0.1", "8080", &hints, &res) != 0) {
+    if (getaddrinfo(NULL, "8080", &hints, &res) != 0) {
         std::cerr << "Erro em getaddrinfo" << std::endl;
     }
 	_server_fd->setRes(res); // Armazena o resultado de getaddrinfo no socket
@@ -311,8 +299,9 @@ void	HttpServer::initServerSocket()
 Socket *HttpServer::initClientSocket()
 {
 	Socket *client_fd = new Socket();
-	socklen_t addr_len = sizeof(client_fd->getAddress());
-	int socket = accept(_server_fd->getSocketFd(), &client_fd->getAddress(), &addr_len);
+	client_fd->setRes(_server_fd->getRes()); // Usa o mesmo res do servidor para o cliente
+	socklen_t addr_len = sizeof(client_fd->getRes()->ai_addr);
+	int socket = accept(_server_fd->getSocketFd(), client_fd->getRes()->ai_addr, &addr_len);
 	if (socket == -1) {
 		std::cerr << "Erro ao aceitar nova conexão" << std::endl;
 		delete client_fd; // Libera a memória do socket se não for usado

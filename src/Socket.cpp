@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/23 18:50:07 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/23 18:53:07 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,7 @@
 Socket::Socket() :_socket_fd(-1) {
 
 	// std::cout << "Iniciando o socket..." << std::endl;
-	
-    memset(&_addr, 0, sizeof(_addr)); // Zero-initialize _addr
+
     memset(&_event, 0, sizeof(_event)); // Zero-initialize _event
 	_res = NULL; // Inicializa _res como nullptr
 }
@@ -29,7 +28,6 @@ Socket::Socket(const Socket &other) {
 Socket &Socket::operator=(const Socket &other) {
 	if (this != &other) {
 		_socket_fd = other._socket_fd;
-		_addr = other._addr;
 		_event = other._event;
 		_hints = other._hints;
 		if (_res) {
@@ -54,10 +52,6 @@ int Socket::getSocketFd() {
 	return _socket_fd;
 }
 
-struct sockaddr &Socket::getAddress() {
-	return _addr;
-}
-
 struct epoll_event &Socket::getEvent() {
 	return _event;
 }
@@ -74,10 +68,6 @@ struct addrinfo *Socket::getHints() {
 // ### SETTERS ###
 void Socket::setSocketFd(int fd) {
 	_socket_fd = fd;
-}
-
-void Socket::setAddress(struct sockaddr addr) {
-	_addr = addr;
 }
 
 void Socket::setEvent(int event_flags, int fd)
