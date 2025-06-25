@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/24 19:26:24 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/25 22:39:20 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,23 @@ HttpServer::HttpServer()
 	_events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
 
 	// inicializa o socket do servidor com as configuracoes corretas
-	initServerSocket();
+	initServerSocket("8080");
+	std::cout << "Servidor Http iniciado fd : " << _server_fd->getSocketFd() << std::endl;
+}
+
+// CONSTRUCTOR WITH PORT
+HttpServer::HttpServer(const std::string &port)
+{
+	std::cout << "Iniciando o servidor Http na porta " << port << "..." << std::endl;
+
+	// inicializa a instacia de epoll
+	initEpoll();
+	
+	_events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
+
+	// inicializa o socket do servidor com as configuracoes corretas
+	initServerSocket(port);
+	std::cout << "🌐 Servidor Http iniciado fd : " << _server_fd->getSocketFd() << " 🌐" << std::endl;
 }
 
 HttpServer::HttpServer(const HttpServer &other) {
@@ -50,6 +66,7 @@ HttpServer::~HttpServer() {
 	if (_epoll_fd != -1) {
 		close(_epoll_fd); // Fecha o descritor do epoll
 	}
+	std::cout << "‼️ WARNING: HttpServer is down! ‼️" << std::endl;
 }
 
 // ### PRINT SERVER INFO ###
@@ -81,13 +98,13 @@ void HttpServer::printServer(Socket *socket)
 // ### START SERVER ###
 void HttpServer::startServer()
 {
-	// Aceita novas conexões
-	while (true) {
+	// // Aceita novas conexões
+	// while (true) {
 		// Espera por eventos
 		int event_count = epoll_wait(_epoll_fd, _events.data(), MAX_EVENTS, -1);
 		if (event_count == -1) {
 			std::cerr << "Erro no epoll_wait" << std::endl;
-			continue;
+			return;
 		}
 
 		for (int i = 0; i < event_count; ++i)
@@ -99,8 +116,7 @@ void HttpServer::startServer()
 				receiveData(_events[i].data.fd);
 			}
 		}
-		
-	}
+	// }
 }
 
 // ### RECEIVE DATA FROM CLIENT ###
@@ -123,7 +139,7 @@ void	HttpServer::receiveData(int client_fd)
 		else if (bytes == 0)
 		{
 			// criar metodo para desconectar o cliente
-			std::cout << "Cliente desconectado - _client_fd: " << client_fd << std::endl;
+			std::cout << "❌ Cliente desconectado - _client_fd: " << client_fd << " ❌" << std::endl;
 			close(client_fd);
 			// Remove o cliente do vetor e do epoll
 			epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
@@ -178,13 +194,7 @@ void	HttpServer::receiveData(int client_fd)
 			std::string response = header.str() + responseBody;
 
 			// envia a resposta ao cliente
-			ssize_t sent_bytes = send(client_fd, response.c_str(), response.size(), 0);
-
-			if (sent_bytes == -1) {
-				std::cerr << "Erro ao enviar resposta ao cliente " << client_fd << std::endl;
-			} else {
-				std::cout << "Resposta enviada com sucesso ao cliente " << client_fd << std::endl;
-			}
+			send(client_fd, response.c_str(), response.size(), 0);
 		}
 	}
 }
@@ -235,7 +245,7 @@ void	HttpServer::initEpoll()
 }
 
 // ### INIT SERVER SOCKET ###
-void	HttpServer::initServerSocket()
+void	HttpServer::initServerSocket(std::string port)
 {
 	// Cria o socket
 	_server_fd = new Socket();
@@ -249,7 +259,7 @@ void	HttpServer::initServerSocket()
 	_server_fd->setHints(hints); // Armazena as hints no socket
 
 	// Obtém informações de endereço
-    if (getaddrinfo(NULL, "8080", &hints, &res) != 0) {
+    if (getaddrinfo(NULL, port.c_str(), &hints, &res) != 0) {
         std::cerr << "Erro em getaddrinfo" << std::endl;
     }
 	_server_fd->setRes(res); // Armazena o resultado de getaddrinfo no socket
@@ -272,7 +282,8 @@ void	HttpServer::initServerSocket()
 
 	// Faz o bind
 	if (bind(_server_fd->getSocketFd(), _server_fd->getRes()->ai_addr, _server_fd->getRes()->ai_addrlen) == -1) {
-		std::cerr << "Erro ao fazer bind" << std::endl;
+		perror("Erro ao fazer bind");
+		std::cerr << "Erro ao fazer bind: " << errno << std::endl;
 		close(_server_fd->getSocketFd());
 		freeaddrinfo(_server_fd->getRes());
 		return ;
@@ -342,6 +353,7 @@ Socket *HttpServer::initClientSocket()
     int keepalive = 1; // Ativa o keepalive para o socket do cliente
     setsockopt(client_fd->getSocketFd(), SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive)); // Permite reutilizar o endereço
 
-    printServer(client_fd); // Imprime as informações do servidor
+	std::cout << "✅ Novo cliente conectado - _client_fd: " << client_fd->getSocketFd() << " ✅" << std::endl;
+    // printServer(client_fd); // Imprime as informações do servidor
     return client_fd;
 }
