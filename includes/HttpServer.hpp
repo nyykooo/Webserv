@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/25 12:10:32 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/21 17:48:55 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/24 19:26:33 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ class HttpServer {
 		void	initEpoll();
 		void	initServerSocket();
 		Socket	*initClientSocket();
-		void	printServer();
+		void	printServer(Socket *socket);
 		void	startServer();
 		void	handleNewClient();
 		void	receiveData(int client_fd);

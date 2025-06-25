@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/23 18:59:20 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/24 19:26:24 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,28 +53,28 @@ HttpServer::~HttpServer() {
 }
 
 // ### PRINT SERVER INFO ###
-void HttpServer::printServer()
+void HttpServer::printServer(Socket *socket)
 {
 
 	// Converte o endereço para string legível
     char ip_str[INET6_ADDRSTRLEN];
     void *addr_ptr;
 
-    if (_server_fd->getRes()->ai_family == AF_INET) { // IPv4
-        struct sockaddr_in *ipv4 = (struct sockaddr_in *)_server_fd->getRes()->ai_addr;
+    if (socket->getRes()->ai_family == AF_INET) { // IPv4
+        struct sockaddr_in *ipv4 = (struct sockaddr_in *)socket->getRes()->ai_addr;
         addr_ptr = &(ipv4->sin_addr);
-    } else if (_server_fd->getRes()->ai_family == AF_INET6) { // IPv6
-        struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)_server_fd->getRes()->ai_addr;
+    } else if (socket->getRes()->ai_family == AF_INET6) { // IPv6
+        struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)socket->getRes()->ai_addr;
         addr_ptr = &(ipv6->sin6_addr);
     } else {
         std::cerr << "Família de endereços desconhecida" << std::endl;
-        close(_server_fd->getSocketFd());
-        freeaddrinfo(_server_fd->getRes());
+        close(socket->getSocketFd());
+        freeaddrinfo(socket->getRes());
         return ;
     }
 
     // Converte o endereço binário para string
-    inet_ntop(_server_fd->getRes()->ai_family, addr_ptr, ip_str, sizeof(ip_str));
+    inet_ntop(socket->getRes()->ai_family, addr_ptr, ip_str, sizeof(ip_str));
     std::cout << "Endereço IP: " << ip_str << std::endl;
 }
 
@@ -295,28 +295,53 @@ void	HttpServer::initServerSocket()
 	}
 }
 
-// ### INIT CLIENT SOCKET ###
 Socket *HttpServer::initClientSocket()
 {
-	Socket *client_fd = new Socket();
-	client_fd->setRes(_server_fd->getRes()); // Usa o mesmo res do servidor para o cliente
-	socklen_t addr_len = sizeof(client_fd->getRes()->ai_addr);
-	int socket = accept(_server_fd->getSocketFd(), client_fd->getRes()->ai_addr, &addr_len);
-	if (socket == -1) {
-		std::cerr << "Erro ao aceitar nova conexão" << std::endl;
-		delete client_fd; // Libera a memória do socket se não for usado
-		return NULL;
-	}
-	client_fd->setSocketFd(socket);
-	int events = EPOLLIN | EPOLLET; // Monitorar eventos de leitura (EPOLLIN) e usar o modo edge-triggered (EPOLLET)
-	client_fd->setEvent(events, client_fd->getSocketFd());
+    Socket *client_fd = new Socket();
 
-	// adicionar o non-blocking ao socket do cliente
-	int flags = fcntl(client_fd->getSocketFd(), F_GETFL, 0);
-	fcntl(client_fd->getSocketFd(), F_SETFL, flags | O_NONBLOCK);
-	
-	int keepalive = 1; // Ativa o keepalive para o socket do cliente
-	setsockopt(client_fd->getSocketFd(), SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive)); // Permite reutilizar o endereço
+    // Aloca memória para o endereço do cliente
+    sockaddr_storage addr; // Usando sockaddr_storage para suportar IPv4 e IPv6
+    socklen_t addr_len = sizeof(addr);
 
-	return client_fd;
+    // Aceita a conexão
+    int socket = accept(_server_fd->getSocketFd(), (sockaddr *)&addr, &addr_len);
+    if (socket == -1) {
+        std::cerr << "Erro ao aceitar nova conexão" << std::endl;
+        delete client_fd; // Libera a memória do socket se não for usado
+        return NULL;
+    }
+
+    // Configura o socket do cliente
+    client_fd->setSocketFd(socket);
+    int events = EPOLLIN | EPOLLET; // Monitorar eventos de leitura (EPOLLIN) e usar o modo edge-triggered (EPOLLET)
+    client_fd->setEvent(events, client_fd->getSocketFd());
+
+    // Configura o endereço do cliente
+    addrinfo *res = new addrinfo(); // Aloca memória para addrinfo
+    res->ai_addr = (sockaddr *)new sockaddr_storage(addr); // Copia o endereço do cliente
+    res->ai_addrlen = addr_len; // Armazena o tamanho do endereço do cliente
+
+    // Configura a família de endereços com base no tipo de endereço recebido
+    if (addr.ss_family == AF_INET) {
+        res->ai_family = AF_INET; // IPv4
+    } else if (addr.ss_family == AF_INET6) {
+        res->ai_family = AF_INET6; // IPv6
+    } else {
+        std::cerr << "Família de endereços desconhecida ao aceitar conexão" << std::endl;
+        delete client_fd;
+        delete res;
+        return NULL;
+    }
+
+    client_fd->setRes(res); // Armazena o resultado no socket do cliente
+
+    // Adicionar o non-blocking ao socket do cliente
+    int flags = fcntl(client_fd->getSocketFd(), F_GETFL, 0);
+    fcntl(client_fd->getSocketFd(), F_SETFL, flags | O_NONBLOCK);
+
+    int keepalive = 1; // Ativa o keepalive para o socket do cliente
+    setsockopt(client_fd->getSocketFd(), SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive)); // Permite reutilizar o endereço
+
+    printServer(client_fd); // Imprime as informações do servidor
+    return client_fd;
 }
