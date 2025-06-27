@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/13 19:03:25 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/22 17:16:44 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"
 
 // ### ORTHODOX CANONICAL FORM ###
-Socket::Socket() :_socket_fd(-1) {
+Socket::Socket() : _socket_fd(-1) {
 
 	std::cout << "Iniciando o socket..." << std::endl;
 	

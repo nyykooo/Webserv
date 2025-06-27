@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpServer.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/15 12:15:43 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/22 19:52:29 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -202,7 +202,7 @@ void	HttpServer::handleNewClient()
 void	HttpServer::initEpoll()
 {
 	// Cria o socket epoll mantido pelo kernel para armazenar o conjunto de descritores a serem monitorados
-	_epoll_fd = epoll_create(1);
+	_epoll_fd = epoll_create(1); // o 1 é apenas um valor dummy obrigatório sem efeito prático desde o Linux 2.6.8
 	if (_epoll_fd == -1)
 	{
 		std::cerr << "Erro ao criar epoll" << std::endl;
@@ -218,14 +218,13 @@ void	HttpServer::initEpoll()
 		close(_epoll_fd);
 		return ;
 	}
-	epoll_flags |= FD_CLOEXEC;
-	if (fcntl(_epoll_fd, F_SETFD, epoll_flags) == -1)
+	epoll_flags |= FD_CLOEXEC; //Processo filho após apenas fork ainda herda, mas ao dar exec, o fd é fechado
+	if (fcntl(_epoll_fd, F_SETFD, epoll_flags) == -1) // a fcntl é uma função variádica
 	{
 		std::cerr << "Erro ao definir flags do epoll_fd" << std::endl;
 		close(_epoll_fd);
 		return ;
 	}
-
 }
 
 // ### INIT SERVER SOCKET ###
