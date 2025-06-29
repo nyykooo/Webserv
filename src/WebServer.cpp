@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/29 10:52:32 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/29 15:39:45 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,27 +132,27 @@ void WebServer::startServer()
 					server_found = true;
 					break; // Sai do loop após encontrar o servidor correspondente
 				}
-				if (!server_found)
-				{
-					std::cout << "Evento recebido de um cliente existente, processando dados..." << std::endl;
-					int status = receiveData(_events[i].data.fd);
+			}
+			if (!server_found)
+			{
+				std::cout << "Evento recebido de um cliente existente, processando dados..." << std::endl;
+				int status = receiveData(_events[i].data.fd);
 
-					if (status == 0)
-					{
-						// criar metodo para desconectar o cliente
-						std::cout << "❌ Cliente desconectado - _client_fd: " << _events[i].data.fd << " ❌" << std::endl;
-						close(_events[i].data.fd);
-						// Remove o cliente do vetor e do epoll
-						epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, _events[i].data.fd, NULL);
-						// QUANDO CRIAR O METODO PARA DESCONEXAO LIDAR COM VAZAMENTO DE MEMORIA
-						// for (std::vector<Socket *>::iterator it = _client_fds.begin(); it != _client_fds.end(); ++it) {
-						// 	if ((*it)->getSocketFd() == client_fd) {
-						// 		delete *it; // Libera a memória do socket
-						// 		_client_fds.erase(it); // Remove o socket do vetor
-						// 		break ; // Sai do loop após encontrar e remover o cliente
-						// 	}
-						// }
-					}
+				if (status == 0)
+				{
+					// criar metodo para desconectar o cliente
+					std::cout << "❌ Cliente desconectado - _client_fd: " << _events[i].data.fd << " ❌" << std::endl;
+					close(_events[i].data.fd);
+					// Remove o cliente do vetor e do epoll
+					epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, _events[i].data.fd, NULL);
+					// QUANDO CRIAR O METODO PARA DESCONEXAO LIDAR COM VAZAMENTO DE MEMORIA
+					// for (std::vector<Socket *>::iterator it = _client_fds.begin(); it != _client_fds.end(); ++it) {
+					// 	if ((*it)->getSocketFd() == client_fd) {
+					// 		delete *it; // Libera a memória do socket
+					// 		_client_fds.erase(it); // Remove o socket do vetor
+					// 		break ; // Sai do loop após encontrar e remover o cliente
+					// 	}
+					// }
 				}
 			}
 		}
