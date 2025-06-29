@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/23 18:53:07 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/29 10:47:01 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,9 +30,6 @@ Socket &Socket::operator=(const Socket &other) {
 		_socket_fd = other._socket_fd;
 		_event = other._event;
 		_hints = other._hints;
-		if (_res) {
-			freeaddrinfo(_res); // Libera o recurso anterior, se necessário
-		}
 		_res = other._res;
 	}
 	return *this;
@@ -45,6 +42,7 @@ Socket::~Socket() {
 	if (_res) {
 		freeaddrinfo(_res);
 	}
+	std::cout << "Socket destruído e recursos liberados." << std::endl;
 }
 
 // ### GETTERS ###

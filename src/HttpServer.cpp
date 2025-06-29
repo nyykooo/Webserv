@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/25 22:39:20 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/06/29 10:50:40 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,9 @@ HttpServer::HttpServer()
 	std::cout << "Iniciando o servidor Http..." << std::endl;
 
 	// inicializa a instacia de epoll
-	initEpoll();
+	// initEpoll();
 	
-	_events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
+	// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
 
 	// inicializa o socket do servidor com as configuracoes corretas
 	initServerSocket("8080");
@@ -34,9 +34,9 @@ HttpServer::HttpServer(const std::string &port)
 	std::cout << "Iniciando o servidor Http na porta " << port << "..." << std::endl;
 
 	// inicializa a instacia de epoll
-	initEpoll();
+	// initEpoll();
 	
-	_events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
+	// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
 
 	// inicializa o socket do servidor com as configuracoes corretas
 	initServerSocket(port);
@@ -50,8 +50,8 @@ HttpServer::HttpServer(const HttpServer &other) {
 HttpServer &HttpServer::operator=(const HttpServer &other) {
 	if (this != &other) {
 		_server_fd = other._server_fd;
-		_epoll_fd = other._epoll_fd;
-		_client_fds = other._client_fds;
+		// _epoll_fd = other._epoll_fd;
+		// _client_fds = other._client_fds;
 	}
 	return *this;
 }
@@ -63,9 +63,9 @@ HttpServer::~HttpServer() {
 		delete *it; // Libera a memória de cada socket do cliente
 		it = _client_fds.erase(it); // Remove o socket do vetor e avança o iterador
 	}
-	if (_epoll_fd != -1) {
-		close(_epoll_fd); // Fecha o descritor do epoll
-	}
+	// if (_epoll_fd != -1) {
+	// 	close(_epoll_fd); // Fecha o descritor do epoll
+	// }
 	std::cout << "‼️ WARNING: HttpServer is down! ‼️" << std::endl;
 }
 
@@ -95,154 +95,154 @@ void HttpServer::printServer(Socket *socket)
     std::cout << "Endereço IP: " << ip_str << std::endl;
 }
 
-// ### START SERVER ###
-void HttpServer::startServer()
-{
-	// // Aceita novas conexões
-	// while (true) {
-		// Espera por eventos
-		int event_count = epoll_wait(_epoll_fd, _events.data(), MAX_EVENTS, -1);
-		if (event_count == -1) {
-			std::cerr << "Erro no epoll_wait" << std::endl;
-			return;
-		}
+// // ### START SERVER ###
+// void HttpServer::startServer()
+// {
+// 	// // Aceita novas conexões
+// 	// while (true) {
+// 		// Espera por eventos
+// 		int event_count = epoll_wait(_epoll_fd, _events.data(), MAX_EVENTS, -1);
+// 		if (event_count == -1) {
+// 			std::cerr << "Erro no epoll_wait" << std::endl;
+// 			return;
+// 		}
 
-		for (int i = 0; i < event_count; ++i)
-		{
-			if (_events[i].data.fd == _server_fd->getSocketFd())
-			{
-				handleNewClient();
-			} else {
-				receiveData(_events[i].data.fd);
-			}
-		}
-	// }
-}
+// 		for (int i = 0; i < event_count; ++i)
+// 		{
+// 			if (_events[i].data.fd == _server_fd->getSocketFd())
+// 			{
+// 				handleNewClient();
+// 			} else {
+// 				receiveData(_events[i].data.fd);
+// 			}
+// 		}
+// 	// }
+// }
 
-// ### RECEIVE DATA FROM CLIENT ###
-void	HttpServer::receiveData(int client_fd)
-{
-	// reescrevendo metodo para aplicar a logica do edge-triggered (EPOLLET)
-	while (true)
-	{
-		ssize_t bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
-		// se bytes for -1 significa que houve um erro
-		if (bytes == -1)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				// fim do evento
-				break ;
-			}
-		}
-		// se bytes for 0 significa que houve desconexao
-		else if (bytes == 0)
-		{
-			// criar metodo para desconectar o cliente
-			std::cout << "❌ Cliente desconectado - _client_fd: " << client_fd << " ❌" << std::endl;
-			close(client_fd);
-			// Remove o cliente do vetor e do epoll
-			epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
-			for (std::vector<Socket *>::iterator it = _client_fds.begin(); it != _client_fds.end(); ++it) {
-				if ((*it)->getSocketFd() == client_fd) {
-					delete *it; // Libera a memória do socket
-					_client_fds.erase(it); // Remove o socket do vetor
-					break; // Sai do loop após encontrar e remover o cliente
-				}
-			}
-			break ;
-		}
-		else
-		{
-			// lidar com a leitura e envio de resposta
-			std::string requestBuffer(_buffer);
+// // ### RECEIVE DATA FROM CLIENT ###
+// void	HttpServer::receiveData(int client_fd)
+// {
+// 	// reescrevendo metodo para aplicar a logica do edge-triggered (EPOLLET)
+// 	while (true)
+// 	{
+// 		ssize_t bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
+// 		// se bytes for -1 significa que houve um erro
+// 		if (bytes == -1)
+// 		{
+// 			if (errno == EAGAIN || errno == EWOULDBLOCK)
+// 			{
+// 				// fim do evento
+// 				break ;
+// 			}
+// 		}
+// 		// se bytes for 0 significa que houve desconexao
+// 		else if (bytes == 0)
+// 		{
+// 			// criar metodo para desconectar o cliente
+// 			std::cout << "❌ Cliente desconectado - _client_fd: " << client_fd << " ❌" << std::endl;
+// 			close(client_fd);
+// 			// Remove o cliente do vetor e do epoll
+// 			epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
+// 			for (std::vector<Socket *>::iterator it = _client_fds.begin(); it != _client_fds.end(); ++it) {
+// 				if ((*it)->getSocketFd() == client_fd) {
+// 					delete *it; // Libera a memória do socket
+// 					_client_fds.erase(it); // Remove o socket do vetor
+// 					break; // Sai do loop após encontrar e remover o cliente
+// 				}
+// 			}
+// 			break ;
+// 		}
+// 		else
+// 		{
+// 			// lidar com a leitura e envio de resposta
+// 			std::string requestBuffer(_buffer);
 
-			try
-			{
-				HttpRequest request(requestBuffer);
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
-				return; 
-			}
+// 			try
+// 			{
+// 				HttpRequest request(requestBuffer);
+// 			}
+// 			catch (const std::exception &e)
+// 			{
+// 				std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
+// 				return; 
+// 			}
 
-			// resposta padrao
-			std::string responseBody = 
-			"<!DOCTYPE html>"
-			"<html lang=\"en\">"
-			"<head>"
-			"<meta charset=\"UTF-8\">"
-			"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-			"<title>Bem-vindo</title>"
-			"<style>"
-			"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-			"h1 { color: #333; }"
-			"</style>"
-			"</head>"
-			"<body>"
-			"<h1>Bem-vindo ao WebServr de ncampbel, bruhenr dioalexa</h1>"
-			"</body>"
-			"</html>";
+// 			// resposta padrao
+// 			std::string responseBody = 
+// 			"<!DOCTYPE html>"
+// 			"<html lang=\"en\">"
+// 			"<head>"
+// 			"<meta charset=\"UTF-8\">"
+// 			"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+// 			"<title>Bem-vindo</title>"
+// 			"<style>"
+// 			"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
+// 			"h1 { color: #333; }"
+// 			"</style>"
+// 			"</head>"
+// 			"<body>"
+// 			"<h1>Bem-vindo ao WebServr de ncampbel, bruhenr dioalexa</h1>"
+// 			"</body>"
+// 			"</html>";
 			
-			std::ostringstream header;
-			header << "HTTP/1.1 200 OK\r\n";
-			header << "Content-Type: text/html\r\n";
-			header << "Content-Length: " << responseBody.size() << "\r\n";
-			header << "\r\n";
+// 			std::ostringstream header;
+// 			header << "HTTP/1.1 200 OK\r\n";
+// 			header << "Content-Type: text/html\r\n";
+// 			header << "Content-Length: " << responseBody.size() << "\r\n";
+// 			header << "\r\n";
 
-			std::string response = header.str() + responseBody;
+// 			std::string response = header.str() + responseBody;
 
-			// envia a resposta ao cliente
-			send(client_fd, response.c_str(), response.size(), 0);
-		}
-	}
-}
+// 			// envia a resposta ao cliente
+// 			send(client_fd, response.c_str(), response.size(), 0);
+// 		}
+// 	}
+// }
 
 // ### HANDLE NEW CLIENT ###
-void	HttpServer::handleNewClient()
+int	HttpServer::handleNewClient()
 {
 	// inicializa o socket do cliente
 	Socket *client_fd = initClientSocket();
 	if (!client_fd) {
 		std::cerr << "Erro ao inicializar o socket do cliente" << std::endl;
-		return ;
+		return client_fd->getSocketFd(); // Retorna um socket inválido
 	}
 
-	// Adiciona o novo socket no vector e no epoll
+	
 	_client_fds.push_back(client_fd);
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_fd->getSocketFd(), &client_fd->getEvent());
+	return client_fd->getSocketFd(); // Retorna o fd do cliente para ser usado no epoll
 }
 
 // ### INIT EPOLL ###
-void	HttpServer::initEpoll()
-{
-	// Cria o socket epoll mantido pelo kernel para armazenar o conjunto de descritores a serem monitorados
-	_epoll_fd = epoll_create(1);
-	if (_epoll_fd == -1)
-	{
-		std::cerr << "Erro ao criar epoll" << std::endl;
-		return ;
-	}
+// void	HttpServer::initEpoll()
+// {
+// 	// Cria o socket epoll mantido pelo kernel para armazenar o conjunto de descritores a serem monitorados
+// 	_epoll_fd = epoll_create(1);
+// 	if (_epoll_fd == -1)
+// 	{
+// 		std::cerr << "Erro ao criar epoll" << std::endl;
+// 		return ;
+// 	}
 	
-	// pensar numa forma de modularizar e reutilizar esse trecho de codigo abaixo
-	// Pegar as flags do epoll_fd e adicionar a flag FD_CLOEXEC
-	int epoll_flags = fcntl(_epoll_fd, F_GETFD);
-	if (epoll_flags == -1)
-	{
-		std::cerr << "Erro ao obter flags do epoll_fd" << std::endl;
-		close(_epoll_fd);
-		return ;
-	}
-	epoll_flags |= FD_CLOEXEC;
-	if (fcntl(_epoll_fd, F_SETFD, epoll_flags) == -1)
-	{
-		std::cerr << "Erro ao definir flags do epoll_fd" << std::endl;
-		close(_epoll_fd);
-		return ;
-	}
+// 	// pensar numa forma de modularizar e reutilizar esse trecho de codigo abaixo
+// 	// Pegar as flags do epoll_fd e adicionar a flag FD_CLOEXEC
+// 	int epoll_flags = fcntl(_epoll_fd, F_GETFD);
+// 	if (epoll_flags == -1)
+// 	{
+// 		std::cerr << "Erro ao obter flags do epoll_fd" << std::endl;
+// 		close(_epoll_fd);
+// 		return ;
+// 	}
+// 	epoll_flags |= FD_CLOEXEC;
+// 	if (fcntl(_epoll_fd, F_SETFD, epoll_flags) == -1)
+// 	{
+// 		std::cerr << "Erro ao definir flags do epoll_fd" << std::endl;
+// 		close(_epoll_fd);
+// 		return ;
+// 	}
 
-}
+// }
 
 // ### INIT SERVER SOCKET ###
 void	HttpServer::initServerSocket(std::string port)
@@ -297,13 +297,13 @@ void	HttpServer::initServerSocket(std::string port)
 		return ;
 	}
 
-	// Registra o server socket na epoll para monitorar
+	// // Registra o server socket na epoll para monitorar
 	_server_fd->setEvent(EPOLLIN, _server_fd->getSocketFd());
-	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _server_fd->getSocketFd(), &_server_fd->getEvent()) == -1) {
-		std::cerr << "Erro ao adicionar o socket ao epoll" << std::endl;
-		freeaddrinfo(_server_fd->getRes());
-		return ;
-	}
+	// if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _server_fd->getSocketFd(), &_server_fd->getEvent()) == -1) {
+	// 	std::cerr << "Erro ao adicionar o socket ao epoll" << std::endl;
+	// 	freeaddrinfo(_server_fd->getRes());
+	// 	return ;
+	// }
 }
 
 Socket *HttpServer::initClientSocket()
@@ -353,7 +353,11 @@ Socket *HttpServer::initClientSocket()
     int keepalive = 1; // Ativa o keepalive para o socket do cliente
     setsockopt(client_fd->getSocketFd(), SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive)); // Permite reutilizar o endereço
 
-	std::cout << "✅ Novo cliente conectado - _client_fd: " << client_fd->getSocketFd() << " ✅" << std::endl;
-    // printServer(client_fd); // Imprime as informações do servidor
+	// printServer(client_fd); // Imprime as informações do servidor
     return client_fd;
+}
+
+// ### GETTERS ###
+Socket *HttpServer::getServerSocket() const {
+	return _server_fd;
 }
