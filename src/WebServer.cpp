@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/29 15:39:45 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/01 19:14:38 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,7 +120,7 @@ void WebServer::startServer()
 					std::cout << "✅ Novo cliente conectado - new_client_fd: " << new_client << " ✅" << std::endl;
 					// Adiciona o novo socket no vector e no epoll
 					struct epoll_event client_event;
-					client_event.events = EPOLLIN | EPOLLET; // Monitorar eventos de leitura (EPOLLIN) e usar o modo edge-triggered (EPOLLET)
+					client_event.events = EPOLLIN; // Monitorar eventos de leitura (EPOLLIN) e usar o modo edge-triggered (EPOLLET)
 					client_event.data.fd = new_client;
 					int res = epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, new_client, &client_event);
 					if (res == -1)
@@ -163,18 +163,11 @@ void WebServer::startServer()
 // ### RECEIVE DATA FROM CLIENT ###
 int	WebServer::receiveData(int client_fd)
 {
-	// reescrevendo metodo para aplicar a logica do edge-triggered (EPOLLET)
-	while (true)
-	{
 		ssize_t bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
 		// se bytes for -1 significa que houve um erro
 		if (bytes == -1)
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				// fim do evento
-				break ;
-			}
+			return -1;
 		}
 		// se bytes for 0 significa que houve desconexao
 		else if (bytes == 0)
@@ -225,7 +218,6 @@ int	WebServer::receiveData(int client_fd)
 			// envia a resposta ao cliente
 			send(client_fd, response.c_str(), response.size(), 0);
 		}
-	}
 		return 1;
 }
 
