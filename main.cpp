@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/02 17:47:25 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/02 19:33:13 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ static void printHL(void)
     std::cout << "Machine IP URL: " << "\033]8;;" << link << "\033\\"
               << link
               << "\033]8;;\033\\" << std::endl;
-    std::cout << "localhost URL:" << "\033]8;;127.0.0.1:8080\033\\"
+    std::cout << "localhost URL:" << "\033]8;;http://127.0.0.1:8080\033\\"
               << "http://127.0.0.1:8080"
               << "\033]8;;\033\\" << std::endl;
     return;
