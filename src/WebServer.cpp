@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/01 19:14:38 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/04 15:02:23 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,8 @@
 WebServer::WebServer() {
 	initEpoll();
 
-	_events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
+	// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
+	_events.resize(MAX_EVENTS); // Aloca memória para o vetor de eventosams
 
 	HttpServer *server1 = new HttpServer("8080");
 	HttpServer *server2 = new HttpServer("8081");
@@ -221,3 +222,49 @@ int	WebServer::receiveData(int client_fd)
 		return 1;
 }
 
+// ### GETTERS ###
+int WebServer::getEpollFd() const {
+	return _epoll_fd;
+}
+
+std::map<std::string, HttpServer *> WebServer::getServersMap() const {
+	return _servers_map;
+}
+
+std::vector<Socket *> WebServer::getClientsVec() const {
+	return _clients_vec;
+}
+
+std::vector<struct epoll_event> WebServer::getEvents() const {
+	return _events;
+}
+
+char *WebServer::getBuffer() {
+	return _buffer;
+}
+
+// ### SETTERS ###
+void WebServer::setEpollFd(int epoll_fd) {
+	_epoll_fd = epoll_fd;
+}
+
+void WebServer::setServersMap(const std::map<std::string, HttpServer *> &servers_map) {
+	_servers_map = servers_map;
+}
+
+void WebServer::setClientsVec(const std::vector<Socket *> &clients_vec) {
+	_clients_vec = clients_vec;
+}
+
+void WebServer::setEvents(std::vector<struct epoll_event> events) {
+	_events = events;
+}
+
+void WebServer::setBuffer(const char *buffer) {
+	if (buffer) {
+		strncpy(_buffer, buffer, BUFFER_SIZE - 1);
+		_buffer[BUFFER_SIZE - 1] = '\0'; // Garante que o buffer esteja null-terminated
+	} else {
+		_buffer[0] = '\0'; // Limpa o buffer se o ponteiro for nulo
+	}
+}
