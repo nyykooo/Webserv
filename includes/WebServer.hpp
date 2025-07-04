@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/04 14:38:38 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/04 18:08:30 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ class WebServer
 		std::map<std::string, HttpServer *> _servers_map; // mapeia uma porta especifica para servidores (pensar em vecrtor de servers depois)
 		std::vector<Socket *>	_clients_vec;
 		// std::vector<struct epoll_event>	_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
-		std::vector<struct epoll_event>	_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
+		struct epoll_event	*_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
 		char 							_buffer[BUFFER_SIZE]; // buffer para leitura de dados
 
 	public:
@@ -40,14 +40,14 @@ class WebServer
 		int getEpollFd() const;
 		std::map<std::string, HttpServer *> getServersMap() const;
 		std::vector<Socket *> getClientsVec() const;
-		std::vector<struct epoll_event> getEvents() const;
+		struct epoll_event *getEvents() const;
 		char *getBuffer();
 
 		// ### SETTERS ###
 		void setEpollFd(int epoll_fd);
 		void setServersMap(const std::map<std::string, HttpServer *> &servers_map);
 		void setClientsVec(const std::vector<Socket *> &clients_vec);
-		void setEvents(std::vector<struct epoll_event> events);
+		void setEvents(struct epoll_event *events);
 		void setBuffer(const char *buffer);
 };
 

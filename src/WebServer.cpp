@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/04 15:02:23 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/04 18:09:56 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ WebServer::WebServer() {
 	initEpoll();
 
 	// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
-	_events.resize(MAX_EVENTS); // Aloca memória para o vetor de eventosams
+	_events = new struct epoll_event[MAX_EVENTS]; // Aloca memória para o vetor de eventos
 
 	HttpServer *server1 = new HttpServer("8080");
 	HttpServer *server2 = new HttpServer("8081");
@@ -97,7 +97,7 @@ void WebServer::startServer()
 	// // Aceita novas conexões
 	while (true) {
 		// Espera por eventos
-		int event_count = epoll_wait(_epoll_fd, _events.data(), MAX_EVENTS, -1);
+		int event_count = epoll_wait(_epoll_fd, _events, MAX_EVENTS, -1);
 		if (event_count == -1) {
 			std::cerr << "Erro no epoll_wait" << std::endl;
 			return;
@@ -235,7 +235,7 @@ std::vector<Socket *> WebServer::getClientsVec() const {
 	return _clients_vec;
 }
 
-std::vector<struct epoll_event> WebServer::getEvents() const {
+struct epoll_event *WebServer::getEvents() const {
 	return _events;
 }
 
@@ -256,7 +256,7 @@ void WebServer::setClientsVec(const std::vector<Socket *> &clients_vec) {
 	_clients_vec = clients_vec;
 }
 
-void WebServer::setEvents(std::vector<struct epoll_event> events) {
+void WebServer::setEvents(struct epoll_event *events) {
 	_events = events;
 }
 

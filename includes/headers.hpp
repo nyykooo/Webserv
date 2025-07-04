@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/02 17:42:40 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/04 17:59:33 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@
 # include <sys/types.h>		// includes types like sockaddr, socklen_t, etc.
 # include <sys/epoll.h>		// includes epoll_create(), epoll_ctl(), epoll_wait(), etc.
 # include <fcntl.h>			// includes fcntl(), open(), O_RDONLY, O_WRONLY, etc.
+# include <cstdlib>		// includes std::exit(), std::atoi(), std::atof(), etc.
 
 # include "macros.hpp"
 # include "Socket.hpp"
