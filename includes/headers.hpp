@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 15:42:17 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 17:53:49 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,6 @@
 
 # include "macros.hpp"
 # include "Socket.hpp"
-# include "HttpServer.hpp"
 # include "HttpRequest.hpp"
 # include "WebServer.hpp"
 # include "Client.hpp"
