@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/29 10:47:01 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 15:03:47 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,6 @@
 
 // ### ORTHODOX CANONICAL FORM ###
 Socket::Socket() :_socket_fd(-1) {
-
-	// std::cout << "Iniciando o socket..." << std::endl;
-
     memset(&_event, 0, sizeof(_event)); // Zero-initialize _event
 	_res = NULL; // Inicializa _res como nullptr
 }

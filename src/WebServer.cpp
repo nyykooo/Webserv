@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/04 18:09:56 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 15:00:08 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,137 +89,6 @@ void WebServer::registerEpollSocket(Socket *socket)
 		freeaddrinfo(socket->getRes());
 		return ;
 	}
-}
-
-// ### START SERVER ###
-void WebServer::startServer()
-{
-	// // Aceita novas conexões
-	while (true) {
-		// Espera por eventos
-		int event_count = epoll_wait(_epoll_fd, _events, MAX_EVENTS, -1);
-		if (event_count == -1) {
-			std::cerr << "Erro no epoll_wait" << std::endl;
-			return;
-		}
-
-		for (int i = 0; i < event_count; ++i)
-		{
-			bool server_found = false;
-			// verifica se o evento corresponde a um server (conexao nova)
-			std::map<std::string, HttpServer *>::iterator it;
-			for (it = _servers_map.begin(); it != _servers_map.end(); ++it)
-			{
-				if (_events[i].data.fd == it->second->getServerSocket()->getSocketFd())
-				{
-					int new_client = it->second->handleNewClient();
-					if (new_client == -1)
-					{
-						std::cerr << "Erro ao aceitar nova conexão" << std::endl;
-						continue; // Continua para o próximo evento
-					}
-					std::cout << "✅ Novo cliente conectado - new_client_fd: " << new_client << " ✅" << std::endl;
-					// Adiciona o novo socket no vector e no epoll
-					struct epoll_event client_event;
-					client_event.events = EPOLLIN; // Monitorar eventos de leitura (EPOLLIN) e usar o modo edge-triggered (EPOLLET)
-					client_event.data.fd = new_client;
-					int res = epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, new_client, &client_event);
-					if (res == -1)
-					{
-						std::cerr << "Erro ao adicionar o socket do cliente ao epoll" << std::endl;
-						close(new_client);
-						continue; // Continua para o próximo evento
-					}
-					server_found = true;
-					break; // Sai do loop após encontrar o servidor correspondente
-				}
-			}
-			if (!server_found)
-			{
-				std::cout << "Evento recebido de um cliente existente, processando dados..." << std::endl;
-				int status = receiveData(_events[i].data.fd);
-
-				if (status == 0)
-				{
-					// criar metodo para desconectar o cliente
-					std::cout << "❌ Cliente desconectado - _client_fd: " << _events[i].data.fd << " ❌" << std::endl;
-					close(_events[i].data.fd);
-					// Remove o cliente do vetor e do epoll
-					epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, _events[i].data.fd, NULL);
-					// QUANDO CRIAR O METODO PARA DESCONEXAO LIDAR COM VAZAMENTO DE MEMORIA
-					// for (std::vector<Socket *>::iterator it = _client_fds.begin(); it != _client_fds.end(); ++it) {
-					// 	if ((*it)->getSocketFd() == client_fd) {
-					// 		delete *it; // Libera a memória do socket
-					// 		_client_fds.erase(it); // Remove o socket do vetor
-					// 		break ; // Sai do loop após encontrar e remover o cliente
-					// 	}
-					// }
-				}
-			}
-		}
-	}
-}
-
-
-// ### RECEIVE DATA FROM CLIENT ###
-int	WebServer::receiveData(int client_fd)
-{
-		ssize_t bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
-		// se bytes for -1 significa que houve um erro
-		if (bytes == -1)
-		{
-			return -1;
-		}
-		// se bytes for 0 significa que houve desconexao
-		else if (bytes == 0)
-		{
-			return 0;
-		}
-		else
-		{
-			// lidar com a leitura e envio de resposta
-			std::string requestBuffer(_buffer);
-
-			try
-			{
-				HttpRequest request(requestBuffer);
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
-				return 1; 
-			}
-
-			// resposta padrao
-			std::string responseBody = 
-			"<!DOCTYPE html>"
-			"<html lang=\"en\">"
-			"<head>"
-			"<meta charset=\"UTF-8\">"
-			"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-			"<title>Bem-vindo</title>"
-			"<style>"
-			"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-			"h1 { color: #333; }"
-			"</style>"
-			"</head>"
-			"<body>"
-			"<h1>Bem-vindo ao WebServr de ncampbel, bruhenr dioalexa</h1>"
-			"</body>"
-			"</html>";
-			
-			std::ostringstream header;
-			header << "HTTP/1.1 200 OK\r\n";
-			header << "Content-Type: text/html\r\n";
-			header << "Content-Length: " << responseBody.size() << "\r\n";
-			header << "\r\n";
-
-			std::string response = header.str() + responseBody;
-
-			// envia a resposta ao cliente
-			send(client_fd, response.c_str(), response.size(), 0);
-		}
-		return 1;
 }
 
 // ### GETTERS ###

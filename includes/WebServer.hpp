@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/04 18:08:30 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 15:03:16 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@ class WebServer
 		int	_epoll_fd; // armazena o fd do epoll para usar nas funcoes
 		std::map<std::string, HttpServer *> _servers_map; // mapeia uma porta especifica para servidores (pensar em vecrtor de servers depois)
 		std::vector<Socket *>	_clients_vec;
-		// std::vector<struct epoll_event>	_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
 		struct epoll_event	*_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
 		char 							_buffer[BUFFER_SIZE]; // buffer para leitura de dados
 
