@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/04 18:11:22 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 17:51:10 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,49 +36,41 @@ static void printHL(void)
 
 static void printAllServersInfo(WebServer &webServer)
 {
-    std::map<std::string, HttpServer *> serversMap = webServer.getServersMap();
+    std::map<std::string, Server *> serversMap = webServer.getServersMap();
     if (serversMap.empty())
     {
         std::cout << "Nenhum servidor configurado." << std::endl;
         return;
     }
     std::cout << "Servidores configurados:" << std::endl;
-    std::map<std::string, HttpServer *>::iterator it;
+    std::map<std::string, Server *>::iterator it;
     for (it = serversMap.begin(); it != serversMap.end(); ++it)
     {
         std::cout << "Servidor: " << it->first << std::endl;
-        std::cout << "  Evento.fd: " << it->second->getServerSocket()->getEvent().data.fd << std::endl;
-        std::cout << "  Evento: " << it->second->getServerSocket()->getEvent().events << std::endl;
-        std::cout << "  Socket FD:: " << it->second->getServerSocket()->getSocketFd() << std::endl;
+        std::cout << "  Evento.fd: " << it->second->getEvent().data.fd << std::endl;
+        std::cout << "  Evento: " << it->second->getEvent().events << std::endl;
+        std::cout << "  Socket FD:: " << it->second->getSocketFd() << std::endl;
     }
 }
 
 static bool tryConnection(WebServer &web, int i)
 {
-    std::map<std::string, HttpServer *>::iterator it;
-    std::map<std::string, HttpServer *> _servers_map = web.getServersMap();
+    std::map<std::string, Server *>::iterator it;
+    std::map<std::string, Server *> _servers_map = web.getServersMap();
     for (it = _servers_map.begin(); it != _servers_map.end(); ++it)
     {
-        if(web.getEvents()[i].data.fd == it->second->getServerSocket()->getSocketFd())
+        if(web.getEvents()[i].data.fd == it->second->getSocketFd())
         {
-            int new_client = it->second->handleNewClient();
-            if (new_client == -1)
-            {
-                std::cerr << "Erro ao aceitar nova conexão" << std::endl;
-                continue; // Continua para o próximo evento
-            }
-            std::cout << "✅ Novo cliente conectado - new_client_fd: " << new_client << " ✅" << std::endl;
-
-            // Adiciona o novo socket no vector e no epoll
-            struct epoll_event client_event;
-            client_event.data.fd = new_client;
-            client_event.events = EPOLLIN; // Habilita leitura e modo edge-triggered
-            if (epoll_ctl(web.getEpollFd(), EPOLL_CTL_ADD, new_client, &client_event) == -1) {
-                std::cerr << "Erro ao adicionar o socket do cliente ao epoll" << std::endl;
-                close(new_client);
-                return false;
-            }
-            return true; // Conexão aceita com sucesso
+			try
+			{
+				web.handleNewClient(it->second->getSocketFd());
+				return true; // Conexão aceita com sucesso
+			}
+			catch (const std::exception &e)
+			{
+				std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
+				return 1; 
+			}
         }
     }
     return false;
@@ -96,7 +88,7 @@ static int receiveData(WebServer &web, int client_fd)
     // se bytes for 0 significa que houve desconexao
     else if (bytes == 0)
     {
-        return 0;
+        return -1;
     }
     else
     {

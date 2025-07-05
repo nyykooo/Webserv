@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 15:00:08 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 17:21:04 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,11 @@ WebServer::WebServer() {
 	// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
 	_events = new struct epoll_event[MAX_EVENTS]; // Aloca memória para o vetor de eventos
 
-	HttpServer *server1 = new HttpServer("8080");
-	HttpServer *server2 = new HttpServer("8081");
+	Server *server1 = new Server("8080");
+	Server *server2 = new Server("8081");
 	
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server1->getServerSocket()->getSocketFd(), &server1->getServerSocket()->getEvent());
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server2->getServerSocket()->getSocketFd(), &server2->getServerSocket()->getEvent());
+	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server1->getSocketFd(), &server1->getEvent());
+	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server2->getSocketFd(), &server2->getEvent());
 
 	_servers_map["8080"] = server1;
 	_servers_map["8081"] = server2;
@@ -91,16 +91,31 @@ void WebServer::registerEpollSocket(Socket *socket)
 	}
 }
 
+// ### HANDLE NEW CLIENT ###
+void	WebServer::handleNewClient(int server_fd)
+{
+	// inicializa o socket do cliente
+	Client *client_socket = new Client(server_fd);
+	if (!client_socket) {
+		std::cerr << "Erro ao inicializar o socket do cliente" << std::endl;
+		return ;
+	}
+	std::cout << "✅ Novo cliente conectado - new_client_socket: " << client_socket->getSocketFd() << " ✅" << std::endl;
+
+	_clients_vec.push_back(client_socket);
+	registerEpollSocket(client_socket);
+}
+
 // ### GETTERS ###
 int WebServer::getEpollFd() const {
 	return _epoll_fd;
 }
 
-std::map<std::string, HttpServer *> WebServer::getServersMap() const {
+std::map<std::string, Server *> WebServer::getServersMap() const {
 	return _servers_map;
 }
 
-std::vector<Socket *> WebServer::getClientsVec() const {
+std::vector<Client *> WebServer::getClientsVec() const {
 	return _clients_vec;
 }
 
@@ -117,11 +132,11 @@ void WebServer::setEpollFd(int epoll_fd) {
 	_epoll_fd = epoll_fd;
 }
 
-void WebServer::setServersMap(const std::map<std::string, HttpServer *> &servers_map) {
+void WebServer::setServersMap(const std::map<std::string, Server *> &servers_map) {
 	_servers_map = servers_map;
 }
 
-void WebServer::setClientsVec(const std::vector<Socket *> &clients_vec) {
+void WebServer::setClientsVec(const std::vector<Client *> &clients_vec) {
 	_clients_vec = clients_vec;
 }
 

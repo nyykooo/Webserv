@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/25 12:10:32 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 15:35:07 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 16:57:14 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class HttpServer {
 		~HttpServer();
 
 		void	initServerSocket(std::string port);
-		Socket	*initClientSocket();
+		// Socket	*initClientSocket();
 		void	printServer(Socket *socket);
 		int		handleNewClient();
 

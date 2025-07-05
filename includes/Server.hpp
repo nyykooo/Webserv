@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 15:36:43 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 17:17:59 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 // Declaração antecipada da classe Client
 class Client;
 
-class Server : private Socket {
+class Server : public Socket {
 	private:
 		std::vector<Client *>	_client_fds;
 

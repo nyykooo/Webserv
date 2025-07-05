@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 15:37:50 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 17:20:13 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,20 +82,20 @@ void HttpServer::printServer(Socket *socket)
     std::cout << "Endereço IP: " << ip_str << std::endl;
 }
 
-// ### HANDLE NEW CLIENT ###
-int	HttpServer::handleNewClient()
-{
-	// inicializa o socket do cliente
-	Socket *client_fd = initClientSocket();
-	if (!client_fd) {
-		std::cerr << "Erro ao inicializar o socket do cliente" << std::endl;
-		return client_fd->getSocketFd(); // Retorna um socket inválido
-	}
+// // ### HANDLE NEW CLIENT ###
+// int	HttpServer::handleNewClient()
+// {
+// 	// inicializa o socket do cliente
+// 	Socket *client_fd = initClientSocket();
+// 	if (!client_fd) {
+// 		std::cerr << "Erro ao inicializar o socket do cliente" << std::endl;
+// 		return client_fd->getSocketFd(); // Retorna um socket inválido
+// 	}
 
 	
-	_client_fds.push_back(client_fd);
-	return client_fd->getSocketFd(); // Retorna o fd do cliente para ser usado no epoll
-}
+// 	_client_fds.push_back(client_fd);
+// 	return client_fd->getSocketFd(); // Retorna o fd do cliente para ser usado no epoll
+// }
 
 // ### INIT SERVER SOCKET ###
 void	HttpServer::initServerSocket(std::string port)
@@ -154,56 +154,56 @@ void	HttpServer::initServerSocket(std::string port)
 	_server_fd->setEvent(EPOLLIN, _server_fd->getSocketFd());
 }
 
-Socket *HttpServer::initClientSocket()
-{
-    Socket *client_fd = new Socket();
+// Socket *HttpServer::initClientSocket()
+// {
+//     Socket *client_fd = new Socket();
 
-    // Aloca memória para o endereço do cliente
-    sockaddr_storage addr; // Usando sockaddr_storage para suportar IPv4 e IPv6
-    socklen_t addr_len = sizeof(addr);
+//     // Aloca memória para o endereço do cliente
+//     sockaddr_storage addr; // Usando sockaddr_storage para suportar IPv4 e IPv6
+//     socklen_t addr_len = sizeof(addr);
 
-    // Aceita a conexão
-    int socket = accept(_server_fd->getSocketFd(), (sockaddr *)&addr, &addr_len);
-    if (socket == -1) {
-        std::cerr << "Erro ao aceitar nova conexão" << std::endl;
-        delete client_fd; // Libera a memória do socket se não for usado
-        return NULL;
-    }
+//     // Aceita a conexão
+//     int socket = accept(_server_fd->getSocketFd(), (sockaddr *)&addr, &addr_len);
+//     if (socket == -1) {
+//         std::cerr << "Erro ao aceitar nova conexão" << std::endl;
+//         delete client_fd; // Libera a memória do socket se não for usado
+//         return NULL;
+//     }
 
-    // Configura o socket do cliente
-    client_fd->setSocketFd(socket);
-    int events = EPOLLIN | EPOLLET; // Monitorar eventos de leitura (EPOLLIN) e usar o modo edge-triggered (EPOLLET)
-    client_fd->setEvent(events, client_fd->getSocketFd());
+//     // Configura o socket do cliente
+//     client_fd->setSocketFd(socket);
+//     int events = EPOLLIN | EPOLLET; // Monitorar eventos de leitura (EPOLLIN) e usar o modo edge-triggered (EPOLLET)
+//     client_fd->setEvent(events, client_fd->getSocketFd());
 
-    // Configura o endereço do cliente
-    addrinfo *res = new addrinfo(); // Aloca memória para addrinfo
-    res->ai_addr = (sockaddr *)new sockaddr_storage(addr); // Copia o endereço do cliente
-    res->ai_addrlen = addr_len; // Armazena o tamanho do endereço do cliente
+//     // Configura o endereço do cliente
+//     addrinfo *res = new addrinfo(); // Aloca memória para addrinfo
+//     res->ai_addr = (sockaddr *)new sockaddr_storage(addr); // Copia o endereço do cliente
+//     res->ai_addrlen = addr_len; // Armazena o tamanho do endereço do cliente
 
-    // Configura a família de endereços com base no tipo de endereço recebido
-    if (addr.ss_family == AF_INET) {
-        res->ai_family = AF_INET; // IPv4
-    } else if (addr.ss_family == AF_INET6) {
-        res->ai_family = AF_INET6; // IPv6
-    } else {
-        std::cerr << "Família de endereços desconhecida ao aceitar conexão" << std::endl;
-        delete client_fd;
-        delete res;
-        return NULL;
-    }
+//     // Configura a família de endereços com base no tipo de endereço recebido
+//     if (addr.ss_family == AF_INET) {
+//         res->ai_family = AF_INET; // IPv4
+//     } else if (addr.ss_family == AF_INET6) {
+//         res->ai_family = AF_INET6; // IPv6
+//     } else {
+//         std::cerr << "Família de endereços desconhecida ao aceitar conexão" << std::endl;
+//         delete client_fd;
+//         delete res;
+//         return NULL;
+//     }
 
-    client_fd->setRes(res); // Armazena o resultado no socket do cliente
+//     client_fd->setRes(res); // Armazena o resultado no socket do cliente
 
-    // Adicionar o non-blocking ao socket do cliente
-    int flags = fcntl(client_fd->getSocketFd(), F_GETFL, 0);
-    fcntl(client_fd->getSocketFd(), F_SETFL, flags | O_NONBLOCK);
+//     // Adicionar o non-blocking ao socket do cliente
+//     int flags = fcntl(client_fd->getSocketFd(), F_GETFL, 0);
+//     fcntl(client_fd->getSocketFd(), F_SETFL, flags | O_NONBLOCK);
 
-    int keepalive = 1; // Ativa o keepalive para o socket do cliente
-    setsockopt(client_fd->getSocketFd(), SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive)); // Permite reutilizar o endereço
+//     int keepalive = 1; // Ativa o keepalive para o socket do cliente
+//     setsockopt(client_fd->getSocketFd(), SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive)); // Permite reutilizar o endereço
 
-	// printServer(client_fd); // Imprime as informações do servidor
-    return client_fd;
-}
+// 	// printServer(client_fd); // Imprime as informações do servidor
+//     return client_fd;
+// }
 
 // ### GETTERS ###
 Socket *HttpServer::getServerSocket() const {
