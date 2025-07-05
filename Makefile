@@ -6,7 +6,7 @@
 #    By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/10 19:46:12 by ncampbel          #+#    #+#              #
-#    Updated: 2025/06/07 13:44:46 by ncampbel         ###   ########.fr        #
+#    Updated: 2025/07/05 17:53:38 by ncampbel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,14 @@ CXX= c++
 
 CXXFLAGS= -Wall -Wextra -Werror -g -std=c++98
 
-SRC = main.cpp src/HttpServer.cpp src/Socket.cpp
+SRC = main.cpp src/Socket.cpp src/HttpRequest.cpp \
+	   src/WebServer.cpp src/Client.cpp src/Server.cpp
+
+TIMENAME= timeexec
+
+TIME = time/main.cpp
+
+TIMEOBJ = $(TIME:.cpp=.o)
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -26,11 +33,16 @@ $(NAME): $(OBJ)
 	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 
 clean:
-	rm -f $(OBJ)
+	rm -f $(OBJ) $(TIMEOBJ)
 	
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME) $(TIMENAME)
 
 re: fclean all
+
+time: $(TIMENAME)
+
+$(TIMENAME): $(TIMEOBJ)
+	$(CXX) $(CXXFLAGS) $(TIMEOBJ) -o $(TIMENAME)
 
 .PHONY: all clean fclean re

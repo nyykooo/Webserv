@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/13 19:03:25 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 16:29:45 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,6 @@
 
 // ### ORTHODOX CANONICAL FORM ###
 Socket::Socket() :_socket_fd(-1) {
-
-	std::cout << "Iniciando o socket..." << std::endl;
-	
-    memset(&_addr, 0, sizeof(_addr)); // Zero-initialize _addr
     memset(&_event, 0, sizeof(_event)); // Zero-initialize _event
 	_res = NULL; // Inicializa _res como nullptr
 }
@@ -29,12 +25,8 @@ Socket::Socket(const Socket &other) {
 Socket &Socket::operator=(const Socket &other) {
 	if (this != &other) {
 		_socket_fd = other._socket_fd;
-		_addr = other._addr;
 		_event = other._event;
 		_hints = other._hints;
-		if (_res) {
-			freeaddrinfo(_res); // Libera o recurso anterior, se necessário
-		}
 		_res = other._res;
 	}
 	return *this;
@@ -47,15 +39,12 @@ Socket::~Socket() {
 	if (_res) {
 		freeaddrinfo(_res);
 	}
+	std::cout << "Socket destruído e recursos liberados." << std::endl;
 }
 
 // ### GETTERS ###
 int Socket::getSocketFd() {
 	return _socket_fd;
-}
-
-struct sockaddr &Socket::getAddress() {
-	return _addr;
 }
 
 struct epoll_event &Socket::getEvent() {
@@ -74,10 +63,6 @@ struct addrinfo *Socket::getHints() {
 // ### SETTERS ###
 void Socket::setSocketFd(int fd) {
 	_socket_fd = fd;
-}
-
-void Socket::setAddress(struct sockaddr addr) {
-	_addr = addr;
 }
 
 void Socket::setEvent(int event_flags, int fd)
