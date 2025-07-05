@@ -1,42 +1,45 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   HttpServer.hpp                                     :+:      :+:    :+:   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/25 12:10:32 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 15:35:07 by ncampbel         ###   ########.fr       */
+/*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
+/*   Updated: 2025/07/05 15:36:43 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef Http_SERVER_HPP
-#define Http_SERVER_HPP
+#ifndef SERVER_HPP
+# define SERVER_HPP
 
 # include "headers.hpp"
 
-// Declaração antecipada da classe Socket
-class Socket;
+// Declaração antecipada da classe Client
+class Client;
 
-class HttpServer {
+class Server : private Socket {
 	private:
-		Socket							*_server_fd; // mudar pra server_socket para ficar mais claro
-		std::vector<Socket *>			_client_fds;
-		
-	public:
-		HttpServer();
-		HttpServer(const std::string &port);
-		HttpServer(const HttpServer &other);
-		HttpServer &operator=(const HttpServer &other);
-		~HttpServer();
+		std::vector<Client *>	_client_fds;
 
+	public:
+		Server();
+		Server(const Server& other);
+		Server(const std::string &port);
+		Server &operator=(const Server& other);
+		~Server();
+
+		// ### PUBLIC METHODS ###
 		void	initServerSocket(std::string port);
 		Socket	*initClientSocket();
 		void	printServer(Socket *socket);
 		int		handleNewClient();
 
 		// ### GETTERS ###
-		Socket *getServerSocket() const;
+		std::vector<Client *>	getTime() const;
+
+		// ### SETTERS ###
+		void	setTime(std::vector<Client *> time);
 };
 
 #endif

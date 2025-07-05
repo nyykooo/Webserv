@@ -6,11 +6,11 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 14:56:35 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 15:38:26 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "./includes/headers.hpp"
+#include "../includes/headers.hpp"
 
 // ### ORTHODOX CANONICAL FORM ###
 Client::Client()

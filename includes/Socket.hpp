@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 15:53:12 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/06/23 18:53:18 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 15:43:50 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 
 class Socket
 {
-	private:
+	protected:
 		int					_socket_fd; // armazena o file descriptor do socket
 		struct epoll_event	_event; // armazena o evento do epoll para usar nas funcoes.
 		struct addrinfo		_hints, *_res; // armazena as informações de endereço para o socket

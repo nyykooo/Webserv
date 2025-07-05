@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 14:52:00 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/05 15:42:17 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@
 # include "HttpRequest.hpp"
 # include "WebServer.hpp"
 # include "Client.hpp"
+# include "Server.hpp"
 
 // remover depois!!!! servem para printar o hyperlink no terminal
 # include <netdb.h>

@@ -48,6 +48,15 @@
 		"typeinfo": "cpp",
 		"map": "cpp",
 		"ctime": "cpp",
-		"iomanip": "cpp"
+		"iomanip": "cpp",
+		"charconv": "cpp",
+		"chrono": "cpp",
+		"optional": "cpp",
+		"ratio": "cpp",
+		"format": "cpp",
+		"span": "cpp",
+		"text_encoding": "cpp",
+		"cinttypes": "cpp",
+		"variant": "cpp"
 	}
 }
