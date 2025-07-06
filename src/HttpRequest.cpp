@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/06/06 19:48:08 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/06/20 18:26:18 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "HttpRequest.hpp"
+#include "../includes/headers.hpp"
 
 HttpRequest::HttpRequest() : method(""), path(""), version(""), headers(), body("")
 {}
@@ -27,6 +27,10 @@ void HttpRequest::parse_headers(std::istringstream &stream)
 	
 	while (std::getline(stream, header_line) && !header_line.empty())
 	{
+		// remove os /r do final de cada linha
+		if (header_line[header_line.size() - 1] == '\r')
+			header_line.erase(header_line.size() - 1);
+
 		if (ft_isspace(header_line[0]))
 		{
 			throw std::invalid_argument("Sintax error. Line folding is forbidden in HTTP headers.");
@@ -98,7 +102,9 @@ void HttpRequest::parse(const std::string &request_text)
 	if (std::getline(stream, request_line) && !request_line.empty())
 	{
 		parse_requestline(request_line);
+		std::cout << "Request line parsed: " << method << " " << path << " " << version << std::endl;
 	}
+	
 	parse_headers(stream);
 	if (stream.peek() != EOF) // a peek retorna o próximo caractere sem removê-lo do stream
 		parseBody(stream);
