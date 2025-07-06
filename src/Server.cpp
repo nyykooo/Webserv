@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 16:32:10 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/06 13:35:48 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ Server::Server(const std::string &port)
 	std::cout << "🌐 Servidor Http iniciado fd : " << _socket_fd << " 🌐" << std::endl;
 }
 
-Server::Server(const Server &other) {
+Server::Server(const Server &other) : Socket(other) { // Chama explicitamente o copy contructor de Socket
 	*this = other; // Chama o operador de atribuição
 }
 

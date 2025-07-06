@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 17:21:29 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/06 13:35:56 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ Client::Client(int server_fd)
 	initClientSocket(server_fd);
 }
 
-Client::Client(const Client &other)
+Client::Client(const Client &other) : Socket(other) // Chama explicitamente o copy contructor de Socket
 {
 	*this = other;
 }
