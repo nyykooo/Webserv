@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/06 13:35:56 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/06 16:22:16 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,16 @@ Client *Client::initClientSocket(int server_fd)
 
 	// printServer(client_fd); // Imprime as informações do servidor
     return this;
+}
+
+bool Client::checkTimeout() const
+{
+    std::time_t curr_time = std::time(NULL);
+    // Verifica se o tempo decorrido desde a última atividade é maior que o timeout
+    if (curr_time - _time > 10)
+        return true;
+    else
+        return false;
 }
 
 // ### GETTERS ###
