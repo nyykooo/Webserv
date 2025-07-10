@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 17:20:42 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/07 18:29:08 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,19 @@ class WebServer
 		void								setClientsVec(const std::vector<Client *> &clients_vec);
 		void								setEvents(struct epoll_event *events);
 		void								setBuffer(const char *buffer);
+
+
+		// ### TESTANDO STARTSERVER DENTRO DA WEBSERVER ###
+		void startServer();
+		void lookForTimeouts();
+		void handleEvents(int event_count);
+		void treatExistingClient(int i);
+		void setClientTime(int client_fd);
+		void sendData(int client_fd);
+		int receiveData(int client_fd);
+		bool tryConnection(int i);
+		void deleteClient(int fd);
+		
 };
 
 #endif

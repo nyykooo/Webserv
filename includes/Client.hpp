@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 17:19:47 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/06 13:59:37 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ class Client : public Socket {
 
 		// ### PUBLIC METHODS ###
 		Client *initClientSocket(int server_fd);
+		bool	checkTimeout() const;
 
 		// ### GETTERS ###
 		std::time_t	getTime() const;
