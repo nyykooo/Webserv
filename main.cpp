@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 17:51:10 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/10 19:04:58 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -214,8 +214,20 @@ static void startServer(WebServer &web)
 }
 
 
-int main(void)
+int main(int argc, char **argv)
 {
+    if (argc != 2) {
+        std::cerr << RED << "Wrong input. Correct usage: ./webserv [configuration_file]" << RESET << std::endl;
+        return (1);
+    }
+    std::vector<Configuration> configFile;
+    
+    try {
+      setup(argv[1], configFile);
+    }
+    catch (const Configuration::WrongConfigFileException& e) {
+      std::cerr << RED << e.what() << RESET << std::endl;
+    }
 	printHL();
 	WebServer webServer;
     printAllServersInfo(webServer);
