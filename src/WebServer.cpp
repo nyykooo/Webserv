@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 17:21:04 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/07 18:55:52 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,9 +100,8 @@ void	WebServer::handleNewClient(int server_fd)
 		std::cerr << "Erro ao inicializar o socket do cliente" << std::endl;
 		return ;
 	}
-	std::cout << "✅ Novo cliente conectado - new_client_socket: " << client_socket->getSocketFd() << " ✅" << std::endl;
-
 	_clients_vec.push_back(client_socket);
+	std::cout << "✅ Novo cliente conectado - new_client_socket: " << _clients_vec.back()->getSocketFd() << " ✅" << std::endl;
 	registerEpollSocket(client_socket);
 }
 
@@ -151,4 +150,206 @@ void WebServer::setBuffer(const char *buffer) {
 	} else {
 		_buffer[0] = '\0'; // Limpa o buffer se o ponteiro for nulo
 	}
+}
+
+
+
+// ### TESTANDO STARTSERVER DENTRO DA WEBSERVER ###
+
+bool WebServer::tryConnection(int i)
+{
+    std::map<std::string, Server *>::iterator it;
+    for (it = _servers_map.begin(); it != _servers_map.end(); ++it)
+    {
+        if(_events[i].data.fd == it->second->getSocketFd())
+        {
+			try
+			{
+				handleNewClient(it->second->getSocketFd());
+				return true; // Conexão aceita com sucesso
+			}
+			catch (const std::exception &e)
+			{
+				std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
+				return 1; 
+			}
+        }
+    }
+    return false;
+}
+
+int WebServer::receiveData(int client_fd)
+{
+    ssize_t bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
+    // se bytes for -1 significa que houve um erro
+    if (bytes == -1)
+    {
+        return -1;
+    }
+    // se bytes for 0 significa que houve desconexao
+    else if (bytes == 0)
+    {
+        return -1;
+    }
+    else
+    {
+        // lidar com a leitura e envio de resposta
+        std::string requestBuffer(_buffer);
+
+        try
+        {
+            HttpRequest request(requestBuffer);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
+            return 1; 
+        }
+    }
+    return 1;
+}
+
+void WebServer::sendData(int client_fd)
+{
+    // resposta padrao
+    std::string responseBody = 
+    "<!DOCTYPE html>"
+    "<html lang=\"en\">"
+    "<head>"
+    "<meta charset=\"UTF-8\">"
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+    "<title>Bem-vindo</title>"
+    "<style>"
+    "body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
+    "h1 { color: #333; }"
+    "</style>"
+    "</head>"
+    "<body>"
+    "<h1>Bem-vindo ao WebServr de ncampbel, bruhenr dioalexa</h1>"
+    "</body>"
+    "</html>";
+    
+    std::ostringstream header;
+    header << "HTTP/1.1 200 OK\r\n";
+    header << "Content-Type: text/html\r\n";
+    header << "Content-Length: " << responseBody.size() << "\r\n";
+    header << "\r\n";
+
+    std::string response = header.str() + responseBody;
+
+    // envia a resposta ao cliente
+    int sent = send(client_fd, response.c_str(), response.size(), 0);
+    if (sent == -1)
+    {
+        return;
+    }
+    else
+        std::cout << "✅ Dados enviados para o cliente - client_fd: " << client_fd << " ✅" << std::endl;
+    
+}
+
+void WebServer::setClientTime(int client_fd)
+{
+    std::vector<Client *>::iterator it;
+
+    for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
+    {
+        if ((*it)->getSocketFd() == client_fd)
+        {
+            (*it)->setTime(std::time(NULL));
+            return;
+        }
+    }
+}
+
+void WebServer::deleteClient(int fd)
+{
+    std::vector<Client *>::iterator it;
+    for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
+    {
+        if ((*it)->getSocketFd() == fd)
+        {
+            std::cout << "❌ Cliente desconectado - client_fd: " << (*it)->getSocketFd() << " ❌" << std::endl;
+            close((*it)->getSocketFd());
+            delete *it; // Libera a memória do cliente
+            it = _clients_vec.erase(it); // Remove o cliente do vetor
+            epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+            return;
+        }
+    }
+}
+
+void WebServer::treatExistingClient(int i)
+{
+    if (_events[i].events == EPOLLIN)
+    {
+        int data = receiveData(_events[i].data.fd);
+        if (data == -1)
+        {
+            deleteClient(_events[i].data.fd);
+            return;
+        }
+        _events[i].events = EPOLLOUT; // Muda o evento para EPOLLOUT após receber dados
+        epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]);
+        setClientTime(_events[i].data.fd);
+    }
+    else if (_events[i].events == EPOLLOUT)
+    {
+        sendData(_events[i].data.fd);
+        _events[i].events = EPOLLIN; // Muda o evento de volta para EPOLLIN após enviar dados
+        epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]);
+        setClientTime(_events[i].data.fd);
+    }
+}
+
+void WebServer::handleEvents(int event_count)
+{
+    for (int i = 0; i < event_count; ++i)
+    {
+        // verifica se o evento corresponde a um server (conexao nova)
+        bool server_found = tryConnection(i);
+        if (!server_found)
+        {
+            treatExistingClient(i);
+        }
+        else
+            break;
+    }
+}
+
+void WebServer::lookForTimeouts()
+{
+    std::vector<Client *>::iterator it;
+    for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
+    {
+        if ((*it)->checkTimeout())
+        {
+            deleteClient((*it)->getSocketFd());
+        }
+        if (it == _clients_vec.end())
+            break;
+    }
+}
+
+void WebServer::startServer()
+{
+    while (true)
+    {
+        // Espera por novos eventos
+        int event_count = epoll_wait(_epoll_fd, _events, MAX_EVENTS, 100);
+		if (event_count == -1) {
+			std::cerr << "Erro no epoll_wait" << std::endl;
+			return;
+		}
+
+        try
+        {
+            handleEvents(event_count);
+            lookForTimeouts();
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+    }
 }
