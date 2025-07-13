@@ -21,7 +21,7 @@ class LocationBlock {
 	void			setRoot(const std::string& root);
 	void			setAllowedMethods(const std::string& method);
 	void			removeAllowedMethods(void);
-	void			setAutoIndex(bool value);
+	void			setAutoIndex(const std::string& value);
 	void			setRedirectStatusCode(const std::string& statusCode);
 	void			setNewLocation(const std::string& newLocation);
 	void			setExactMatchModifier(bool value);
@@ -47,17 +47,6 @@ class LocationBlock {
 	~LocationBlock();
 	LocationBlock(const LocationBlock& other);
 	LocationBlock& operator=(const LocationBlock& other);
-
-	// PARSER
-
-	class WrongLocationBlock: public std::exception {
-		private:
-			std::string	_message;
-		public:
-			WrongLocationBlock(const std::string& message): _message("Invalid configuration file: " + message) {}
-			virtual ~WrongLocationBlock() throw() {};
-			const char* what() const throw();
-	};
 		
 };
 

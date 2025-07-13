@@ -113,7 +113,7 @@ bool	isValidIP(const std::string& host) {
 			if (!std::isdigit(*it))
 				return (false);
 		}
-		if (segment.size() > 3 || std::strtol(segment.c_str(), NULL, 10) > 255) {
+		if (segment.size() > 4 || std::strtol(segment.c_str(), NULL, 10) > 255) {
 			throw Configuration::WrongConfigFileException("invalid host: " + host);
 		}
 	}
@@ -141,9 +141,8 @@ bool	isOnlyDigit(const std::string& word) {
 bool	isValidPort(const std::string& word) {
 	if (!isOnlyDigit(word))
 		return (false);
-	std::cout << "aqui\n";
 	// check if it's bigger than 65535 which is the max number for the port
-	if (word.size() > 5 || std::strtol(word.c_str(), NULL, 10) > 65535) 
+	if (word.size() > 6 || std::strtol(word.c_str(), NULL, 10) > 65535) 
 		throw Configuration::WrongConfigFileException("invalid port number: " + word);
 	return (true);
 }

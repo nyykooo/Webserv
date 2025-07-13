@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-LocationBlock::LocationBlock(): _exactMatchModifier(false) {
+LocationBlock::LocationBlock(): _autoIndex(false), _exactMatchModifier(false) {
 	_allowedMethods.push_back("GET");
 	_allowedMethods.push_back("POST");
 	_allowedMethods.push_back("DELETE");
@@ -65,10 +65,6 @@ void	LocationBlock::setRoot(const std::string& root) {
 	this->_root = root;
 }
 
-const char* LocationBlock::WrongLocationBlock::what() const throw() {
-	return (_message.c_str());
-}
-
 void	LocationBlock::setAllowedMethods(const std::string& location) {
 	_allowedMethods.push_back(location);
 }
@@ -79,6 +75,19 @@ const std::vector<std::string>&	LocationBlock::getMethods(void) const {
 
 void	LocationBlock::removeAllowedMethods(void) {
 	_allowedMethods.clear();
+}
+
+bool	LocationBlock::getAutoIndex(void) const {
+	return (this->_autoIndex);
+}
+
+void	LocationBlock::setAutoIndex(const std::string& value) {
+	if (value == "on")
+		this->_autoIndex = false;
+	else if (value == "off")
+		this->_autoIndex = true;
+	else
+		throw Configuration::WrongConfigFileException("Invalid autoindex value");
 }
 
 /* void	LocationBlock::setRedirectStatusCode(const std::string& statusCode) {
@@ -105,10 +114,10 @@ const std::string& LocationBlock::getNewLocation(void) const {
 void	checkLocationCurlyBrackets(std::string& line) {
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
 	if (line.find('{') != std::string::npos)
-		throw LocationBlock::WrongLocationBlock("line shouldn't have \'{\'");
+		throw Configuration::WrongConfigFileException("line shouldn't have \'{\'");
 	if (line.find('}') != std::string::npos) {
 		if (line[line.size() - 1] != '}' || line.find('}') != line.rfind('}'))	
-			throw LocationBlock::WrongLocationBlock("} should be at the end of the line.");
+			throw Configuration::WrongConfigFileException("} should be at the end of the line.");
 		line.erase(line.size() - 1);
 		LocationBlock::decrementLocationCurlyBracketsCount();
 	}
@@ -123,9 +132,9 @@ void	parseRoot(std::string& line, LocationBlock& location) {
 	if (ss >> word)
 		location.setRoot(word);
 	else
-		throw LocationBlock::WrongLocationBlock("no root defined.");
+		throw Configuration::WrongConfigFileException("no root defined.");
 	if (ss >> word)
-		throw LocationBlock::WrongLocationBlock("too many arguments when defining root.");
+		throw Configuration::WrongConfigFileException("too many arguments when defining root.");
 	//std::cout << GRAY << webserv.getRoot() << RESET << std::endl;
 }
 
@@ -140,12 +149,16 @@ void	parseAllowedMethods(std::string& line, LocationBlock& location) {
 		methods.push_back(word);
 	}
 	if (methods.empty())
-		throw LocationBlock::WrongLocationBlock("wrong syntax in allowed_methods.");
-	
+		throw Configuration::WrongConfigFileException("wrong syntax in allowed_methods.");
+	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
+		if (*it != "GET" && *it != "POST" && *it != "DELETE")
+			throw Configuration::WrongConfigFileException(*it + "Invalid method");
+	}
 	location.removeAllowedMethods();
 	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
 		location.setAllowedMethods(*it);
 	}
+
 /* 	for (std::vector<std::string>::const_iterator it = location.getMethods().begin(); it != location.getMethods().end(); it++) {
 		std::cout << *it << std::endl;
 	} */
@@ -157,9 +170,22 @@ void	parseAllowedMethods(std::string& line, LocationBlock& location) {
 
 	ss >> word;
 	if (!(ss >> word))
-		throw LocationBlock::WrongLocationBlock("wrong syntax in redirect block.");
+		throw Configuration::WrongConfigFileException("wrong syntax in redirect block.");
 	location.setRedirectStatusCode(word);
 } */
+
+void	parseAutoIndex(std::string& line, LocationBlock& location) {
+	std::stringstream	ss(line);
+	std::string			word;	
+
+	ss >> word;
+	if (ss >> word)
+		location.setAutoIndex(word);
+	else
+		throw Configuration::WrongConfigFileException("no value in autoindex defined.");
+	if (ss >> word)
+		throw Configuration::WrongConfigFileException("too many arguments when defining autoindex.");
+}
 
 void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& location) {
 	std::stringstream	ss(line);
@@ -168,19 +194,19 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
  	if (line.find('{') == std::string::npos || line.find('}') != std::string::npos || (line[line.size() - 1] != '{' 
 		&& line.find('{') != line.rfind('{'))) // the last condition checks if there's only one {
-			throw LocationBlock::WrongLocationBlock("invalid sintax in server line.");
+			throw Configuration::WrongConfigFileException("invalid sintax in server line.");
 	line.erase(line.size() - 1);
 	ss >> word;
 	if (ss >> word) {
 		if (word == "=") {
 			if (!(ss >> word) || word == "{") // check if there's a word after the =
-				throw LocationBlock::WrongLocationBlock("no literal location defined.");
+				throw Configuration::WrongConfigFileException("no literal location defined.");
 			location.setExactMatchModifier(true);
 		}
 		location.setLocation(word);
 	}
 	else	
-		throw LocationBlock::WrongLocationBlock("no location defined.");
+		throw Configuration::WrongConfigFileException("no location defined.");
 	LocationBlock::incrementLocationCurlyBracketsCount();
 	while (std::getline(file, line)) {
 		std::stringstream ss(line);
@@ -188,16 +214,14 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 		ss >> word;
 		if (word.at(0) == '#')
 			continue ;
-		if (LocationBlock::getLocationCurlyBracketsCount() == 0)
+		if (word == "}" || LocationBlock::getLocationCurlyBracketsCount() == 0)
 			break ;
-		if (word == "}") {
-			LocationBlock::decrementLocationCurlyBracketsCount();
-			break ;
-		}
 		else if (word == "root")
 			parseRoot(line, location);
 		else if (word == "allowed_methods")
 			parseAllowedMethods(line, location);
+		else if (word == "autoindex")
+			parseAutoIndex(line, location);
 	/* 	else if (word == "return")
 			parseRedirect(line, location); */
 		std::cout << line << std::endl;
