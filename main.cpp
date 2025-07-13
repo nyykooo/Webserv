@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/13 23:22:05 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/13 23:38:33 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -228,9 +228,9 @@ int main(int argc, char **argv)
     catch (const Configuration::WrongConfigFileException& e) {
       std::cerr << RED << e.what() << RESET << std::endl;
     }
- 	printHL();
+/*  	printHL();
 	WebServer webServer;
     printAllServersInfo(webServer);
-    startServer(webServer);
-	webServer.startServer();
+    startServer(webServer); */
+	//webServer.startServer();
 }
