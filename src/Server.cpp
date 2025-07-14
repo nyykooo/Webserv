@@ -3,38 +3,42 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/06 13:35:48 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/13 16:38:33 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"
 
-// ### ORTHODOX CANONICAL FORM ###
-
-Server::Server()
+Server::Server(const std::string &ip, const std::string &port) : Socket(ip, port) //constructor da classe base
 {
-	// inicializa o socket do servidor com as configuracoes corretas
-	initServerSocket("8080");
+    initServerSocket();
+}
+
+Server::Server() : Socket("0.0.0.0", "8080") // Valores padrão para IP e porta
+{
+	initServerSocket();
 	std::cout << "Servidor Http iniciado fd : " << _socket_fd << std::endl;
 }
 
-// CONSTRUCTOR WITH PORT
-Server::Server(const std::string &port)
+// O constructor apenas com a porta
+Server::Server(const std::string &port) : Socket("0.0.0.0", port)
 {
-	// inicializa o socket do servidor com as configuracoes corretas
-	initServerSocket(port);
+	initServerSocket();
 	std::cout << "🌐 Servidor Http iniciado fd : " << _socket_fd << " 🌐" << std::endl;
 }
 
-Server::Server(const Server &other) : Socket(other) { // Chama explicitamente o copy contructor de Socket
-	*this = other; // Chama o operador de atribuição
+Server::Server(const Server &other) : Socket(other)
+{
+	_client_fds = other._client_fds;
 }
 
 Server &Server::operator=(const Server &other) {
-	if (this != &other) {
+	if (this != &other)
+	{
+		Socket::operator=(other); // Para copiarmos a parte do objeto referente ao Socket
 		_client_fds = other._client_fds;
 	}
 	return *this;
@@ -45,55 +49,30 @@ Server::~Server() {
 }
 
 // ### INIT SERVER SOCKET ###
-void	Server::initServerSocket(std::string port)
+void	Server::initServerSocket()
 {
-	// Configura o socket hints e res
-	struct addrinfo hints, *res;
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET; // IPv4
-	hints.ai_socktype = SOCK_STREAM; // TCP
-	hints.ai_flags = AI_PASSIVE; // Use my IP. Isso é adeqiado para o servidor, pois ele irá escutar em todas as interfaces de rede disponíveis.
-	_hints = hints; // Armazena as hints no socket
-
-	// Obtém informações de endereço
-    if (getaddrinfo(NULL, port.c_str(), &hints, &res) != 0) {
-        std::cerr << "Erro em getaddrinfo" << std::endl;
-    }
-	_res = res; // Armazena o resultado de getaddrinfo no socket
-
+	// Cria socket usando addrinfo já configurado
 	_socket_fd = socket(_res->ai_family, _res->ai_socktype, _res->ai_protocol);
 	if (_socket_fd == -1)
 	{
-		std::cerr << "Erro ao criar o socket" << std::endl;
-		freeaddrinfo(_res);
-		return ;
+		throw std::runtime_error("socket creation failed");
 	}
-
-	// Torna o server socket nao bloqueante
+	// Torna o server socket não bloqueante
 	int flags = fcntl(_socket_fd, F_GETFL, 0);
 	fcntl(_socket_fd, F_SETFL, flags | O_NONBLOCK);
-
-	// seta as opcoes do socket para reutilizar o endereco
-	int reuse = 1;
-	setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
-
-	// Faz o bind
-	if (bind(_socket_fd, _res->ai_addr, _res->ai_addrlen) == -1) {
-		perror("Erro ao fazer bind");
-		std::cerr << "Erro ao fazer bind: " << errno << std::endl;
+	int opt = 1;
+	setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+	if (bind(_socket_fd, _res->ai_addr, _res->ai_addrlen) == -1)
+	{
 		close(_socket_fd);
-		freeaddrinfo(_res);
-		return ;
+		throw std::runtime_error("bind failed on " + _ip + ":" + _port);
 	}
-
-	// Escuta por conexões
-	if (listen(_socket_fd, 10) == -1) {
-		std::cerr << "Erro ao escutar no socket" << std::endl;
+    if (listen(_socket_fd, SOMAXCONN) == -1)
+	{
 		close(_socket_fd);
-		freeaddrinfo(_res);
-		return ;
+		throw std::runtime_error("listen failed");
 	}
-
-	// // Registra o server socket na epoll para monitorar
+    std::cout << "Server listening on " << _ip << ":" << _port << std::endl;
+	// Registra o server socket na epoll para monitorar
 	setEvent(EPOLLIN, _socket_fd);
 }

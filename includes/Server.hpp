@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 17:17:59 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/13 16:15:29 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,11 +26,12 @@ class Server : public Socket {
 		Server();
 		Server(const Server& other);
 		Server(const std::string &port);
+		Server(const std::string &ip, const std::string &port);  // NOVO
 		Server &operator=(const Server& other);
 		~Server();
 
 		// ### PUBLIC METHODS ###
-		void	initServerSocket(std::string port);
+		void	initServerSocket();
 		Socket	*initClientSocket();
 		void	printServer(Socket *socket);
 		int		handleNewClient();
