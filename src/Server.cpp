@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/06 13:35:48 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/12 23:47:24 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,16 +17,16 @@
 Server::Server()
 {
 	// inicializa o socket do servidor com as configuracoes corretas
-	initServerSocket("8080");
+	initServerSocket("localhost", "8080");
 	std::cout << "Servidor Http iniciado fd : " << _socket_fd << std::endl;
 }
 
 // CONSTRUCTOR WITH PORT
-Server::Server(const std::string &port)
+Server::Server(const std::string &ip, const std::string &port)
 {
 	// inicializa o socket do servidor com as configuracoes corretas
-	initServerSocket(port);
-	std::cout << "🌐 Servidor Http iniciado fd : " << _socket_fd << " 🌐" << std::endl;
+	initServerSocket(ip, port);
+	// std::cout << "🌐 Servidor Http iniciado fd : " << _socket_fd << " 🌐" << std::endl;
 }
 
 Server::Server(const Server &other) : Socket(other) { // Chama explicitamente o copy contructor de Socket
@@ -45,18 +45,19 @@ Server::~Server() {
 }
 
 // ### INIT SERVER SOCKET ###
-void	Server::initServerSocket(std::string port)
+void	Server::initServerSocket(std::string ip, std::string port)
 {
 	// Configura o socket hints e res
 	struct addrinfo hints, *res;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET; // IPv4
 	hints.ai_socktype = SOCK_STREAM; // TCP
-	hints.ai_flags = AI_PASSIVE; // Use my IP. Isso é adeqiado para o servidor, pois ele irá escutar em todas as interfaces de rede disponíveis.
+	hints.ai_flags = AI_NUMERICHOST;
 	_hints = hints; // Armazena as hints no socket
 
 	// Obtém informações de endereço
-    if (getaddrinfo(NULL, port.c_str(), &hints, &res) != 0) {
+	std::cout << "Inicializando o servidor em " << ip << ":" << port << std::endl;
+    if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &res) != 0) {
         std::cerr << "Erro em getaddrinfo" << std::endl;
     }
 	_res = res; // Armazena o resultado de getaddrinfo no socket

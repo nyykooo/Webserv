@@ -6,26 +6,37 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/07 18:55:52 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/14 19:01:15 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"
 
-WebServer::WebServer() {
+WebServer::WebServer(std::vector<Configuration> conf) {
 	initEpoll();
 
 	// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
 	_events = new struct epoll_event[MAX_EVENTS]; // Aloca memória para o vetor de eventos
 
-	Server *server1 = new Server("8080");
-	Server *server2 = new Server("8081");
+	// Server *server1 = new Server("8080");
+	// Server *server2 = new Server("8081");
 	
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server1->getSocketFd(), &server1->getEvent());
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server2->getSocketFd(), &server2->getEvent());
+	// epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server1->getSocketFd(), &server1->getEvent());
+	// epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server2->getSocketFd(), &server2->getEvent());
 
-	_servers_map["8080"] = server1;
-	_servers_map["8081"] = server2;
+	// _servers_map["8080"] = server1;
+	// _servers_map["8081"] = server2;
+    std::set<std::pair<std::string, std::string> >::const_iterator it;
+    for (it = conf[0].getAllHosts().begin(); it != conf[0].getAllHosts().end(); ++it) {
+        Server *server = new Server(it->first, it->second);
+        if (server) {
+            registerEpollSocket(server);
+            _servers_map[server->getSocketFd()] = server; // Armazena o servidor no mapa usando o socket fd como chave
+            std::cout << "🌐 Servidor Http iniciado fd : " << server->getSocketFd() << " 🌐" << std::endl;
+        } else {
+            std::cerr << "Erro ao inicializar o servidor na porta: " << it->first << std::endl;
+        }
+    }
 }
 
 WebServer::WebServer(const WebServer &other) {
@@ -83,7 +94,6 @@ int WebServer::initEpoll(void)
 void WebServer::registerEpollSocket(Socket *socket)
 {
 	// Registra o server socket na epoll para monitorar
-	socket->setEvent(EPOLLIN, socket->getSocketFd());
 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, socket->getSocketFd(), &socket->getEvent()) == -1) {
 		std::cerr << "Erro ao adicionar o socket ao epoll" << std::endl;
 		freeaddrinfo(socket->getRes());
@@ -110,7 +120,7 @@ int WebServer::getEpollFd() const {
 	return _epoll_fd;
 }
 
-std::map<std::string, Server *> WebServer::getServersMap() const {
+std::map<int, Server *> WebServer::getServersMap() const {
 	return _servers_map;
 }
 
@@ -131,7 +141,7 @@ void WebServer::setEpollFd(int epoll_fd) {
 	_epoll_fd = epoll_fd;
 }
 
-void WebServer::setServersMap(const std::map<std::string, Server *> &servers_map) {
+void WebServer::setServersMap(const std::map<int, Server *> &servers_map) {
 	_servers_map = servers_map;
 }
 
@@ -158,21 +168,17 @@ void WebServer::setBuffer(const char *buffer) {
 
 bool WebServer::tryConnection(int i)
 {
-    std::map<std::string, Server *>::iterator it;
-    for (it = _servers_map.begin(); it != _servers_map.end(); ++it)
+    if(_servers_map.find(_events[i].data.fd) != _servers_map.end())
     {
-        if(_events[i].data.fd == it->second->getSocketFd())
+        try
         {
-			try
-			{
-				handleNewClient(it->second->getSocketFd());
-				return true; // Conexão aceita com sucesso
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
-				return 1; 
-			}
+            handleNewClient(_events[i].data.fd);
+            return true; // Conexão aceita com sucesso
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
+            return false; 
         }
     }
     return false;
@@ -196,9 +202,11 @@ int WebServer::receiveData(int client_fd)
         // lidar com a leitura e envio de resposta
         std::string requestBuffer(_buffer);
 
+        std::cout << requestBuffer << std::endl;
         try
         {
             HttpRequest request(requestBuffer);
+            // encontrar server correspondente a request
         }
         catch (const std::exception &e)
         {

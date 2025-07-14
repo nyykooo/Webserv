@@ -200,6 +200,6 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 			parseAllowedMethods(line, location);
 	/* 	else if (word == "return")
 			parseRedirect(line, location); */
-		std::cout << line << std::endl;
+		// std::cout << line << std::endl;
 	}
 }

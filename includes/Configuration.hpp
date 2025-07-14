@@ -5,11 +5,11 @@ class LocationBlock;
 class Configuration {
 	private:
 		static std::set<std::pair<std::string, std::string> >	_allHosts;
-		std::set<std::pair<std::string, std::string> >			_host;
-		std::vector<std::string>								_serverName;
-		std::map<std::string, std::string>						_errorPage;
-		std::string												_root;
-		long													_requestSize;
+		std::set<std::pair<std::string, std::string> >			_host; // sb
+		std::vector<std::string>								_serverName; // sb
+		std::map<std::string, std::string>						_errorPage; // sb
+		std::string												_root; // sb
+		long													_requestSize; // sb
 		static int												_curlyBracketsCount;
 
 	public:	

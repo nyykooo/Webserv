@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/10 21:08:57 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/12 23:31:54 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,6 @@ int main(int argc, char** argv)
       std::cerr << RED << e.what() << RESET << std::endl;
     }
 	printHL();
-	WebServer webServer;
+	WebServer webServer(configFile);
 	webServer.startServer();
 }

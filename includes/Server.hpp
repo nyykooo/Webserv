@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/05 17:17:59 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/12 15:48:14 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,12 +25,12 @@ class Server : public Socket {
 	public:
 		Server();
 		Server(const Server& other);
-		Server(const std::string &port);
+		Server(const std::string &ip, const std::string &port);
 		Server &operator=(const Server& other);
 		~Server();
 
 		// ### PUBLIC METHODS ###
-		void	initServerSocket(std::string port);
+		void	initServerSocket(std::string ip, std::string port);
 		Socket	*initClientSocket();
 		void	printServer(Socket *socket);
 		int		handleNewClient();

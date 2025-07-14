@@ -141,7 +141,6 @@ bool	isOnlyDigit(const std::string& word) {
 bool	isValidPort(const std::string& word) {
 	if (!isOnlyDigit(word))
 		return (false);
-	std::cout << "aqui\n";
 	// check if it's bigger than 65535 which is the max number for the port
 	if (word.size() > 5 || std::strtol(word.c_str(), NULL, 10) > 65535) 
 		throw Configuration::WrongConfigFileException("invalid port number: " + word);
@@ -170,7 +169,7 @@ void	parseHost(std::string& line, Configuration& confserv) {
 	std::string word;
 
 	checkCurlyBrackets(line);
-	std::cout << GRAY << line << RESET << std::endl;
+	// std::cout << GRAY << line << RESET << std::endl;
 	ss >> word;
 	while (ss >> word) {
 		size_t pos = word.find(':');
@@ -186,7 +185,7 @@ void	parseHost(std::string& line, Configuration& confserv) {
 			else if (isValidIP(word))
 				confserv.setHost(word, "8080"); // 8080 is the default port
 		}
-		std::cout << BLUE << word << RESET << std::endl;
+		// std::cout << BLUE << word << RESET << std::endl;
 	}
 	if (confserv.getHost().empty())
 		throw Configuration::WrongConfigFileException("no host mentioned.");
@@ -274,7 +273,7 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 		std::stringstream ss(line);
 		std::string	word;
 		ss >> word;
-		std::cout << YELLOW << word << RESET << std::endl;
+		// std::cout << YELLOW << word << RESET << std::endl;
 		if (word.at(0) == '#')
 			continue ;
 		if (Configuration::getCurlyBracketsCount() == 0)
@@ -300,7 +299,7 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in server block.");
 	}
-	std::cout << Configuration::getCurlyBracketsCount() << std::endl;
+	// std::cout << Configuration::getCurlyBracketsCount() << std::endl;
 	if (confserv.getCurlyBracketsCount() > 0 || confserv.getHost().empty())
 		throw Configuration::WrongConfigFileException("server block incomplete.");
 }
@@ -319,7 +318,7 @@ void	setup(const char* file, std::vector<Configuration>& confserv) {
 		std::stringstream	ss(line);
 		std::string			word;
 		ss >> word;
-		std::cout << YELLOW << line << RESET << std::endl;
+		// std::cout << YELLOW << line << RESET << std::endl;
 		if (word.at(0) == '#')
 			continue ;
 		line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
