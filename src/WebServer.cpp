@@ -6,26 +6,36 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/14 19:01:15 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/14 23:11:28 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/headers.hpp"
+#include "../includes/headers.hpp"\
 
-WebServer::WebServer(std::vector<Configuration> conf) {
+WebServer::WebServer() // CORRIGIR DEFAULT CONSTRUCTOR PARA NOVO SERVERS_MAP
+{
 	initEpoll();
+
+	_events = new struct epoll_event[MAX_EVENTS];
+
+	Server *server1 = new Server("0.0.0.0", "8080");
+	Server *server2 = new Server("0.0.0.0", "8081");
+	
+	_servers_map[server1->getSocketFd()] = server1;
+	_servers_map[server2->getSocketFd()] = server2;
+
+	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server1->getSocketFd(), &server1->getEvent());
+	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server2->getSocketFd(), &server2->getEvent());
+}	
+
+WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(conf)
+{
+	initEpoll();
+	_events = new struct epoll_event[MAX_EVENTS];
 
 	// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
 	_events = new struct epoll_event[MAX_EVENTS]; // Aloca memória para o vetor de eventos
 
-	// Server *server1 = new Server("8080");
-	// Server *server2 = new Server("8081");
-	
-	// epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server1->getSocketFd(), &server1->getEvent());
-	// epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server2->getSocketFd(), &server2->getEvent());
-
-	// _servers_map["8080"] = server1;
-	// _servers_map["8081"] = server2;
     std::set<std::pair<std::string, std::string> >::const_iterator it;
     for (it = conf[0].getAllHosts().begin(); it != conf[0].getAllHosts().end(); ++it) {
         Server *server = new Server(it->first, it->second);
@@ -39,27 +49,52 @@ WebServer::WebServer(std::vector<Configuration> conf) {
     }
 }
 
-WebServer::WebServer(const WebServer &other) {
+
+WebServer::WebServer(const WebServer &other) // problemático pois compartilha ponteiros
+{
 	_epoll_fd = other._epoll_fd;
 	_servers_map = other._servers_map;
 	_clients_vec = other._clients_vec;
+	_client_to_server_map = other._client_to_server_map;
 	_events = other._events;
+	_configurations = other._configurations;
 }
 
-WebServer &WebServer::operator=(const WebServer &other) {
-	if (this != &other) {
+WebServer &WebServer::operator=(const WebServer &other)
+{
+	if (this != &other)
+	{
 		_epoll_fd = other._epoll_fd;
 		_servers_map = other._servers_map;
 		_clients_vec = other._clients_vec;
+		_client_to_server_map = other._client_to_server_map;
 		_events = other._events;
+		_configurations = other._configurations;
 	}
 	return *this;
 }
 
-WebServer::~WebServer() {
+WebServer::~WebServer()
+{
+	for (std::vector<Client *>::iterator it = _clients_vec.begin(); it != _clients_vec.end(); ++it) {
+		close((*it)->getSocketFd());
+		delete *it;
+	}
 	_clients_vec.clear();
-}
 
+	_client_to_server_map.clear();
+
+	for (std::map<int, Server*>::iterator it = _servers_map.begin(); it != _servers_map.end(); ++it) {
+		close(it->second->getSocketFd());
+		delete it->second;
+	}
+	_servers_map.clear();
+
+	if (_events)
+		delete[] _events;
+	if (_epoll_fd != -1)
+		close(_epoll_fd);
+}
 
 int WebServer::initEpoll(void)
 {
@@ -106,11 +141,14 @@ void	WebServer::handleNewClient(int server_fd)
 {
 	// inicializa o socket do cliente
 	Client *client_socket = new Client(server_fd);
-	if (!client_socket) {
+	if (!client_socket) { // new nunca retorna NULL em c++?, verificar
 		std::cerr << "Erro ao inicializar o socket do cliente" << std::endl;
 		return ;
 	}
 	_clients_vec.push_back(client_socket);
+
+	_client_to_server_map[client_socket->getSocketFd()] = server_fd; // novidade, possível approach
+
 	std::cout << "✅ Novo cliente conectado - new_client_socket: " << _clients_vec.back()->getSocketFd() << " ✅" << std::endl;
 	registerEpollSocket(client_socket);
 }
@@ -134,6 +172,11 @@ struct epoll_event *WebServer::getEvents() const {
 
 char *WebServer::getBuffer() {
 	return _buffer;
+}
+
+const std::vector<Configuration>& WebServer::getConfigurations() const
+{
+	return _configurations;
 }
 
 // ### SETTERS ###
@@ -162,10 +205,7 @@ void WebServer::setBuffer(const char *buffer) {
 	}
 }
 
-
-
 // ### TESTANDO STARTSERVER DENTRO DA WEBSERVER ###
-
 bool WebServer::tryConnection(int i)
 {
     if(_servers_map.find(_events[i].data.fd) != _servers_map.end())
@@ -200,19 +240,30 @@ int WebServer::receiveData(int client_fd)
     else
     {
         // lidar com a leitura e envio de resposta
+		_buffer[bytes] = '\0';  // Garante null-termination
         std::string requestBuffer(_buffer);
 
-        std::cout << requestBuffer << std::endl;
-        try
-        {
-            HttpRequest request(requestBuffer);
-            // encontrar server correspondente a request
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
-            return 1; 
-        }
+		// Qual servidor recebeu a requisição?
+		int server_fd = getServerFdForClient(client_fd);
+		if (server_fd == -1) {
+			std::cerr << "Servidor não encontrado para cliente " << client_fd << std::endl;
+			return -1;
+		}
+		try
+		{
+			HttpRequest request(requestBuffer);
+			Configuration* config = findConfigForRequest(request, server_fd);
+			if (!config)
+			{
+				std::cerr << "Configuração não encontrada para servidor " << server_fd << std::endl;
+				return -1;
+			}
+		}
+		catch (const std::exception &e)
+		{
+			std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
+			return 1; 
+		}
     }
     return 1;
 }
@@ -272,27 +323,29 @@ void WebServer::setClientTime(int client_fd)
 
 void WebServer::deleteClient(int fd)
 {
-    std::vector<Client *>::iterator it;
-    for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
-    {
-        if ((*it)->getSocketFd() == fd)
-        {
-            std::cout << "❌ Cliente desconectado - client_fd: " << (*it)->getSocketFd() << " ❌" << std::endl;
-            close((*it)->getSocketFd());
-            delete *it; // Libera a memória do cliente
-            it = _clients_vec.erase(it); // Remove o cliente do vetor
-            epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
-            return;
-        }
-    }
+	std::vector<Client *>::iterator it;
+	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
+	{
+		if ((*it)->getSocketFd() == fd)
+		{
+			std::cout << "❌ Cliente desconectado - client_fd: " << (*it)->getSocketFd() << " ❌" << std::endl;
+			close((*it)->getSocketFd());
+			delete *it; // Libera a memória do cliente
+			it = _clients_vec.erase(it); // Remove o cliente do vetor
+			epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+
+			_client_to_server_map.erase(fd); // para remover o elemento do mapeamento
+			return;
+		}
+	}
 }
 
 void WebServer::treatExistingClient(int i)
 {
-    if (_events[i].events == EPOLLIN)
-    {
-        int data = receiveData(_events[i].data.fd);
-        if (data == -1)
+	if (_events[i].events == EPOLLIN)
+	{
+		int data = receiveData(_events[i].data.fd);
+		if (data == -1)
         {
             deleteClient(_events[i].data.fd);
             return;
@@ -320,24 +373,43 @@ void WebServer::handleEvents(int event_count)
         {
             treatExistingClient(i);
         }
-        else
-            break;
+        // else
+        //     break; // não é necessário remover esse break?
     }
 }
 
+// void WebServer::lookForTimeouts()
+// {
+//     std::vector<Client *>::iterator it;
+//     for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
+//     {
+//         if ((*it)->checkTimeout())
+//         {
+//             deleteClient((*it)->getSocketFd()); // Modifica o vetor durante iteração?
+//         }
+//         if (it == _clients_vec.end()) // Nunca será verdadeiro
+//             break;
+//     }
+// }
+
 void WebServer::lookForTimeouts()
 {
-    std::vector<Client *>::iterator it;
-    for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
+    std::vector<Client *>::iterator it = _clients_vec.begin();
+    while (it != _clients_vec.end())
     {
         if ((*it)->checkTimeout())
         {
-            deleteClient((*it)->getSocketFd());
+            int fd = (*it)->getSocketFd();
+            deleteClient(fd);
+            it = _clients_vec.begin(); // Reinicia a iteração
         }
-        if (it == _clients_vec.end())
-            break;
+        else
+        {
+            ++it;
+        }
     }
 }
+
 
 void WebServer::startServer()
 {
@@ -360,4 +432,66 @@ void WebServer::startServer()
             std::cerr << e.what() << '\n';
         }
     }
+}
+
+
+int WebServer::getServerFdForClient(int client_fd)
+{
+	std::map<int, int>::iterator it = _client_to_server_map.find(client_fd);
+	if (it != _client_to_server_map.end())
+		return it->second;
+	return -1;
+}
+
+Configuration* WebServer::findConfigForRequest(const HttpRequest& request, const int& server_fd)
+{
+	if (server_fd < 0)
+	{
+		std::cerr << "FD de servidor inválido: " << server_fd << std::endl;
+		return NULL;
+	}
+	std::map<std::string, std::string>::const_iterator host_it = request.getHeaders().find("Host");
+	if (host_it == request.getHeaders().end())
+	{
+		return NULL; // verificar esse handle
+	}
+	std::string host = host_it->second;
+
+	// Tira a porta, se vier junto
+	size_t colonPos = host.find(':');
+	if (colonPos != std::string::npos)
+		host = host.substr(0, colonPos);
+	Configuration* defaultConfig = NULL;
+    // Pegar o server diretamente pelo fd
+	std::map<int, Server *>::iterator server_it = _servers_map.find(server_fd);
+	if (server_it == _servers_map.end())
+		return NULL;
+	Server* server = server_it->second;
+	std::string serverIp = server->getIp();
+	std::string serverPort = server->getPort();
+
+    // Procurar configuração que corresponde ao host e servidor
+	for (std::vector<Configuration>::iterator config_it = _configurations.begin(); config_it != _configurations.end(); ++config_it)
+	{
+		const std::set<std::pair<std::string, std::string> >& hosts = config_it->getHost();
+		for (std::set<std::pair<std::string, std::string> >::const_iterator host_it = hosts.begin(); host_it != hosts.end(); ++host_it)
+		{
+            // Comparar diretamente com o ip e porta do servidor
+			if (host_it->first == serverIp && host_it->second == serverPort)
+			{
+				if (defaultConfig == NULL)
+                    defaultConfig = &(*config_it);
+                // Avaliar o server name agora
+				const std::vector<std::string>& serverNames = config_it->getServerName();
+				for (std::vector<std::string>::const_iterator name_it = serverNames.begin(); name_it != serverNames.end(); ++name_it)
+				{
+					if (host == *name_it)
+					{
+						return &(*config_it);
+					}
+				}
+			}
+		}
+	}
+	return (defaultConfig);
 }

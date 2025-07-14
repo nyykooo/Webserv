@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/12 23:31:54 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/14 23:16:32 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,21 +34,28 @@ static void printHL(void)
     return;
 }
 
-int main(int argc, char** argv)
+int	main(int argc, char** argv)
 {
-    if (argc != 2) {
-        std::cerr << RED << "Wrong input. Correct usage: ./webserv [configuration_file]" << RESET << std::endl;
-        return (1);
-    }
-    std::vector<Configuration> configFile;
-    
-    try {
-      setup(argv[1], configFile);
-    }
-    catch (const Configuration::WrongConfigFileException& e) {
-      std::cerr << RED << e.what() << RESET << std::endl;
-    }
+	const char	*configFile;
+
+	if (argc == 1)
+		configFile = "default.config";
+	else if (argc == 2)
+		configFile = argv[1];
+	else
+	{
+		std::cerr << RED << "Wrong input. Usage: ./webserv [configuration_file]" << RESET << std::endl;
+		return (1);
+	}
+	std::vector<Configuration> configVector;
+	try	{
+		setup(configFile, configVector);
+	}
+	catch (const Configuration::WrongConfigFileException& e) {
+		std::cerr << RED << e.what() << RESET << std::endl;
+		return (1);
+	}
 	printHL();
-	WebServer webServer(configFile);
+	WebServer webServer(configVector);
 	webServer.startServer();
 }
