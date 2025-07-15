@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/14 23:11:28 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/15 21:01:11 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,9 @@ WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(co
         if (server) {
             registerEpollSocket(server);
             _servers_map[server->getSocketFd()] = server; // Armazena o servidor no mapa usando o socket fd como chave
-            std::cout << "🌐 Servidor Http iniciado fd : " << server->getSocketFd() << " 🌐" << std::endl;
+			std::stringstream ss;
+			ss << "Servidor iniciado no Ip/Port: " << server->getIp() << "/" << server->getPort();
+			printLog(ss.str());
         } else {
             std::cerr << "Erro ao inicializar o servidor na porta: " << it->first << std::endl;
         }
@@ -494,4 +496,27 @@ Configuration* WebServer::findConfigForRequest(const HttpRequest& request, const
 		}
 	}
 	return (defaultConfig);
+}
+
+// ### TIMESTAMP LOGS ###
+std::string WebServer::setTimeStamp()
+{
+	std::time_t timestamp = std::time(&timestamp);
+	std::tm *timeinfo = std::localtime(&timestamp);
+
+	std::ostringstream oss;
+	oss << (1900 + timeinfo->tm_year) 
+	<< "-" << std::setfill('0') << std::setw(2) << (1 + timeinfo->tm_mon) 
+	<< "-" << std::setfill('0') << std::setw(2) << (timeinfo->tm_mday) 
+	<< "T" << std::setfill('0') << std::setw(2) << (timeinfo->tm_hour)
+	<< ":" << std::setfill('0') << std::setw(2) << (timeinfo->tm_min)
+	<< ":" << std::setfill('0') << std::setw(2) << (timeinfo->tm_sec);
+
+	return oss.str();
+}
+
+void	WebServer::printLog(std::string message)
+{
+	std::string time = setTimeStamp();
+	std::cout << "[" + time + "]: " + message << std::endl;
 }

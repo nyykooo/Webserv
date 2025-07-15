@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/15 20:22:22 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/15 20:54:41 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,9 @@ class WebServer
 		int									getServerFdForClient(int client_fd);
 		Configuration						*findConfigForRequest(const HttpRequest& request, const int& server_fd);
 		
+		// ### TIMESTAMP LOGS ###
+		std::string							setTimeStamp();
+		void								printLog(std::string message);
 };
 
 #endif
