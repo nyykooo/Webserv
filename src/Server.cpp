@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/14 23:14:45 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/15 20:18:13 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@ Server::Server(const std::string &ip, const std::string &port) : Socket(), _ip(i
 {
 	// inicializa o socket do servidor com as configuracoes corretas
 	initServerSocket(ip, port);
-	std::cout << "🌐 Servidor Http iniciado fd : " << _socket_fd << " 🌐" << std::endl;
 }
 
 
