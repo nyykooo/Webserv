@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/14 23:23:48 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/15 20:22:22 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,21 +57,22 @@ class WebServer
 		void								setEvents(struct epoll_event *events);
 		void								setBuffer(const char *buffer);
 
+		// ### SERVER LOOP ###
+		void								startServer();
+		void								handleEvents(int event_count);
+		void								treatExistingClient(int i);
+		void								setClientTime(int client_fd);
+		void								sendData(int client_fd);
+		int									receiveData(int client_fd);
+		bool								tryConnection(int i);
+		void								deleteClient(int fd);
 
-		// ### TESTANDO STARTSERVER DENTRO DA WEBSERVER ###
-		void startServer();
-		void lookForTimeouts();
-		void handleEvents(int event_count);
-		void treatExistingClient(int i);
-		void setClientTime(int client_fd);
-		void sendData(int client_fd);
-		int receiveData(int client_fd);
-		bool tryConnection(int i);
-		void deleteClient(int fd);
+		// ### TIMEOUT ###
+		void								lookForTimeouts();
 
-
-		int getServerFdForClient(int client_fd);
-		Configuration	*findConfigForRequest(const HttpRequest& request, const int& server_fd);
+		// ### AFTER REQUEST PARSING ###
+		int									getServerFdForClient(int client_fd);
+		Configuration						*findConfigForRequest(const HttpRequest& request, const int& server_fd);
 		
 };
 
