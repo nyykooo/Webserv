@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/15 21:01:11 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/16 19:28:30 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,7 +151,9 @@ void	WebServer::handleNewClient(int server_fd)
 
 	_client_to_server_map[client_socket->getSocketFd()] = server_fd; // novidade, possível approach
 
-	std::cout << "✅ Novo cliente conectado - new_client_socket: " << _clients_vec.back()->getSocketFd() << " ✅" << std::endl;
+	std::stringstream ss;
+	ss << "Novo cliente conectado - client_fd: " << client_socket->getSocketFd();
+	printLog(ss.str());
 	registerEpollSocket(client_socket);
 }
 
@@ -305,7 +307,11 @@ void WebServer::sendData(int client_fd)
         return;
     }
     else
-        std::cout << "✅ Dados enviados para o cliente - client_fd: " << client_fd << " ✅" << std::endl;
+	{
+		std::stringstream ss;
+		ss << "Dados enviados ao cliente - client_fd: " << client_fd;
+		printLog(ss.str());
+	}
     
 }
 
@@ -330,7 +336,9 @@ void WebServer::deleteClient(int fd)
 	{
 		if ((*it)->getSocketFd() == fd)
 		{
-			std::cout << "❌ Cliente desconectado - client_fd: " << (*it)->getSocketFd() << " ❌" << std::endl;
+			std::stringstream ss;
+			ss << "Cliente desconectado - client_fd: " << (*it)->getSocketFd();
+			printLog(ss.str());
 			close((*it)->getSocketFd());
 			delete *it; // Libera a memória do cliente
 			it = _clients_vec.erase(it); // Remove o cliente do vetor
