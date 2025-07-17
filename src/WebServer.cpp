@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/16 19:28:30 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/17 18:22:34 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -506,25 +506,9 @@ Configuration* WebServer::findConfigForRequest(const HttpRequest& request, const
 	return (defaultConfig);
 }
 
-// ### TIMESTAMP LOGS ###
-std::string WebServer::setTimeStamp()
-{
-	std::time_t timestamp = std::time(&timestamp);
-	std::tm *timeinfo = std::localtime(&timestamp);
 
-	std::ostringstream oss;
-	oss << (1900 + timeinfo->tm_year) 
-	<< "-" << std::setfill('0') << std::setw(2) << (1 + timeinfo->tm_mon) 
-	<< "-" << std::setfill('0') << std::setw(2) << (timeinfo->tm_mday) 
-	<< "T" << std::setfill('0') << std::setw(2) << (timeinfo->tm_hour)
-	<< ":" << std::setfill('0') << std::setw(2) << (timeinfo->tm_min)
-	<< ":" << std::setfill('0') << std::setw(2) << (timeinfo->tm_sec);
+// ### EXCEPTION ###
 
-	return oss.str();
-}
-
-void	WebServer::printLog(std::string message)
-{
-	std::string time = setTimeStamp();
-	std::cout << "[" + time + "]: " + message << std::endl;
+const char* WebServer::WebServerErrorException::what() const throw() {
+	return _message.c_str();
 }

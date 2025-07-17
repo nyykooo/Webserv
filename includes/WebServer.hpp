@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/15 20:54:41 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/17 18:23:25 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,16 @@ class WebServer
 		// ### TIMESTAMP LOGS ###
 		std::string							setTimeStamp();
 		void								printLog(std::string message);
+
+		
+		class WebServerErrorException: public std::exception {
+			private:
+				std::string	_message;
+			public:
+				WebServerErrorException(const std::string& message): _message("WebServer error detected: " + message) {}
+				virtual ~WebServerErrorException() throw() {};
+				const char* what() const throw();
+		};
 };
 
 #endif
