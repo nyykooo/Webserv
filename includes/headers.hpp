@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   headers.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 18:36:22 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/17 21:16:46 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@
 
 
 # include "macros.hpp"
+# include "functions.hpp"
 # include "Socket.hpp"
 # include "HttpRequest.hpp"
 # include "WebServer.hpp"

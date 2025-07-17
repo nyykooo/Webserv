@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 21:09:25 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/17 21:19:10 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -508,4 +508,10 @@ Configuration* WebServer::findConfigForRequest(const HttpRequest& request, const
 		}
 	}
 	return (defaultConfig);
+}
+
+// ### EXCEPTION ###
+
+const char* WebServer::WebServerErrorException::what() const throw() {
+	return (_message.c_str());
 }
