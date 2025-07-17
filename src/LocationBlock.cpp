@@ -269,9 +269,7 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 			parseErrorPage(line, location);
 		else if (word == "index")
 			parseDefaultFile(line, location);
-/* 		else
-			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file."); */
 		else
-			std::cout << line << std::endl;
+			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}
 }
