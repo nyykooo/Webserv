@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/14 22:55:33 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/16 19:28:43 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,6 @@ Socket::~Socket() {
 	if (_res) {
 		freeaddrinfo(_res);
 	}
-	std::cout << "Socket destruído e recursos liberados." << std::endl;
 }
 
 // ### GETTERS ###

@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: discallow <discallow@student.42.fr>        +#+  +:+       +#+         #
+#    By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/10 19:46:12 by ncampbel          #+#    #+#              #
-#    Updated: 2025/07/10 19:07:29 by discallow        ###   ########.fr        #
+#    Updated: 2025/07/17 18:13:55 by ncampbel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,7 +18,8 @@ CXXFLAGS= -Wall -Wextra -Werror -g -std=c++98
 
 SRC = main.cpp src/Socket.cpp src/HttpRequest.cpp \
 	   src/WebServer.cpp src/Client.cpp src/Server.cpp \
-	   src/LocationBlock.cpp src/Configuration.cpp
+	   src/LocationBlock.cpp src/Configuration.cpp \
+	   src/timeStamp.cpp
 
 TIMENAME= timeexec
 

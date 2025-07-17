@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/14 23:14:45 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/15 21:04:33 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 Server::Server() : Socket(), _ip("localhost"), _port("8080") // Valores padrão para IP e porta
 {
 	initServerSocket(_ip, _port);
-	std::cout << "Servidor Http iniciado fd : " << _socket_fd << std::endl;
 }
 
 // CONSTRUCTOR WITH PORT
@@ -23,7 +22,6 @@ Server::Server(const std::string &ip, const std::string &port) : Socket(), _ip(i
 {
 	// inicializa o socket do servidor com as configuracoes corretas
 	initServerSocket(ip, port);
-	std::cout << "🌐 Servidor Http iniciado fd : " << _socket_fd << " 🌐" << std::endl;
 }
 
 
@@ -57,7 +55,6 @@ void	Server::initServerSocket(std::string ip, std::string port)
 	_hints = hints; // Armazena as hints no socket
 
 	// Obtém informações de endereço
-	std::cout << "Inicializando o servidor em " << ip << ":" << port << std::endl;
     if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &res) != 0) {
         std::cerr << "Erro em getaddrinfo" << std::endl;
     }
@@ -83,7 +80,6 @@ void	Server::initServerSocket(std::string ip, std::string port)
 		close(_socket_fd);
 		throw std::runtime_error("listen failed");
 	}
-    std::cout << "Server listening on " << ip << ":" << port << std::endl;
 	// Registra o server socket na epoll para monitorar
 	setEvent(EPOLLIN, _socket_fd);
 }
