@@ -45,15 +45,8 @@ const std::set<std::pair<std::string, std::string> >&	Configuration::getHost(voi
 // }
 void	Configuration::setHost(const std::string& host, const std::string& port)
 {
-	std::pair<std::string, std::string> hostPair(host, port);
-
-	// Verificação dos duplicados
-	if (_allHosts.find(hostPair) != _allHosts.end()) {
-		throw WrongConfigFileException("Duplicate host: " + host + ":" + port);
-	}
-
-	_allHosts.insert(hostPair);
-	this->_host.insert(hostPair);
+	_allHosts.insert(std::pair<std::string, std::string>(host, port));
+	this->_host.insert(std::pair<std::string, std::string>(host, port));
 }
 
 std::set<std::pair<std::string, std::string> >&	Configuration::getAllHosts(void) {
@@ -369,6 +362,10 @@ void	setup(const char* file, std::vector<Configuration>& confserv) {
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}
+/* 	std::set<std::pair<std::string, std::string> >::const_iterator it;
+    for (it = confserv[0].getAllHosts().begin(); it != confserv[0].getAllHosts().end(); ++it) {
+		std::cout << CYAN << it->first << it->second << RESET << std::endl;
+	} */
 /* 	std::set<std::pair<std::string, std::string> >::iterator it;
 	for (it = Configuration::getAllHosts().begin(); it != Configuration::getAllHosts().end(); it++) {
 		std::cout << GREEN << "ip: " << it->first << " porta: " << it->second << std::endl;
