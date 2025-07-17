@@ -38,10 +38,22 @@ const std::set<std::pair<std::string, std::string> >&	Configuration::getHost(voi
 	return (this->_host);
 }
 
-void	Configuration::setHost(const std::string& host, const std::string& port) {
-	//std::cout << GREEN << host << CYAN << port << std::endl;
-	_allHosts.insert(std::pair<std::string, std::string>(host, port));
-	this->_host.insert(std::pair<std::string, std::string>(host, port));
+// void	Configuration::setHost(const std::string& host, const std::string& port) {
+// 	//std::cout << GREEN << host << CYAN << port << std::endl;
+// 	_allHosts.insert(std::pair<std::string, std::string>(host, port));
+// 	this->_host.insert(std::pair<std::string, std::string>(host, port));
+// }
+void	Configuration::setHost(const std::string& host, const std::string& port)
+{
+	std::pair<std::string, std::string> hostPair(host, port);
+
+	// Verificação dos duplicados
+	if (_allHosts.find(hostPair) != _allHosts.end()) {
+		throw WrongConfigFileException("Duplicate host: " + host + ":" + port);
+	}
+
+	_allHosts.insert(hostPair);
+	this->_host.insert(hostPair);
 }
 
 std::set<std::pair<std::string, std::string> >&	Configuration::getAllHosts(void) {
@@ -293,7 +305,7 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 		std::stringstream ss(line);
 		std::string	word;
 		ss >> word;
-		std::cout << YELLOW << word << RESET << std::endl;
+		// std::cout << YELLOW << word << RESET << std::endl;
 		if (word.at(0) == '#')
 			continue ;
 		if (Configuration::getCurlyBracketsCount() == 0)
@@ -342,7 +354,7 @@ void	setup(const char* file, std::vector<Configuration>& confserv) {
 		std::stringstream	ss(line);
 		std::string			word;
 		ss >> word;
-		std::cout << YELLOW << line << RESET << std::endl;
+		// std::cout << YELLOW << line << RESET << std::endl;
 		if (word.at(0) == '#')
 			continue ;
 		line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);

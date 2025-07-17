@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/16 18:24:53 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/17 17:07:02 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,204 +34,28 @@ static void printHL(void)
     return;
 }
 
-static void printAllServersInfo(WebServer &webServer)
+int	main(int argc, char** argv)
 {
-    std::map<std::string, Server *> serversMap = webServer.getServersMap();
-    if (serversMap.empty())
-    {
-        std::cout << "Nenhum servidor configurado." << std::endl;
-        return;
-    }
-    std::cout << "Servidores configurados:" << std::endl;
-    std::map<std::string, Server *>::iterator it;
-    for (it = serversMap.begin(); it != serversMap.end(); ++it)
-    {
-        std::cout << "Servidor: " << it->first << std::endl;
-        std::cout << "  Evento.fd: " << it->second->getEvent().data.fd << std::endl;
-        std::cout << "  Evento: " << it->second->getEvent().events << std::endl;
-        std::cout << "  Socket FD:: " << it->second->getSocketFd() << std::endl;
-    }
-}
+	const char	*configFile;
 
-static bool tryConnection(WebServer &web, int i)
-{
-    std::map<std::string, Server *>::iterator it;
-    std::map<std::string, Server *> _servers_map = web.getServersMap();
-    for (it = _servers_map.begin(); it != _servers_map.end(); ++it)
-    {
-        if(web.getEvents()[i].data.fd == it->second->getSocketFd())
-        {
-			try
-			{
-				web.handleNewClient(it->second->getSocketFd());
-				return true; // Conexão aceita com sucesso
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
-				return 1; 
-			}
-        }
-    }
-    return false;
-}
-
-static int receiveData(WebServer &web, int client_fd)
-{
-    ssize_t bytes = recv(client_fd, web.getBuffer(), BUFFER_SIZE - 1, 0);
-    // se bytes for -1 significa que houve um erro
-    if (bytes == -1)
-    {
-        std::cerr << "Erro ao receber dados do cliente: " << strerror(errno) << std::endl;
-        return -1;
-    }
-    // se bytes for 0 significa que houve desconexao
-    else if (bytes == 0)
-    {
-        return -1;
-    }
-    else
-    {
-        // lidar com a leitura e envio de resposta
-        std::string requestBuffer(web.getBuffer());
-
-        try
-        {
-            std::cout << requestBuffer << std::endl;
-            HttpRequest request(requestBuffer);
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
-            return 1; 
-        }
-    }
-    return 1;
-}
-
-static void sendData(WebServer &web, int client_fd)
-{			
-    // resposta padrao
-    std::string responseBody = 
-    "<!DOCTYPE html>"
-    "<html lang=\"en\">"
-    "<head>"
-    "<meta charset=\"UTF-8\">"
-    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-    "<title>Bem-vindo</title>"
-    "<style>"
-    "body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-    "h1 { color: #333; }"
-    "</style>"
-    "</head>"
-    "<body>"
-    "<h1>Bem-vindo ao WebServr de ncampbel, bruhenr dioalexa</h1>"
-    "</body>"
-    "</html>";
-    
-    std::ostringstream header;
-    header << "HTTP/1.1 200 OK\r\n";
-    header << "Content-Type: text/html\r\n";
-    header << "Content-Length: " << responseBody.size() << "\r\n";
-    header << "\r\n";
-
-    std::string response = header.str() + responseBody;
-
-    // envia a resposta ao cliente
-    int sent = send(client_fd, response.c_str(), response.size(), 0);
-    if (sent == -1)
-    {
-        std::cerr << "Erro ao enviar dados para o cliente: " << strerror(errno) << std::endl;
-        return; // Retorna se houver erro ao enviar
-    }
-    else
-        std::cout << "✅ Dados enviados para o cliente - client_fd: " << client_fd << " ✅" << std::endl;
-    
-    static_cast<void>(web); // Para evitar warning de variável não utilizada
-}
-
-static void treatExistingClient(WebServer &web, int i)
-{
-    if (web.getEvents()[i].events == EPOLLIN)
-    {
-        int data = receiveData(web, web.getEvents()[i].data.fd);
-        if (data == -1)
-        {
-            // criar metodo para desconectar o cliente
-            std::cout << "❌ Cliente desconectado - _client_fd: " << web.getEvents()[i].data.fd << " ❌" << std::endl;
-            close(web.getEvents()[i].data.fd);
-            // Remove o cliente do vetor e do epoll
-            epoll_ctl(web.getEpollFd(), EPOLL_CTL_DEL, web.getEvents()[i].data.fd, NULL);
-            return;
-        }
-        web.getEvents()[i].events = EPOLLOUT; // Muda o evento para EPOLLOUT após receber dados
-        epoll_ctl(web.getEpollFd(), EPOLL_CTL_MOD, web.getEvents()[i].data.fd, &web.getEvents()[i]);
-    }
-    else if (web.getEvents()[i].events == EPOLLOUT)
-    {
-        sendData(web, web.getEvents()[i].data.fd);
-        web.getEvents()[i].events = EPOLLIN; // Muda o evento de volta para EPOLLIN após enviar dados
-        epoll_ctl(web.getEpollFd(), EPOLL_CTL_MOD, web.getEvents()[i].data.fd, &web.getEvents()[i]);
-    }
-}
-
-static void handleEvents(WebServer &web, int event_count)
-{
-    for (int i = 0; i < event_count; ++i)
-    {
-        // verifica se o evento corresponde a um server (conexao nova)
-        bool server_found = tryConnection(web, i);
-        if (!server_found)
-        {
-            treatExistingClient(web, i);
-        }
-        else
-            break;
-    }
-}
-
-static void startServer(WebServer &web)
-{
-    while (true)
-    {
-        // Espera por novos eventos
-        int event_count = epoll_wait(web.getEpollFd(), web.getEvents(), MAX_EVENTS, 100);
-		if (event_count == -1) {
-			std::cerr << "Erro no epoll_wait" << std::endl;
-			return;
-		}
-
-        try
-        {
-            handleEvents(web, event_count);
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << '\n';
-        }
-
-        // verifica possiveis timeouts
-    }
-}
-
-
-int main(int argc, char **argv)
-{
-    if (argc != 2) {
-        std::cerr << RED << "Wrong input. Correct usage: ./webserv [configuration_file]" << RESET << std::endl;
-        return (1);
-    }
-    std::vector<Configuration> configFile;
-    
-    try {
-      setup(argv[1], configFile);
-    }
-    catch (const Configuration::WrongConfigFileException& e) {
-      std::cerr << RED << e.what() << RESET << std::endl;
-    }
- 	printHL();
-	WebServer webServer;
-    printAllServersInfo(webServer);
-    startServer(webServer);
-	//webServer.startServer();
+	if (argc == 1)
+		configFile = "default.config";
+	else if (argc == 2)
+		configFile = argv[1];
+	else
+	{
+		std::cerr << RED << "Wrong input. Usage: ./webserv [configuration_file]" << RESET << std::endl;
+		return (1);
+	}
+	std::vector<Configuration> configVector;
+	try	{
+		setup(configFile, configVector);
+	}
+	catch (const Configuration::WrongConfigFileException& e) {
+		std::cerr << RED << e.what() << RESET << std::endl;
+		return (1);
+	}
+	printHL();
+	WebServer webServer(configVector);
+	webServer.startServer();
 }

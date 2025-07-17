@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/06 13:35:56 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/12 14:48:46 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,8 +56,7 @@ Client *Client::initClientSocket(int server_fd)
     }
 
     // Configura o socket do cliente
-	_event.data.fd = _socket_fd;
-	_event.events = EPOLLIN;
+    setEvent(EPOLLIN, _socket_fd);
 
     // Configura o endereço do cliente
     addrinfo *_res = new addrinfo(); // Aloca memória para addrinfo
@@ -84,6 +83,16 @@ Client *Client::initClientSocket(int server_fd)
 
 	// printServer(client_fd); // Imprime as informações do servidor
     return this;
+}
+
+bool Client::checkTimeout() const
+{
+    std::time_t curr_time = std::time(NULL);
+    // Verifica se o tempo decorrido desde a última atividade é maior que o timeout
+    if (curr_time - _time > 10)
+        return true;
+    else
+        return false;
 }
 
 // ### GETTERS ###
