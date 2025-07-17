@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 18:22:34 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/14 23:11:28 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,9 +42,7 @@ WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(co
         if (server) {
             registerEpollSocket(server);
             _servers_map[server->getSocketFd()] = server; // Armazena o servidor no mapa usando o socket fd como chave
-			std::stringstream ss;
-			ss << "Servidor iniciado no Ip/Port: " << server->getIp() << "/" << server->getPort();
-			printLog(ss.str());
+            std::cout << "🌐 Servidor Http iniciado fd : " << server->getSocketFd() << " 🌐" << std::endl;
         } else {
             std::cerr << "Erro ao inicializar o servidor na porta: " << it->first << std::endl;
         }
@@ -151,9 +149,7 @@ void	WebServer::handleNewClient(int server_fd)
 
 	_client_to_server_map[client_socket->getSocketFd()] = server_fd; // novidade, possível approach
 
-	std::stringstream ss;
-	ss << "Novo cliente conectado - client_fd: " << client_socket->getSocketFd();
-	printLog(ss.str());
+	std::cout << "✅ Novo cliente conectado - new_client_socket: " << _clients_vec.back()->getSocketFd() << " ✅" << std::endl;
 	registerEpollSocket(client_socket);
 }
 
@@ -307,11 +303,7 @@ void WebServer::sendData(int client_fd)
         return;
     }
     else
-	{
-		std::stringstream ss;
-		ss << "Dados enviados ao cliente - client_fd: " << client_fd;
-		printLog(ss.str());
-	}
+        std::cout << "✅ Dados enviados para o cliente - client_fd: " << client_fd << " ✅" << std::endl;
     
 }
 
@@ -336,9 +328,7 @@ void WebServer::deleteClient(int fd)
 	{
 		if ((*it)->getSocketFd() == fd)
 		{
-			std::stringstream ss;
-			ss << "Cliente desconectado - client_fd: " << (*it)->getSocketFd();
-			printLog(ss.str());
+			std::cout << "❌ Cliente desconectado - client_fd: " << (*it)->getSocketFd() << " ❌" << std::endl;
 			close((*it)->getSocketFd());
 			delete *it; // Libera a memória do cliente
 			it = _clients_vec.erase(it); // Remove o cliente do vetor
@@ -504,11 +494,4 @@ Configuration* WebServer::findConfigForRequest(const HttpRequest& request, const
 		}
 	}
 	return (defaultConfig);
-}
-
-
-// ### EXCEPTION ###
-
-const char* WebServer::WebServerErrorException::what() const throw() {
-	return _message.c_str();
 }
