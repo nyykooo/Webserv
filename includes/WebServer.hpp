@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/14 23:23:48 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/17 20:51:27 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,10 +69,19 @@ class WebServer
 		bool tryConnection(int i);
 		void deleteClient(int fd);
 
+		// ### AFTER REQUEST PARSING ###
+		int									getServerFdForClient(int client_fd);
+		Configuration						*findConfigForRequest(const HttpRequest& request, const int& server_fd);
 
-		int getServerFdForClient(int client_fd);
-		Configuration	*findConfigForRequest(const HttpRequest& request, const int& server_fd);
-		
+		// ### EXCEPTION ###
+		class WebServerErrorException: public std::exception {
+			private:
+				std::string	_message;
+			public:
+				WebServerErrorException(const std::string& message): _message("WebServer error detected: " + message) {}
+				virtual ~WebServerErrorException() throw() {};
+				const char* what() const throw();
+		};
 };
 
 #endif
