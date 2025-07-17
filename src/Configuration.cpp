@@ -96,6 +96,14 @@ void	Configuration::setRoot(const std::string& root) {
 	this->_root = root;
 }
 
+void	Configuration::setDefaultFile(const std::string& index) {
+	this->_defaultFile = index;
+}
+
+const std::string&	Configuration::getDefaultFile(void) const {
+	return (this->_defaultFile);
+}
+
 void	checkCurlyBrackets(std::string line) {
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
 	if (line.find('{') != std::string::npos)
@@ -105,7 +113,6 @@ void	checkCurlyBrackets(std::string line) {
 			throw Configuration::WrongConfigFileException("} should be at the end of the line.");
 		line.erase(line.size() - 1);
 		Configuration::decrementCurlyBracketsCount();
-
 	}
 		
 }
@@ -125,7 +132,7 @@ bool	isValidIP(const std::string& host) {
 			if (!std::isdigit(*it))
 				return (false);
 		}
-		if (segment.size() > 3 || std::strtol(segment.c_str(), NULL, 10) > 255) {
+		if (segment.size() > 4 || std::strtol(segment.c_str(), NULL, 10) > 255) {
 			throw Configuration::WrongConfigFileException("invalid host: " + host);
 		}
 	}
@@ -154,7 +161,7 @@ bool	isValidPort(const std::string& word) {
 	if (!isOnlyDigit(word))
 		return (false);
 	// check if it's bigger than 65535 which is the max number for the port
-	if (word.size() > 5 || std::strtol(word.c_str(), NULL, 10) > 65535) 
+	if (word.size() > 6 || std::strtol(word.c_str(), NULL, 10) > 65535) 
 		throw Configuration::WrongConfigFileException("invalid port number: " + word);
 	return (true);
 }
@@ -173,7 +180,6 @@ void	parseServerName(std::string& line, Configuration& confserv) {
 	} */
 	if (confserv.getServerName().empty())
 		throw Configuration::WrongConfigFileException("no server_name defined");
-	return ;
 }
 
 void	parseHost(std::string& line, Configuration& confserv) {
@@ -181,7 +187,7 @@ void	parseHost(std::string& line, Configuration& confserv) {
 	std::string word;
 
 	checkCurlyBrackets(line);
-	// std::cout << GRAY << line << RESET << std::endl;
+	//std::cout << GRAY << line << RESET << std::endl;
 	ss >> word;
 	while (ss >> word) {
 		size_t pos = word.find(':');
@@ -197,13 +203,13 @@ void	parseHost(std::string& line, Configuration& confserv) {
 			else if (isValidIP(word))
 				confserv.setHost(word, "8080"); // 8080 is the default port
 		}
-		// std::cout << BLUE << word << RESET << std::endl;
+		//std::cout << BLUE << word << RESET << std::endl;
 	}
 	if (confserv.getHost().empty())
 		throw Configuration::WrongConfigFileException("no host mentioned.");
 }
 
-void	parseErrorPage(std::string& line, Configuration& confserv) {
+static void	parseErrorPage(std::string& line, Configuration& confserv) {
 	std::stringstream 			ss(line);
 	std::string					word;
 	std::vector<std::string>	words;
@@ -275,6 +281,20 @@ void	parseRoot(const std::string& line, Configuration& confserv) {
 	//std::cout << GRAY << confserv.getRoot() << RESET << std::endl;
 }
 
+void	parseDefaultFile(const std::string& line, Configuration& confserv) {
+	std::stringstream ss(line);
+	std::string word;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (ss >> word)
+		confserv.setDefaultFile(word);
+	else
+		throw Configuration::WrongConfigFileException("no index defined.");
+	if (ss >> word)
+		throw Configuration::WrongConfigFileException("too many arguments when defining index.");	
+}
+
 void parseServer(std::ifstream& file, Configuration& confserv) {
 	std::string	line;
 
@@ -304,16 +324,20 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 			parseRequestSize(line, confserv);
 		else if (word == "root")
 			parseRoot(line, confserv);
+		else if (word == "index")
+			parseDefaultFile(line, confserv);
 		else if (word == "location") {
 			confserv.locations.push_back(LocationBlock());
 			parseLocationBlock(file, line, confserv.locations.back());
+			if (confserv.locations.back().getRoot().empty() && confserv.getRoot().empty())
+				throw Configuration::WrongConfigFileException("root needs to be defined.");
 		}
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in server block.");
 	}
-	// std::cout << Configuration::getCurlyBracketsCount() << std::endl;
+	//std::cout << Configuration::getCurlyBracketsCount() << std::endl;
 	if (confserv.getCurlyBracketsCount() > 0 || confserv.getHost().empty())
-		throw Configuration::WrongConfigFileException("server block incomplete.");
+		throw Configuration::WrongConfigFileException("server block incomplete / not closed.");
 }
 
 void	setup(const char* file, std::vector<Configuration>& confserv) {
@@ -345,4 +369,8 @@ void	setup(const char* file, std::vector<Configuration>& confserv) {
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}
+/* 	std::set<std::pair<std::string, std::string> >::iterator it;
+	for (it = Configuration::getAllHosts().begin(); it != Configuration::getAllHosts().end(); it++) {
+		std::cout << GREEN << "ip: " << it->first << " porta: " << it->second << std::endl;
+	} */
 }

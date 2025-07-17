@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-LocationBlock::LocationBlock(): _exactMatchModifier(false) {
+LocationBlock::LocationBlock(): _autoIndex(false), _exactMatchModifier(false) {
 	_allowedMethods.push_back("GET");
 	_allowedMethods.push_back("POST");
 	_allowedMethods.push_back("DELETE");
@@ -65,10 +65,6 @@ void	LocationBlock::setRoot(const std::string& root) {
 	this->_root = root;
 }
 
-const char* LocationBlock::WrongLocationBlock::what() const throw() {
-	return (_message.c_str());
-}
-
 void	LocationBlock::setAllowedMethods(const std::string& location) {
 	_allowedMethods.push_back(location);
 }
@@ -81,16 +77,24 @@ void	LocationBlock::removeAllowedMethods(void) {
 	_allowedMethods.clear();
 }
 
-/* void	LocationBlock::setRedirectStatusCode(const std::string& statusCode) {
-	errno = 0;
-	char* endptr = NULL;
+bool	LocationBlock::getAutoIndex(void) const {
+	return (this->_autoIndex);
+}
 
-	_redirectStatusCode = std::strtol(statusCode.c_str(), &endptr, 10);
-	if (endptr)
-		throw WrongLocationBlock("invalid status code.");
-} */
+void	LocationBlock::setAutoIndex(const std::string& value) {
+	if (value == "on")
+		this->_autoIndex = false;
+	else if (value == "off")
+		this->_autoIndex = true;
+	else
+		throw Configuration::WrongConfigFileException("Invalid autoindex value");
+}
 
-int		LocationBlock::getStatusCode(void) const {
+void	LocationBlock::setRedirectStatusCode(const std::string& statusCode) {
+	_redirectStatusCode = statusCode;
+}
+
+const std::string&		LocationBlock::getStatusCode(void) const {
 	return (_redirectStatusCode);
 }
 
@@ -102,30 +106,34 @@ const std::string& LocationBlock::getNewLocation(void) const {
 	return (this->_newLocation);
 }
 
-void	checkLocationCurlyBrackets(std::string& line) {
-	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
-	if (line.find('{') != std::string::npos)
-		throw LocationBlock::WrongLocationBlock("line shouldn't have \'{\'");
-	if (line.find('}') != std::string::npos) {
-		if (line[line.size() - 1] != '}' || line.find('}') != line.rfind('}'))	
-			throw LocationBlock::WrongLocationBlock("} should be at the end of the line.");
-		line.erase(line.size() - 1);
-		LocationBlock::decrementLocationCurlyBracketsCount();
-	}
+void	LocationBlock::setErrorPage(const std::string& errorPage, const std::string& errorPagePath) {
+	this->_errorPage[errorPage] = errorPagePath;
+}
+
+const std::map<std::string, std::string>& LocationBlock::getErrorPage(void) const {
+	return (this->_errorPage);
+}
+
+void	LocationBlock::setDefaultFile(const std::string& index) {
+	this->_defaultFile = index;
+}
+
+const std::string&	LocationBlock::getDefaultFile(void) const {
+	return (this->_defaultFile);
 }
 
 void	parseRoot(std::string& line, LocationBlock& location) {
 	std::stringstream ss(line);
 	std::string word;
 
-	checkLocationCurlyBrackets(line);
+	checkCurlyBrackets(line);
 	ss >> word;
 	if (ss >> word)
 		location.setRoot(word);
 	else
-		throw LocationBlock::WrongLocationBlock("no root defined.");
+		throw Configuration::WrongConfigFileException("no root defined.");
 	if (ss >> word)
-		throw LocationBlock::WrongLocationBlock("too many arguments when defining root.");
+		throw Configuration::WrongConfigFileException("too many arguments when defining root.");
 	//std::cout << GRAY << webserv.getRoot() << RESET << std::endl;
 }
 
@@ -134,32 +142,88 @@ void	parseAllowedMethods(std::string& line, LocationBlock& location) {
 	std::string					word;
 	std::vector<std::string>	methods;
 
-	checkLocationCurlyBrackets(line);
+	checkCurlyBrackets(line);
 	ss >> word;
 	while (ss >> word) {
 		methods.push_back(word);
 	}
 	if (methods.empty())
-		throw LocationBlock::WrongLocationBlock("wrong syntax in allowed_methods.");
-	
+		throw Configuration::WrongConfigFileException("wrong syntax in allowed_methods.");
+	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
+		if (*it != "GET" && *it != "POST" && *it != "DELETE")
+			throw Configuration::WrongConfigFileException(*it + "Invalid method");
+	}
 	location.removeAllowedMethods();
 	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
 		location.setAllowedMethods(*it);
 	}
+
 /* 	for (std::vector<std::string>::const_iterator it = location.getMethods().begin(); it != location.getMethods().end(); it++) {
 		std::cout << *it << std::endl;
 	} */
 }
 
-/* void	parseRedirect(std::string& line, LocationBlock& location) {
+void	parseRedirect(std::string& line, LocationBlock& location) {
 	std::stringstream	ss(line);
 	std::string			word;
 
+	checkCurlyBrackets(line);
 	ss >> word;
 	if (!(ss >> word))
-		throw LocationBlock::WrongLocationBlock("wrong syntax in redirect block.");
+		throw Configuration::WrongConfigFileException("wrong syntax in redirect line.");
 	location.setRedirectStatusCode(word);
-} */
+	if (!(ss >> word))
+		throw Configuration::WrongConfigFileException("no location defined in redirect line.");
+	location.setNewLocation(word);
+	if (ss >> word)
+		throw Configuration::WrongConfigFileException("too many arguments when defining redirect.");
+}
+
+void	parseAutoIndex(std::string& line, LocationBlock& location) {
+	std::stringstream	ss(line);
+	std::string			word;	
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (ss >> word)
+		location.setAutoIndex(word);
+	else
+		throw Configuration::WrongConfigFileException("no value in autoindex defined.");
+	if (ss >> word)
+		throw Configuration::WrongConfigFileException("too many arguments when defining autoindex.");
+}
+
+void	parseErrorPage(std::string& line, LocationBlock& location) {
+	std::stringstream 			ss(line);
+	std::string					word;
+	std::vector<std::string>	words;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	while (ss >> word)
+		words.push_back(word);
+	if (words.size() < 2)
+		throw Configuration::WrongConfigFileException("no error page defined");
+	for (size_t i = 0; i < words.size() - 1; i++)
+		location.setErrorPage(words[i], words.back());
+	/* 	for (std::set<std::pair<std::string, std::string> >::iterator it = getHost().begin(); it != this->getHost().end(); it++) {
+		std::cout << GRAY<< it->first << it->second << std::endl;
+	} */
+}
+
+void	parseDefaultFile(const std::string& line, LocationBlock& location) {
+	std::stringstream ss(line);
+	std::string word;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (ss >> word)
+		location.setDefaultFile(word);
+	else
+		throw Configuration::WrongConfigFileException("no index defined.");
+	if (ss >> word)
+		throw Configuration::WrongConfigFileException("too many arguments when defining index.");	
+}
 
 void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& location) {
 	std::stringstream	ss(line);
@@ -167,20 +231,20 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
  	if (line.find('{') == std::string::npos || line.find('}') != std::string::npos || (line[line.size() - 1] != '{' 
-		&& line.find('{') != line.rfind('{'))) // the last condition checks if there's only one {
-			throw LocationBlock::WrongLocationBlock("invalid sintax in server line.");
+		&& line.find('{') != line.rfind('{'))) // the last condition checks if there's at least one and only one {
+			throw Configuration::WrongConfigFileException("invalid sintax in location line.");
 	line.erase(line.size() - 1);
 	ss >> word;
 	if (ss >> word) {
 		if (word == "=") {
 			if (!(ss >> word) || word == "{") // check if there's a word after the =
-				throw LocationBlock::WrongLocationBlock("no literal location defined.");
+				throw Configuration::WrongConfigFileException("no literal location defined.");
 			location.setExactMatchModifier(true);
 		}
 		location.setLocation(word);
 	}
 	else	
-		throw LocationBlock::WrongLocationBlock("no location defined.");
+		throw Configuration::WrongConfigFileException("no location defined.");
 	LocationBlock::incrementLocationCurlyBracketsCount();
 	while (std::getline(file, line)) {
 		std::stringstream ss(line);
@@ -188,18 +252,24 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 		ss >> word;
 		if (word.at(0) == '#')
 			continue ;
-		if (LocationBlock::getLocationCurlyBracketsCount() == 0)
-			break ;
-		if (word == "}") {
-			LocationBlock::decrementLocationCurlyBracketsCount();
+		if (word == "}" || LocationBlock::getLocationCurlyBracketsCount() == 0) {
+			if (ss >> word)
+				throw Configuration::WrongConfigFileException(word + " invalid keyword after \'}\'.");
 			break ;
 		}
 		else if (word == "root")
 			parseRoot(line, location);
 		else if (word == "allowed_methods")
 			parseAllowedMethods(line, location);
-	/* 	else if (word == "return")
-			parseRedirect(line, location); */
-		// std::cout << line << std::endl;
+		else if (word == "autoindex")
+			parseAutoIndex(line, location);
+		else if (word == "return")
+			parseRedirect(line, location);
+		else if (word == "error_page")
+			parseErrorPage(line, location);
+		else if (word == "index")
+			parseDefaultFile(line, location);
+		else
+			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}
 }
