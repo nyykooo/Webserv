@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/14 23:11:28 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/17 19:51:11 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(co
 
     std::set<std::pair<std::string, std::string> >::const_iterator it;
     for (it = conf[0].getAllHosts().begin(); it != conf[0].getAllHosts().end(); ++it) {
+		
         Server *server = new Server(it->first, it->second);
         if (server) {
             registerEpollSocket(server);
@@ -253,6 +254,7 @@ int WebServer::receiveData(int client_fd)
 		{
 			HttpRequest request(requestBuffer);
 			Configuration* config = findConfigForRequest(request, server_fd);
+			//std::cout << requestBuffer;
 			if (!config)
 			{
 				std::cerr << "Configuração não encontrada para servidor " << server_fd << std::endl;
