@@ -9,12 +9,12 @@ class Configuration {
 		std::vector<std::string>								_serverName;
 		std::map<std::string, std::string>						_errorPage;
 		std::string												_root;
+		std::string												_defaultFile;
 		long													_requestSize;
 		static int												_curlyBracketsCount;
 
 	public:	
 		// SETTERS
-		void										setAllHosts(const std::string& host, const std::string& port);
 		void										setHost(const std::string& host, const std::string& port);
 		void										setServerName(const std::string& serverName);
 		void										setErrorPage(const std::string& errorPage, const std::string& errorPagePath);
@@ -22,6 +22,7 @@ class Configuration {
 		void										setRequestSize(long reqSize);
 		static void									incrementCurlyBracketsCount(void);
 		static void									decrementCurlyBracketsCount(void);
+		void										setDefaultFile(const std::string& index);
 
 		// GETTERS
 		static std::set<std::pair<std::string, std::string> >&	getAllHosts(void);
@@ -29,6 +30,7 @@ class Configuration {
 		const std::vector<std::string>&							getServerName(void) const;
 		const std::map<std::string, std::string>&				getErrorPage(void) const;
 		const std::string&										getRoot(void) const;
+		const std::string&										getDefaultFile(void) const;
 		long													getRequestSize(void) const;
 		static int												getCurlyBracketsCount(void);
 
@@ -54,3 +56,4 @@ class Configuration {
 };
 
 void	setup(const char* file, std::vector<Configuration>& webserv);
+void	checkCurlyBrackets(std::string line);

@@ -6,13 +6,13 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/13 23:38:33 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/16 18:24:53 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "includes/headers.hpp"
 
-/* static void printHL(void)
+static void printHL(void)
 {
     char hostname[256];
 	std::string link;
@@ -97,6 +97,7 @@ static int receiveData(WebServer &web, int client_fd)
 
         try
         {
+            std::cout << requestBuffer << std::endl;
             HttpRequest request(requestBuffer);
         }
         catch (const std::exception &e)
@@ -211,7 +212,7 @@ static void startServer(WebServer &web)
 
         // verifica possiveis timeouts
     }
-} */
+}
 
 
 int main(int argc, char **argv)
@@ -228,9 +229,9 @@ int main(int argc, char **argv)
     catch (const Configuration::WrongConfigFileException& e) {
       std::cerr << RED << e.what() << RESET << std::endl;
     }
-/*  	printHL();
+ 	printHL();
 	WebServer webServer;
     printAllServersInfo(webServer);
-    startServer(webServer); */
+    startServer(webServer);
 	//webServer.startServer();
 }
