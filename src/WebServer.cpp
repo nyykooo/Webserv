@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 21:09:25 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/19 19:39:27 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,17 +30,17 @@ WebServer::WebServer() // CORRIGIR DEFAULT CONSTRUCTOR PARA NOVO SERVERS_MAP
 
 WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(conf)
 {
-	try
+	initEpoll();
+	_events = new struct epoll_event[MAX_EVENTS];
+
+	// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
+	_events = new struct epoll_event[MAX_EVENTS]; // Aloca memória para o vetor de eventos
+
+	std::set<std::pair<std::string, std::string> >::const_iterator it;
+	for (it = conf[0].getAllHosts().begin(); it != conf[0].getAllHosts().end(); ++it) 
 	{
-		initEpoll();
-		_events = new struct epoll_event[MAX_EVENTS];
-
-		// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
-		_events = new struct epoll_event[MAX_EVENTS]; // Aloca memória para o vetor de eventos
-
-		std::set<std::pair<std::string, std::string> >::const_iterator it;
-		for (it = conf[0].getAllHosts().begin(); it != conf[0].getAllHosts().end(); ++it) {
-			
+		try
+		{
 			Server *server = new Server(it->first, it->second);
 			if (server) {
 				registerEpollSocket(server);
@@ -54,12 +54,11 @@ WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(co
 				throw WebServerErrorException(ss.str());
 			}
 		}
+		catch(const WebServer::WebServerErrorException& e)
+		{
+			printLog(e.what());
+		}
 	}
-	catch(const WebServer::WebServerErrorException& e)
-	{
-		printLog(e.what());
-	}
-	
 }
 
 
@@ -233,7 +232,7 @@ bool WebServer::tryConnection(int i)
         catch (const std::exception &e)
         {
             std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
-            return false; 
+			return true;
         }
     }
     return false;
@@ -258,15 +257,15 @@ int WebServer::receiveData(int client_fd)
 		_buffer[bytes] = '\0';  // Garante null-termination
         std::string requestBuffer(_buffer);
 
-		// Qual servidor recebeu a requisição?
-		int server_fd = getServerFdForClient(client_fd);
-		if (server_fd == -1) {
-			std::cerr << "Servidor não encontrado para cliente " << client_fd << std::endl;
-			return -1;
-		}
 		try
 		{
 			HttpRequest request(requestBuffer);
+			// Qual servidor recebeu a requisição?
+			int server_fd = getServerFdForClient(client_fd);
+			if (server_fd == -1) {
+				std::cerr << "Servidor não encontrado para cliente " << client_fd << std::endl;
+				return -1;
+			}
 			Configuration* config = findConfigForRequest(request, server_fd);
 			//std::cout << requestBuffer;
 			if (!config)
@@ -467,11 +466,6 @@ int WebServer::getServerFdForClient(int client_fd)
 
 Configuration* WebServer::findConfigForRequest(const HttpRequest& request, const int& server_fd)
 {
-	if (server_fd < 0)
-	{
-		std::cerr << "FD de servidor inválido: " << server_fd << std::endl;
-		return NULL;
-	}
 	std::map<std::string, std::string>::const_iterator host_it = request.getHeaders().find("Host");
 	if (host_it == request.getHeaders().end())
 	{
