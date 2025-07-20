@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/19 19:51:29 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/19 23:47:35 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,13 +23,13 @@ class Configuration;
 class WebServer
 {
 	private:
-		int									_epoll_fd; // armazena o fd do epoll para usar nas funcoes
-		std::map<int, Server *>				_servers_map; // mapeia uma porta especifica para servidores (pensar em vecrtor de servers depois)
-		std::vector<Client *>				_clients_vec;
-		std::map<int, int>					_client_to_server_map; // mapeia o fd do cliente para o fd do servidor
-		std::vector<Configuration>			_configurations; // armazena as configurações do servidor
-		struct epoll_event					*_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
-		char 								_buffer[BUFFER_SIZE]; // buffer para leitura de dados
+		int													_epoll_fd; // armazena o fd do epoll para usar nas funcoes
+		std::map<int, Server *>								_servers_map; // mapeia uma porta especifica para servidores (pensar em vecrtor de servers depois)
+		std::vector<Client *>								_clients_vec;
+		std::map<int, std::pair<std::string, std::string> >	_client_to_server_map; // mapeia o fd do cliente para o ip:port do servidor
+		std::vector<Configuration>							_configurations; // armazena as configurações do servidor
+		struct epoll_event									*_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
+		char 												_buffer[BUFFER_SIZE]; // buffer para leitura de dados
 
 	public:
 		WebServer();
@@ -72,7 +72,7 @@ class WebServer
 
 		// ### AFTER REQUEST PARSING ###
 		int									getServerFdForClient(int client_fd);
-		Configuration						*findConfigForRequest(const HttpRequest& request, const int& server_fd);
+		Configuration						*findConfigForRequest(const HttpRequest& request, int client_fd);
 
 		// ### EXCEPTION ###
 		class WebServerErrorException: public std::exception {
