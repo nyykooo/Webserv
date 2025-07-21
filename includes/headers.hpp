@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 21:16:46 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/21 19:46:41 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,6 @@
 # include <map>
 # include <set>
 # include <stdexcept>
-# include <cstdlib>
 # include <climits>
 
 
@@ -46,16 +45,6 @@
 # include "Server.hpp"
 # include "Configuration.hpp"
 # include "LocationBlock.hpp"
-
-# define RED	"\033[31m"
-# define GREEN	"\033[32m"
-# define BLUE	"\033[34m"
-# define WHITE	"\033[37m"
-# define BLACK	"\033[30m"
-# define YELLOW	"\033[33m"
-# define CYAN	"\033[36m"
-# define GRAY	"\033[90m"
-# define RESET	"\033[0m"
 
 // remover depois!!!! servem para printar o hyperlink no terminal
 # include <netdb.h>

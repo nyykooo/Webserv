@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 21:19:10 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/21 19:47:11 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,36 +30,28 @@ WebServer::WebServer() // CORRIGIR DEFAULT CONSTRUCTOR PARA NOVO SERVERS_MAP
 
 WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(conf)
 {
-	try
+	initEpoll();
+	_events = new struct epoll_event[MAX_EVENTS];
+
+	// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
+	_events = new struct epoll_event[MAX_EVENTS]; // Aloca memória para o vetor de eventos
+
+	std::set<std::pair<std::string, std::string> >::const_iterator it;
+	for (it = conf[0].getAllHosts().begin(); it != conf[0].getAllHosts().end(); ++it) 
 	{
-		initEpoll();
-		_events = new struct epoll_event[MAX_EVENTS];
-
-		// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
-		_events = new struct epoll_event[MAX_EVENTS]; // Aloca memória para o vetor de eventos
-
-		std::set<std::pair<std::string, std::string> >::const_iterator it;
-		for (it = conf[0].getAllHosts().begin(); it != conf[0].getAllHosts().end(); ++it) {
-			
-			Server *server = new Server(it->first, it->second);
-			if (server) {
-				registerEpollSocket(server);
-				_servers_map[server->getSocketFd()] = server; // Armazena o servidor no mapa usando o socket fd como chave
-				std::stringstream ss;
-				ss << "Servidor iniciado no Ip/Port: " << server->getIp() << "/" << server->getPort();
-				printLog(ss.str());
-			} else {
-				std::stringstream ss;
-				ss << "Erro ao inicializar o servidor na porta: " << it->first;
-				throw WebServerErrorException(ss.str());
-			}
+		Server *server = new Server(it->first, it->second);
+		if (server) {
+			registerEpollSocket(server);
+			_servers_map[server->getSocketFd()] = server; // Armazena o servidor no mapa usando o socket fd como chave
+			std::stringstream ss;
+			ss << "Servidor iniciado no Ip/Port: " << server->getIp() << "/" << server->getPort();
+			printLog(ss.str(), WHITE);
+		} else {
+			std::stringstream ss;
+			ss << "Erro ao inicializar o servidor na porta: " << it->first;
+			throw WebServerErrorException(ss.str());
 		}
 	}
-	catch(const WebServer::WebServerErrorException& e)
-	{
-		printLog(e.what());
-	}
-	
 }
 
 
@@ -160,9 +152,12 @@ void	WebServer::handleNewClient(int server_fd)
 	}
 	_clients_vec.push_back(client_socket);
 
-	_client_to_server_map[client_socket->getSocketFd()] = server_fd; // novidade, possível approach
+	Server *server = _servers_map.find(server_fd)->second;
+	_client_to_server_map[client_socket->getSocketFd()] = std::make_pair(server->getIp(), server->getPort()); // novidade, possível approach
 
-	std::cout << "✅ Novo cliente conectado - new_client_socket: " << _clients_vec.back()->getSocketFd() << " ✅" << std::endl;
+	std::stringstream ss;
+	ss << "Novo cliente conectado - client_fd: " << client_socket->getSocketFd();
+	printLog(ss.str(), WHITE);
 	registerEpollSocket(client_socket);
 }
 
@@ -231,7 +226,7 @@ bool WebServer::tryConnection(int i)
         catch (const std::exception &e)
         {
             std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
-            return false; 
+			return true;
         }
     }
     return false;
@@ -256,20 +251,20 @@ int WebServer::receiveData(int client_fd)
 		_buffer[bytes] = '\0';  // Garante null-termination
         std::string requestBuffer(_buffer);
 
-		// Qual servidor recebeu a requisição?
-		int server_fd = getServerFdForClient(client_fd);
-		if (server_fd == -1) {
-			std::cerr << "Servidor não encontrado para cliente " << client_fd << std::endl;
-			return -1;
-		}
 		try
 		{
 			HttpRequest request(requestBuffer);
-			Configuration* config = findConfigForRequest(request, server_fd);
+			// Qual servidor recebeu a requisição?
+			// int server_fd = getServerFdForClient(client_fd);
+			// if (server_fd == -1) {
+			// 	std::cerr << "Servidor não encontrado para cliente " << client_fd << std::endl;
+			// 	return -1;
+			// }
+			Configuration* config = findConfigForRequest(request, client_fd);
 			//std::cout << requestBuffer;
 			if (!config)
 			{
-				std::cerr << "Configuração não encontrada para servidor " << server_fd << std::endl;
+				std::cerr << "Configuração não encontrada para servidor" << std::endl;
 				return -1;
 			}
 		}
@@ -317,7 +312,11 @@ void WebServer::sendData(int client_fd)
         return;
     }
     else
-        std::cout << "✅ Dados enviados para o cliente - client_fd: " << client_fd << " ✅" << std::endl;
+	{
+		std::stringstream ss;
+		ss << "Dados enviados ao cliente - client_fd: " << client_fd;
+		printLog(ss.str(), WHITE);
+	}
     
 }
 
@@ -342,7 +341,9 @@ void WebServer::deleteClient(int fd)
 	{
 		if ((*it)->getSocketFd() == fd)
 		{
-			std::cout << "❌ Cliente desconectado - client_fd: " << (*it)->getSocketFd() << " ❌" << std::endl;
+			std::stringstream ss;
+			ss << "Cliente desconectado - client_fd: " << (*it)->getSocketFd();
+			printLog(ss.str(), RED);
 			close((*it)->getSocketFd());
 			delete *it; // Libera a memória do cliente
 			it = _clients_vec.erase(it); // Remove o cliente do vetor
@@ -448,66 +449,79 @@ void WebServer::startServer()
     }
 }
 
+// ### FIND CONFIG FOR REQUEST ###
 
-int WebServer::getServerFdForClient(int client_fd)
+static bool checkHostType(const std::string &host)
 {
-	std::map<int, int>::iterator it = _client_to_server_map.find(client_fd);
-	if (it != _client_to_server_map.end())
-		return it->second;
-	return -1;
+	size_t colonPos = host.find_first_of(':');
+	if (colonPos != std::string::npos)
+		return true;
+	else
+		return false;
 }
 
-Configuration* WebServer::findConfigForRequest(const HttpRequest& request, const int& server_fd)
+static std::string getHostFromRequest(const HttpRequest& request)
 {
-	if (server_fd < 0)
-	{
-		std::cerr << "FD de servidor inválido: " << server_fd << std::endl;
-		return NULL;
-	}
 	std::map<std::string, std::string>::const_iterator host_it = request.getHeaders().find("Host");
 	if (host_it == request.getHeaders().end())
-	{
 		return NULL; // verificar esse handle
+	else
+		return host_it->second;
+}
+
+static bool checkForServerName(const std::vector<std::string> & server_names, std::string host)
+{
+	for (std::vector<std::string>::const_iterator name_it = server_names.begin(); name_it != server_names.end(); ++name_it)
+	{
+		if (host == *name_it)
+		{
+			std::cout << "Server name encontrado: " << *name_it << std::endl;
+			return true;
+		}
 	}
-	std::string host = host_it->second;
+	return false;
+}
 
-	// Tira a porta, se vier junto
-	size_t colonPos = host.find(':');
-	if (colonPos != std::string::npos)
-		host = host.substr(0, colonPos);
+static Configuration *lookForConfigurations(bool numeric_host, std::string host, 
+std::map<int, std::pair<std::string, std::string> >::const_iterator client_it,
+std::vector<Configuration> configs)
+{
 	Configuration* defaultConfig = NULL;
-    // Pegar o server diretamente pelo fd
-	std::map<int, Server *>::iterator server_it = _servers_map.find(server_fd);
-	if (server_it == _servers_map.end())
-		return NULL;
-	Server* server = server_it->second;
-	std::string serverIp = server->getIp();
-	std::string serverPort = server->getPort();
-
     // Procurar configuração que corresponde ao host e servidor
-	for (std::vector<Configuration>::iterator config_it = _configurations.begin(); config_it != _configurations.end(); ++config_it)
+	for (std::vector<Configuration>::iterator config_it = configs.begin(); config_it != configs.end(); ++config_it)
 	{
 		const std::set<std::pair<std::string, std::string> >& hosts = config_it->getHost();
-		for (std::set<std::pair<std::string, std::string> >::const_iterator host_it = hosts.begin(); host_it != hosts.end(); ++host_it)
+		std::set<std::pair<std::string, std::string> >::iterator host_it = hosts.find(client_it->second); // Verifica se o pair é encontrado no set de hosts
+		if (host_it == hosts.end())
+			continue;
+		// entender first como ip e second como porta
+		if (host_it->first == client_it->second.first && host_it->second == client_it->second.second)
 		{
-            // Comparar diretamente com o ip e porta do servidor
-			if (host_it->first == serverIp && host_it->second == serverPort)
-			{
-				if (defaultConfig == NULL)
-                    defaultConfig = &(*config_it);
-                // Avaliar o server name agora
-				const std::vector<std::string>& serverNames = config_it->getServerName();
-				for (std::vector<std::string>::const_iterator name_it = serverNames.begin(); name_it != serverNames.end(); ++name_it)
-				{
-					if (host == *name_it)
-					{
-						return &(*config_it);
-					}
-				}
-			}
+			if (defaultConfig == NULL)
+				defaultConfig = &(*config_it);
+			if (numeric_host)
+				return defaultConfig;
+			if (checkForServerName(config_it->getServerName(), host))
+				return &(*config_it);
 		}
 	}
 	return (defaultConfig);
+	
+}
+
+Configuration* WebServer::findConfigForRequest(const HttpRequest& request, int client_fd)
+{
+	// pega o header host da request
+	std::string host = getHostFromRequest(request);
+
+	// verifica o tipo do host obtido
+	bool numeric_host = checkHostType(host);
+	
+	// Pegar o server pelo client_fd
+	std::map<int, std::pair<std::string, std::string> >::const_iterator client_it = _client_to_server_map.find(client_fd);
+	
+	// obtem a configuracao baseado nos valores extraidos
+	return (lookForConfigurations(numeric_host, host, client_it, _configurations));
 }
 
 // ### EXCEPTION ###
