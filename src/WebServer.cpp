@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/21 19:02:05 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/21 19:39:24 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(co
 			_servers_map[server->getSocketFd()] = server; // Armazena o servidor no mapa usando o socket fd como chave
 			std::stringstream ss;
 			ss << "Servidor iniciado no Ip/Port: " << server->getIp() << "/" << server->getPort();
-			printLog(ss.str());
+			printLog(ss.str(), WHITE);
 		} else {
 			std::stringstream ss;
 			ss << "Erro ao inicializar o servidor na porta: " << it->first;
@@ -157,7 +157,7 @@ void	WebServer::handleNewClient(int server_fd)
 
 	std::stringstream ss;
 	ss << "Novo cliente conectado - client_fd: " << client_socket->getSocketFd();
-	printLog(ss.str());
+	printLog(ss.str(), WHITE);
 	registerEpollSocket(client_socket);
 }
 
@@ -315,7 +315,7 @@ void WebServer::sendData(int client_fd)
 	{
 		std::stringstream ss;
 		ss << "Dados enviados ao cliente - client_fd: " << client_fd;
-		printLog(ss.str());
+		printLog(ss.str(), WHITE);
 	}
     
 }
@@ -343,7 +343,7 @@ void WebServer::deleteClient(int fd)
 		{
 			std::stringstream ss;
 			ss << "Cliente desconectado - client_fd: " << (*it)->getSocketFd();
-			printLog(ss.str());
+			printLog(ss.str(), RED);
 			close((*it)->getSocketFd());
 			delete *it; // Libera a memória do cliente
 			it = _clients_vec.erase(it); // Remove o cliente do vetor

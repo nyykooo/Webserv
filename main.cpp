@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/21 19:09:49 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/21 19:37:51 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ int	main(int argc, char** argv)
 		printHL();
 	}
 	catch (const std::exception& e) {
-		printLog(e.what());
+		printLog(e.what(), RED);
 		return (1);
 	}
 }

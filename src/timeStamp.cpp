@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:13:55 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 21:13:58 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/21 19:37:03 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,8 +29,8 @@ std::string setTimeStamp()
 	return oss.str();
 }
 
-void	printLog(std::string message)
+void	printLog(std::string message, const char	*color)
 {
 	std::string time = setTimeStamp();
-	std::cout << "[" + time + "]: " + message << std::endl;
+	std::cout << "[" + time + "]: " << color << message << RESET << std::endl;
 }
