@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/16 19:28:43 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/21 19:08:49 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,3 +93,8 @@ void Socket::setHints(struct addrinfo hints) {
 	_hints = hints;
 }
 
+// ### EXCEPTION ###
+
+const char* Socket::SocketErrorException::what() const throw() {
+	return _message.c_str();
+}

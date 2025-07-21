@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/19 19:05:00 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/21 19:09:49 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,8 +54,8 @@ int	main(int argc, char** argv)
 		webServer.startServer();
 		printHL();
 	}
-	catch (const Configuration::WrongConfigFileException& e) {
-		std::cerr << RED << e.what() << RESET << std::endl;
+	catch (const std::exception& e) {
+		printLog(e.what());
 		return (1);
 	}
 }

@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 15:53:12 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/14 22:53:49 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/21 19:08:26 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,16 @@ class Socket
 		void				setEvent(int event_flags, int fd);
 		void				setRes(struct addrinfo *res);
 		void				setHints(struct addrinfo hints);
+
+	// ### EXCEPTION ###
+		class SocketErrorException: public std::exception {
+			private:
+				std::string	_message;
+			public:
+				SocketErrorException(const std::string& message): _message("Socket error detected: " + message) {}
+				virtual ~SocketErrorException() throw() {};
+				const char* what() const throw();
+		};
 };
 
 #endif

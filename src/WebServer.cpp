@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/20 18:17:23 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/21 19:02:05 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,24 +39,17 @@ WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(co
 	std::set<std::pair<std::string, std::string> >::const_iterator it;
 	for (it = conf[0].getAllHosts().begin(); it != conf[0].getAllHosts().end(); ++it) 
 	{
-		try
-		{
-			Server *server = new Server(it->first, it->second);
-			if (server) {
-				registerEpollSocket(server);
-				_servers_map[server->getSocketFd()] = server; // Armazena o servidor no mapa usando o socket fd como chave
-				std::stringstream ss;
-				ss << "Servidor iniciado no Ip/Port: " << server->getIp() << "/" << server->getPort();
-				printLog(ss.str());
-			} else {
-				std::stringstream ss;
-				ss << "Erro ao inicializar o servidor na porta: " << it->first;
-				throw WebServerErrorException(ss.str());
-			}
-		}
-		catch(const WebServer::WebServerErrorException& e)
-		{
-			printLog(e.what());
+		Server *server = new Server(it->first, it->second);
+		if (server) {
+			registerEpollSocket(server);
+			_servers_map[server->getSocketFd()] = server; // Armazena o servidor no mapa usando o socket fd como chave
+			std::stringstream ss;
+			ss << "Servidor iniciado no Ip/Port: " << server->getIp() << "/" << server->getPort();
+			printLog(ss.str());
+		} else {
+			std::stringstream ss;
+			ss << "Erro ao inicializar o servidor na porta: " << it->first;
+			throw WebServerErrorException(ss.str());
 		}
 	}
 }
