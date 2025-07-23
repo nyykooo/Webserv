@@ -6,11 +6,23 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 20:15:38 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/23 20:22:14 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"\
+
+// ### STATIC FUNCTIONS ###
+Client *findClient(int client_fd, std::vector<Client*> &client_vec)
+{
+	std::vector<Client *>::iterator it;
+	for (it = client_vec.begin(); it != client_vec.end(); ++it) {
+		std::cout << "client_fd: " << client_fd << " socket_fd: " << (*it)->getSocketFd() << std::endl;
+		if ((*it)->getSocketFd() == client_fd)
+			break ;
+	}
+	return (*it);
+}
 
 WebServer::WebServer()
 {
@@ -242,12 +254,8 @@ int WebServer::receiveData(int client_fd)
 
 		try
 		{
-			std::vector<Client *>::iterator it;
-			for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it) {
-				std::cout << "client_fd: " << client_fd << " socket_fd: " << (*it)->getSocketFd() << std::endl;
-				if ((*it)->getSocketFd() == client_fd)
-					break ;
-			}
+			
+			Client *client = findClient(client_fd, _clients_vec);
 			HttpRequest *request = new HttpRequest(requestBuffer);
 			Configuration* config = findConfigForRequest(*request, client_fd);
 			if (!config)
@@ -255,8 +263,8 @@ int WebServer::receiveData(int client_fd)
 				std::cerr << "Configuração não encontrada para servidor" << std::endl;
 				return -1;
 			}
-			(*it)->_request = request;
-			(*it)->sendResponse = new HttpResponse(*(*it)->_request, *config);
+			client->_request = request;
+			client->sendResponse = new HttpResponse(*client->_request, *config);
 		}
 		catch (const std::exception &e)
 		{
@@ -269,21 +277,15 @@ int WebServer::receiveData(int client_fd)
 
 void WebServer::sendData(int client_fd)
 {
-	std::vector<Client *>::iterator it;
-	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it) {
-		std::cout << "client_fd: " << client_fd << " socket_fd: " << (*it)->getSocketFd() << std::endl;
-		if ((*it)->getSocketFd() == client_fd)
-			break ;
-	}
-	std::cout << "response:" << (*it)->sendResponse->getResponse() << std::endl;
-	// (*it)->sendResponse->setResponse(response);
-	//std::cout << (*it)->sendResponse->getResponse() << std::endl;
+	Client *client = findClient(client_fd, _clients_vec);
+	// client->sendResponse->setResponse(response);
+	//std::cout << client->sendResponse->getResponse() << std::endl;
 
-	// std::cerr << RED << "||" << (*it)->sendResponse.getResponse() << "||" << RESET << std::endl;
+	// std::cerr << RED << "||" << client->sendResponse.getResponse() << "||" << RESET << std::endl;
 
     // envia a resposta ao cliente
-	const char *buf = (*it)->sendResponse->getResponse().c_str();
-	size_t size = (*it)->sendResponse->getResponse().size();
+	const char *buf = client->sendResponse->getResponse().c_str();
+	size_t size = client->sendResponse->getResponse().size();
     int sent = send(client_fd, buf, size, 0);
 	//int sent = send(client_fd, response.c_str(), response.size(), 0);
     if (sent == -1)
