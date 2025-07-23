@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 18:46:41 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/23 19:13:04 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ Client	&Client::operator=(const Client& other)
 Client::~Client()
 {
 	delete sendResponse;
+	delete _request;
 }
 
 // ### PUBLIC METHODS ###

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/22 12:24:32 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/23 18:51:05 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ class Client : public Socket {
 		Client *initClientSocket(int server_fd);
 		bool	checkTimeout() const;
 		HttpResponse*	sendResponse;
+		HttpRequest*	_request;
 
 		// ### GETTERS ###
 		std::time_t	getTime() const;
