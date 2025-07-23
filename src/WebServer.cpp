@@ -6,26 +6,15 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 18:00:41 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/23 18:47:51 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"\
 
-WebServer::WebServer() // CORRIGIR DEFAULT CONSTRUCTOR PARA NOVO SERVERS_MAP
+WebServer::WebServer()
 {
-	initEpoll();
-
-	_events = new struct epoll_event[MAX_EVENTS];
-
-	Server *server1 = new Server("0.0.0.0", "8080");
-	Server *server2 = new Server("0.0.0.0", "8081");
-	
-	_servers_map[server1->getSocketFd()] = server1;
-	_servers_map[server2->getSocketFd()] = server2;
-
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server1->getSocketFd(), &server1->getEvent());
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, server2->getSocketFd(), &server2->getEvent());
+	// THIS CLASS WILL NEVER BE DEFAULT CONSTRUCTED
 }	
 
 WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(conf)
@@ -266,7 +255,6 @@ int WebServer::receiveData(int client_fd)
 				std::cerr << "Configuração não encontrada para servidor" << std::endl;
 				return -1;
 			}
-			(*it)->sendResponse = new HttpResponse;
 		}
 		catch (const std::exception &e)
 		{
@@ -310,6 +298,7 @@ void WebServer::sendData(int client_fd)
 		if ((*it)->getSocketFd() == client_fd)
 			break ;
 	}
+	(*it)->sendResponse = new HttpResponse;
 	(*it)->sendResponse->setResponse(response);
 	//std::cout << (*it)->sendResponse->getResponse() << std::endl;
 
