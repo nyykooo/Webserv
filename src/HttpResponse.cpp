@@ -38,7 +38,16 @@ HttpResponse::HttpResponse(const HttpRequest& request, const Configuration& conf
 	long test2 = config.getRequestSize();
 	test2++;
 	//std::cout << "aqui" << std::endl;
-	setResponse(http_error_404_page);
+
+    std::ostringstream header;
+    header << "HTTP/1.1 400 Bad Request\r\n";
+    header << "Content-Type: text/html\r\n";
+    header << "Content-Length: " << http_error_404_page.size() << "\r\n";
+    header << "\r\n";
+
+
+
+	setResponse(header.str() + http_error_404_page);
 }
 
 

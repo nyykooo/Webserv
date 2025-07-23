@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 18:59:03 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/23 20:15:38 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -256,6 +256,7 @@ int WebServer::receiveData(int client_fd)
 				return -1;
 			}
 			(*it)->_request = request;
+			(*it)->sendResponse = new HttpResponse(*(*it)->_request, *config);
 		}
 		catch (const std::exception &e)
 		{
@@ -268,39 +269,14 @@ int WebServer::receiveData(int client_fd)
 
 void WebServer::sendData(int client_fd)
 {
-    // resposta padrao
-    std::string responseBody = 
-    "<!DOCTYPE html>"
-    "<html lang=\"en\">"
-    "<head>"
-    "<meta charset=\"UTF-8\">"
-    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-    "<title>Bem-vindo</title>"
-    "<style>"
-    "body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-    "h1 { color: #333; }"
-    "</style>"
-    "</head>"
-    "<body>"
-    "<h1>Bem-vindo ao WebServr de ncampbel, bruhenr dioalexa</h1>"
-    "</body>"
-    "</html>";
-    
-    std::ostringstream header;
-    header << "HTTP/1.1 200 OK\r\n";
-    header << "Content-Type: text/html\r\n";
-    header << "Content-Length: " << responseBody.size() << "\r\n";
-    header << "\r\n";
-
-    std::string response = header.str() + responseBody;
 	std::vector<Client *>::iterator it;
 	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it) {
 		std::cout << "client_fd: " << client_fd << " socket_fd: " << (*it)->getSocketFd() << std::endl;
 		if ((*it)->getSocketFd() == client_fd)
 			break ;
 	}
-	(*it)->sendResponse = new HttpResponse;
-	(*it)->sendResponse->setResponse(response);
+	std::cout << "response:" << (*it)->sendResponse->getResponse() << std::endl;
+	// (*it)->sendResponse->setResponse(response);
 	//std::cout << (*it)->sendResponse->getResponse() << std::endl;
 
 	// std::cerr << RED << "||" << (*it)->sendResponse.getResponse() << "||" << RESET << std::endl;

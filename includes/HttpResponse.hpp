@@ -8,11 +8,13 @@ class WebServer;
 class HttpResponse {
 	private:
 		std::string		_response;
+		int				_responseStatus;
 
 	public:
 
 		//SETTERS
 		void	setResponse(const std::string& response);
+		void	setStatus(int status);
 
 		//GETTERS
 		const std::string&	getResponse(void) const;
