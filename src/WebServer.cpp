@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 13:27:51 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/23 18:00:41 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -260,27 +260,13 @@ int WebServer::receiveData(int client_fd)
 					break ;
 			}
 			HttpRequest request(requestBuffer);
-			// Qual servidor recebeu a requisição?
-		int server_fd = getServerFdForClient(client_fd);
-		if (server_fd == -1) {
-			std::cerr << "Servidor não encontrado para cliente " << client_fd << std::endl;
-			return -1;
-		}
-		try
-		{
-			std::vector<Client *>::iterator it;
-			for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it) {
-				std::cout << "client_fd: " << client_fd << " socket_fd: " << (*it)->getSocketFd() << std::endl;
-				if ((*it)->getSocketFd() == client_fd)
-					break ;
-			}
-			HttpRequest request(requestBuffer);
-			Configuration* config = findConfigForRequest(request, server_fd);
+			Configuration* config = findConfigForRequest(request, client_fd);
 			if (!config)
 			{
 				std::cerr << "Configuração não encontrada para servidor" << std::endl;
 				return -1;
 			}
+			(*it)->sendResponse = new HttpResponse;
 		}
 		catch (const std::exception &e)
 		{
@@ -324,12 +310,15 @@ void WebServer::sendData(int client_fd)
 		if ((*it)->getSocketFd() == client_fd)
 			break ;
 	}
+	(*it)->sendResponse->setResponse(response);
 	//std::cout << (*it)->sendResponse->getResponse() << std::endl;
 
 	// std::cerr << RED << "||" << (*it)->sendResponse.getResponse() << "||" << RESET << std::endl;
 
     // envia a resposta ao cliente
-    int sent = send(client_fd, (*it)->sendResponse->getResponse().c_str(), (*it)->sendResponse->getResponse().size(), 0);
+	const char *buf = (*it)->sendResponse->getResponse().c_str();
+	size_t size = (*it)->sendResponse->getResponse().size();
+    int sent = send(client_fd, buf, size, 0);
 	//int sent = send(client_fd, response.c_str(), response.size(), 0);
     if (sent == -1)
     {
