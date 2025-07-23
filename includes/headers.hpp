@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 18:36:22 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/21 16:43:05 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,12 +39,13 @@
 
 # include "macros.hpp"
 # include "Socket.hpp"
+# include "Configuration.hpp"
+# include "LocationBlock.hpp"
 # include "HttpRequest.hpp"
+# include "HttpResponse.hpp"
 # include "WebServer.hpp"
 # include "Client.hpp"
 # include "Server.hpp"
-# include "Configuration.hpp"
-# include "LocationBlock.hpp"
 
 # define RED	"\033[31m"
 # define GREEN	"\033[32m"
@@ -55,6 +56,8 @@
 # define CYAN	"\033[36m"
 # define GRAY	"\033[90m"
 # define RESET	"\033[0m"
+
+# define CRLF "\r\n"
 
 // remover depois!!!! servem para printar o hyperlink no terminal
 # include <netdb.h>

@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-Configuration::Configuration(): _requestSize(0) {} // we need to put here the default files for all the possible errors
+Configuration::Configuration(): _requestSize(1000000) {} // we need to put here the default files for all the possible errors
 
 Configuration::~Configuration() {}
 
@@ -62,10 +62,10 @@ void	Configuration::setServerName(const std::string& serverName) {
 }
 
 void	Configuration::setErrorPage(const std::string& errorPage, const std::string& errorPagePath) {
-	this->_errorPage[errorPage] = errorPagePath;
+	this->_errorPage.insert(std::pair<std::string, std::string>(errorPage, errorPagePath));
 }
 
-const std::map<std::string, std::string>& Configuration::getErrorPage(void) const {
+const std::set<std::pair<std::string, std::string> >& Configuration::getErrorPage(void) const {
 	return (this->_errorPage);
 }
 
@@ -89,12 +89,12 @@ void	Configuration::setRoot(const std::string& root) {
 	this->_root = root;
 }
 
-void	Configuration::setDefaultFile(const std::string& index) {
-	this->_defaultFile = index;
+void	Configuration::setDefaultFiles(const std::string& index) {
+	this->_defaultFiles.push_back(index);
 }
 
-const std::string&	Configuration::getDefaultFile(void) const {
-	return (this->_defaultFile);
+const std::vector<std::string>&	Configuration::getDefaultFiles(void) const {
+	return (this->_defaultFiles);
 }
 
 void	checkCurlyBrackets(std::string line) {
@@ -274,18 +274,18 @@ void	parseRoot(const std::string& line, Configuration& confserv) {
 	//std::cout << GRAY << confserv.getRoot() << RESET << std::endl;
 }
 
-void	parseDefaultFile(const std::string& line, Configuration& confserv) {
+void	parseDefaultFiles(const std::string& line, Configuration& confserv) {
 	std::stringstream ss(line);
 	std::string word;
 
 	checkCurlyBrackets(line);
 	ss >> word;
-	if (ss >> word)
-		confserv.setDefaultFile(word);
+	if (!(ss >> word))
+		throw Configuration::WrongConfigFileException("no default file defined.");
 	else
-		throw Configuration::WrongConfigFileException("no index defined.");
-	if (ss >> word)
-		throw Configuration::WrongConfigFileException("too many arguments when defining index.");	
+		confserv.setDefaultFiles(word);
+	while (ss >> word)
+		confserv.setDefaultFiles(word);
 }
 
 void parseServer(std::ifstream& file, Configuration& confserv) {
@@ -318,19 +318,19 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 		else if (word == "root")
 			parseRoot(line, confserv);
 		else if (word == "index")
-			parseDefaultFile(line, confserv);
+			parseDefaultFiles(line, confserv);
 		else if (word == "location") {
 			confserv.locations.push_back(LocationBlock());
 			parseLocationBlock(file, line, confserv.locations.back());
-			if (confserv.locations.back().getRoot().empty() && confserv.getRoot().empty())
-				throw Configuration::WrongConfigFileException("root needs to be defined.");
 		}
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in server block.");
 	}
 	//std::cout << Configuration::getCurlyBracketsCount() << std::endl;
-	if (confserv.getCurlyBracketsCount() > 0 || confserv.getHost().empty())
-		throw Configuration::WrongConfigFileException("server block incomplete / not closed.");
+	if (confserv.getCurlyBracketsCount() > 0)
+		throw Configuration::WrongConfigFileException("server block not closed.");
+	if (confserv.getHost().empty())
+		confserv.setHost("0.0.0.0", "8080");
 }
 
 void	setup(const char* file, std::vector<Configuration>& confserv) {

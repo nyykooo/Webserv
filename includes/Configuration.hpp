@@ -7,30 +7,32 @@ class Configuration {
 		static std::set<std::pair<std::string, std::string> >	_allHosts;
 		std::set<std::pair<std::string, std::string> >			_host;
 		std::vector<std::string>								_serverName;
-		std::map<std::string, std::string>						_errorPage;
+		std::set<std::pair<std::string, std::string> >			_errorPage;
 		std::string												_root;
-		std::string												_defaultFile;
+		std::vector<std::string>								_defaultFiles;
 		long													_requestSize;
 		static int												_curlyBracketsCount;
 
-	public:	
+	public:
+		std::vector<LocationBlock>			locations;
+
 		// SETTERS
-		void										setHost(const std::string& host, const std::string& port);
-		void										setServerName(const std::string& serverName);
-		void										setErrorPage(const std::string& errorPage, const std::string& errorPagePath);
-		void										setRoot(const std::string& root);
-		void										setRequestSize(long reqSize);
-		static void									incrementCurlyBracketsCount(void);
-		static void									decrementCurlyBracketsCount(void);
-		void										setDefaultFile(const std::string& index);
+		void							setHost(const std::string& host, const std::string& port);
+		void							setServerName(const std::string& serverName);
+		void							setErrorPage(const std::string& errorPage, const std::string& errorPagePath);
+		void							setRoot(const std::string& root);
+		void							setRequestSize(long reqSize);
+		static void						incrementCurlyBracketsCount(void);
+		static void						decrementCurlyBracketsCount(void);
+		void							setDefaultFiles(const std::string& index);
 
 		// GETTERS
 		static std::set<std::pair<std::string, std::string> >&	getAllHosts(void);
 		const std::set<std::pair<std::string, std::string> >&	getHost(void) const;
 		const std::vector<std::string>&							getServerName(void) const;
-		const std::map<std::string, std::string>&				getErrorPage(void) const;
+		const std::set<std::pair<std::string, std::string> >&	getErrorPage(void) const;
 		const std::string&										getRoot(void) const;
-		const std::string&										getDefaultFile(void) const;
+		const std::vector<std::string>&							getDefaultFiles(void) const;
 		long													getRequestSize(void) const;
 		static int												getCurlyBracketsCount(void);
 
@@ -51,8 +53,6 @@ class Configuration {
 				virtual ~WrongConfigFileException() throw() {};
 				const char* what() const throw();
 		};
-
-		std::vector<LocationBlock>	locations;
 };
 
 void	setup(const char* file, std::vector<Configuration>& webserv);

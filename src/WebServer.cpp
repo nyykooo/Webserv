@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 19:51:11 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/22 13:52:17 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -252,9 +252,18 @@ int WebServer::receiveData(int client_fd)
 		}
 		try
 		{
+			std::vector<Client *>::iterator it;
+			for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it) {
+				std::cout << "client_fd: " << client_fd << " socket_fd: " << (*it)->getSocketFd() << std::endl;
+				if ((*it)->getSocketFd() == client_fd)
+					break ;
+			}
 			HttpRequest request(requestBuffer);
 			Configuration* config = findConfigForRequest(request, server_fd);
-			//std::cout << requestBuffer;
+			(*it)->sendResponse = new HttpResponse(request, *config);
+			//std::cout << requestBuffer << config->getRoot() << std::endl;
+			// Client::sendResponse = HttpResponse response(request, *config);
+			
 			if (!config)
 			{
 				std::cerr << "Configuração não encontrada para servidor " << server_fd << std::endl;
@@ -297,9 +306,19 @@ void WebServer::sendData(int client_fd)
     header << "\r\n";
 
     std::string response = header.str() + responseBody;
+	std::vector<Client *>::iterator it;
+	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it) {
+		std::cout << "client_fd: " << client_fd << " socket_fd: " << (*it)->getSocketFd() << std::endl;
+		if ((*it)->getSocketFd() == client_fd)
+			break ;
+	}
+	//std::cout << (*it)->sendResponse->getResponse() << std::endl;
+
+	// std::cerr << RED << "||" << (*it)->sendResponse.getResponse() << "||" << RESET << std::endl;
 
     // envia a resposta ao cliente
-    int sent = send(client_fd, response.c_str(), response.size(), 0);
+    int sent = send(client_fd, (*it)->sendResponse->getResponse().c_str(), (*it)->sendResponse->getResponse().size(), 0);
+	//int sent = send(client_fd, response.c_str(), response.size(), 0);
     if (sent == -1)
     {
         return;

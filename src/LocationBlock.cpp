@@ -107,10 +107,10 @@ const std::string& LocationBlock::getNewLocation(void) const {
 }
 
 void	LocationBlock::setErrorPage(const std::string& errorPage, const std::string& errorPagePath) {
-	this->_errorPage[errorPage] = errorPagePath;
+	this->_errorPage.insert(std::pair<std::string, std::string>(errorPage, errorPagePath));
 }
 
-const std::map<std::string, std::string>& LocationBlock::getErrorPage(void) const {
+const std::set<std::pair<std::string, std::string> >&	LocationBlock::getErrorPage(void) const {
 	return (this->_errorPage);
 }
 

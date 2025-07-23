@@ -15,7 +15,7 @@ class LocationBlock {
 		std::vector<std::string>								_cgiExtension;
 		std::vector<std::string>								_cgiPath;
 		static int												_locationCurlyBracketsCount;
-		std::map<std::string, std::string>						_errorPage;
+		std::set<std::pair<std::string, std::string> >			_errorPage;
 	public:
 
 	// SETTERS
@@ -36,16 +36,16 @@ class LocationBlock {
 
 	// GETTERS
 
-	const std::string&										getRoot(void) const;
-	const std::vector<std::string>&							getMethods(void) const;
-	bool													getAutoIndex(void) const;
-	bool													getExactMatchModifier(void) const;
-	const std::string&										getStatusCode(void) const;
-	const std::string&										getNewLocation(void) const;
-	const std::string&										getLocation(void) const;
-	const std::map<std::string, std::string>&				getErrorPage(void) const;
-	static int												getLocationCurlyBracketsCount(void);
-	const std::string&										getDefaultFile(void) const;
+	const std::string&											getRoot(void) const;
+	const std::vector<std::string>&								getMethods(void) const;
+	bool														getAutoIndex(void) const;
+	bool														getExactMatchModifier(void) const;
+	const std::string&											getStatusCode(void) const;
+	const std::string&											getNewLocation(void) const;
+	const std::string&											getLocation(void) const;
+	const std::set<std::pair<std::string, std::string> >&		getErrorPage(void) const;
+	static int													getLocationCurlyBracketsCount(void);
+	const std::string&											getDefaultFile(void) const;
 
 	// ORTHODOX CANONICAL FORM
 
