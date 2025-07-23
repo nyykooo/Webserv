@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 19:13:04 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/23 19:20:21 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@ Client::Client()
 Client::Client(int server_fd)
 {
 	_time = std::time(NULL);
+	sendResponse = NULL;
+	_request = NULL;
 	initClientSocket(server_fd);
 }
 
@@ -37,8 +39,10 @@ Client	&Client::operator=(const Client& other)
 
 Client::~Client()
 {
-	delete sendResponse;
-	delete _request;
+	if (sendResponse)
+		delete sendResponse;
+	if (_request)
+		delete _request;
 }
 
 // ### PUBLIC METHODS ###
