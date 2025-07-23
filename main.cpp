@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 17:07:02 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/21 19:37:51 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,12 +50,12 @@ int	main(int argc, char** argv)
 	std::vector<Configuration> configVector;
 	try	{
 		setup(configFile, configVector);
+		WebServer webServer(configVector);
+		webServer.startServer();
+		printHL();
 	}
-	catch (const Configuration::WrongConfigFileException& e) {
-		std::cerr << RED << e.what() << RESET << std::endl;
+	catch (const std::exception& e) {
+		printLog(e.what(), RED);
 		return (1);
 	}
-	printHL();
-	WebServer webServer(configVector);
-	webServer.startServer();
 }

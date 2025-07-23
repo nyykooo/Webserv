@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/17 19:50:52 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/21 19:50:11 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 Server::Server() : Socket(), _ip("localhost"), _port("8080") // Valores padrão para IP e porta
 {
 	initServerSocket(_ip, _port);
-	std::cout << "Servidor Http iniciado fd : " << _socket_fd << std::endl;
 }
 
 // CONSTRUCTOR WITH PORT
@@ -23,7 +22,6 @@ Server::Server(const std::string &ip, const std::string &port) : Socket(), _ip(i
 {
 	// inicializa o socket do servidor com as configuracoes corretas
 	initServerSocket(ip, port);
-	std::cout << "🌐 Servidor Http iniciado fd : " << _socket_fd << " 🌐" << std::endl;
 }
 
 
@@ -57,7 +55,6 @@ void	Server::initServerSocket(std::string ip, std::string port)
 	_hints = hints; // Armazena as hints no socket
 
 	// Obtém informações de endereço
-	std::cout << "Inicializando o servidor em " << ip << ":" << port << std::endl;
     if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &res) != 0) {
         std::cerr << "Erro em getaddrinfo" << std::endl;
     }
@@ -66,7 +63,7 @@ void	Server::initServerSocket(std::string ip, std::string port)
 	_socket_fd = socket(_res->ai_family, _res->ai_socktype, _res->ai_protocol);
 	if (_socket_fd == -1)
 	{
-		throw std::runtime_error("socket creation failed");
+		throw Socket::SocketErrorException("failed to create server socket on " + ip + ":" + port);
 	}
 	// Torna o server socket não bloqueante
 	int flags = fcntl(_socket_fd, F_GETFL, 0);
@@ -76,14 +73,13 @@ void	Server::initServerSocket(std::string ip, std::string port)
 	if (bind(_socket_fd, _res->ai_addr, _res->ai_addrlen) == -1)
 	{
 		close(_socket_fd);
-		throw std::runtime_error("bind failed on " + ip + ":" + port);
+		throw Socket::SocketErrorException("failed to bind server socket on " + ip + ":" + port);
 	}
     if (listen(_socket_fd, SOMAXCONN) == -1)
 	{
 		close(_socket_fd);
-		throw std::runtime_error("listen failed");
+		throw Socket::SocketErrorException("failed to listen on server socket on " + ip + ":" + port);
 	}
-    std::cout << "Server listening on " << ip << ":" << port << std::endl;
 	// Registra o server socket na epoll para monitorar
 	setEvent(EPOLLIN, _socket_fd);
 }
