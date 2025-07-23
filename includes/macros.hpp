@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   macros.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/30 20:55:39 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/21 19:36:03 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/23 14:19:41 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,5 +27,7 @@
 # define CYAN	"\033[36m"
 # define GRAY	"\033[90m"
 # define RESET	"\033[0m"
+
+# define CRLF "\r\n"
 
 #endif

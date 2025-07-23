@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 14:14:17 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/23 14:19:35 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,18 +46,6 @@
 # include "WebServer.hpp"
 # include "Client.hpp"
 # include "Server.hpp"
-
-# define RED	"\033[31m"
-# define GREEN	"\033[32m"
-# define BLUE	"\033[34m"
-# define WHITE	"\033[37m"
-# define BLACK	"\033[30m"
-# define YELLOW	"\033[33m"
-# define CYAN	"\033[36m"
-# define GRAY	"\033[90m"
-# define RESET	"\033[0m"
-
-# define CRLF "\r\n"
 
 // remover depois!!!! servem para printar o hyperlink no terminal
 # include <netdb.h>
