@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/25 17:58:32 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/25 18:21:49 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -276,11 +276,9 @@ int WebServer::receiveData(int client_fd)
 void WebServer::sendData(int client_fd)
 {
 	Client *client = findClient(client_fd, _clients_vec);
-	// client->sendResponse->setResponse(response);
-	//std::cout << client->sendResponse->getResponse() << std::endl;
 
-	// std::cerr << RED << "||" << client->sendResponse.getResponse() << "||" << RESET << std::endl;
-
+	int status = execMethod(client);
+	std::cout << status << std::endl;
 	client->sendResponse = new HttpResponse(*client->_request, *client->_request->_config);
     // envia a resposta ao cliente
 	const char *buf = client->sendResponse->getResponse().c_str();
