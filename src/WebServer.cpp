@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 20:15:38 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/25 17:49:29 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -248,15 +248,14 @@ int WebServer::receiveData(int client_fd)
 				if ((*it)->getSocketFd() == client_fd)
 					break ;
 			}
-			HttpRequest *request = new HttpRequest(requestBuffer);
-			Configuration* config = findConfigForRequest(*request, client_fd);
-			if (!config)
+			(*it)->_request  = new HttpRequest(requestBuffer);
+			(*it)->_request->_config = findConfigForRequest(*(*it)->_request, client_fd);
+			if (!(*it)->_request->_config)
 			{
 				std::cerr << "Configuração não encontrada para servidor" << std::endl;
 				return -1;
 			}
-			(*it)->_request = request;
-			(*it)->sendResponse = new HttpResponse(*(*it)->_request, *config);
+			(*it)->sendResponse = new HttpResponse(*(*it)->_request, *(*it)->_request->_config);
 		}
 		catch (const std::exception &e)
 		{
