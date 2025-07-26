@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/07/26 13:51:45 by discallow        ###   ########.fr       */
+/*   Updated: 2025/07/26 13:59:55 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,6 @@ class HttpRequest
 		~HttpRequest();
 		
 		// utils
-		Configuration* _config;
 
 		Configuration* _config;
 
