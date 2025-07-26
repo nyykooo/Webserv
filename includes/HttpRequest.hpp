@@ -5,10 +5,11 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/29 14:35:45 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/07/26 13:33:45 by discallow        ###   ########.fr       */
+/*   Created: Invalid date        by                   #+#    #+#             */
+/*   Updated: 2025/07/26 13:51:45 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include <string>
 #include <sstream> //para std::istringstream
@@ -39,6 +40,9 @@ class HttpRequest
 		HttpRequest(const HttpRequest& other);
 		HttpRequest& operator=(const HttpRequest& other);
 		~HttpRequest();
+		
+		// utils
+		Configuration* _config;
 
 		Configuration* _config;
 

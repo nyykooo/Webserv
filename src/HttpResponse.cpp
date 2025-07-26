@@ -114,4 +114,3 @@ const std::string&	HttpResponse::getResponse(void) const {
 	return (_response);
 }
 
-

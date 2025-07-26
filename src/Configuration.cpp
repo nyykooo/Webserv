@@ -213,7 +213,6 @@ static void	parseErrorPage(std::string& line, Configuration& confserv) {
 		words.push_back(word);
 	if (words.size() < 2)
 		throw Configuration::WrongConfigFileException("no error page defined");
-
 	for (size_t i = 0; i < words.size() - 1; i++) {
 		errno = 0;
 		char	*endptr;
