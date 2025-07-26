@@ -221,9 +221,6 @@ static void	parseErrorPage(std::string& line, Configuration& confserv) {
 			throw Configuration::WrongConfigFileException("value \"" + words[i] + "\" must be between 300 and 599");
 		confserv.setErrorPage(static_cast<int>(value), words.back());
 	}
-	/* 	for (std::set<std::pair<std::string, std::string> >::iterator it = getHost().begin(); it != this->getHost().end(); it++) {
-		std::cout << GRAY<< it->first << it->second << std::endl;
-	} */
 }
 
 void	parseRequestSize(const std::string& line, Configuration& confserv) {
@@ -331,6 +328,9 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 		}
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in server block.");
+/* 		for (std::set<std::pair<int, std::string> >::iterator it = confserv.getErrorPage().begin(); it != confserv.getErrorPage().end(); it++) {
+			std::cout << GRAY<< it->first << " " << it->second << RESET << std::endl;
+		} */
 	}
 	//std::cout << Configuration::getCurlyBracketsCount() << std::endl;
 	if (confserv.getCurlyBracketsCount() > 0)

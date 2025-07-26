@@ -49,43 +49,53 @@ static const std::string& http_error_413_page =
 "</body>"
 "</html>";
 
-/* const std::string& httpFileContent(int errorPage) {
+const std::string httpFileContent(int errorPage) {
 	
-	const std::string content = "";
-	errorPage++;
-	return (content);
-} */
+	char buffer[BUFFER_SIZE];
+	std::string result;
+
+	ssize_t bytesRead;
+	while ((bytesRead = read(errorPage, buffer, BUFFER_SIZE)) > 0) {
+		result.append(buffer, bytesRead);
+	}
+	if (bytesRead < 0) {
+        return http_error_404_page;
+	}
+	return (result);
+}
 
 static int openFile(const Configuration& config, int statusCode) {
 
-	std::set<std::pair<int, std::string> >::iterator it = config.getErrorPage().begin();
+	std::set<std::pair<int, std::string> >::const_iterator it = config.getErrorPage().begin();
 
-	for (; it != config.getErrorPage().end(); ++it) {
+	while (it != config.getErrorPage().end()) {
+		std::cout << it->first << it->second << std::endl;
 		if (it->first == statusCode)
 			break ;
+		it++;
 	}
 	if (it == config.getErrorPage().end())
 		return (-1);
+		
 	int	configFile = open(it->second.c_str(), O_RDONLY);
 	if (configFile < 0)
 		return (-1);
 	return (configFile);
 }
 
-static const std::string& checkStatusCode(const Configuration& config, int statusCode) {
+static const std::string checkStatusCode(const Configuration& config, int statusCode) {
 	int	errorPage;
 
 	switch (statusCode) {
 		case 413:
 			errorPage = openFile(config, statusCode);
 			if (errorPage < 0)
-				return (http_error_413_page);
-			//return (httpFileContent(errorPage));
-			break ;
+				return (http_error_404_page);
+			return (httpFileContent(errorPage));
 		default:
-			return http_error_404_page;
+			break ;
 	}
-	return http_error_404_page;
+	return http_error_413_page;
 }
 
 HttpResponse::HttpResponse(const HttpRequest& request, const Configuration& config) {
@@ -102,7 +112,7 @@ HttpResponse::HttpResponse(const HttpRequest& request, const Configuration& conf
     header << CRLF;
 
 	pageContent = checkStatusCode(config, 413);
-	setResponse(header.str() + http_error_404_page);
+	setResponse(header.str() + pageContent);
 }
 
 
