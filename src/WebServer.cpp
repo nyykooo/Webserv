@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 20:22:14 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/24 17:39:00 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -279,9 +279,6 @@ void WebServer::sendData(int client_fd)
 {
 	Client *client = findClient(client_fd, _clients_vec);
 	// client->sendResponse->setResponse(response);
-	//std::cout << client->sendResponse->getResponse() << std::endl;
-
-	// std::cerr << RED << "||" << client->sendResponse.getResponse() << "||" << RESET << std::endl;
 
     // envia a resposta ao cliente
 	const char *buf = client->sendResponse->getResponse().c_str();
