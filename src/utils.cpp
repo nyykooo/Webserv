@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:13:55 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/25 20:21:33 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/26 14:27:42 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,10 @@
 
 // ### HTTP METHODS ###
 
-static int	handleGET(Client *client)
+static int	handleGET(const std::string path, const std::string root)
 {
-	static_cast<void>(client);
-	std::cout << "GET detected" << std::endl;
+	std::string fileName = root + path;
+	std::cout << "GET file: " << fileName << std::endl;
 	return 200;
 }
 
@@ -27,7 +27,7 @@ int	execMethod(Client *client)
 	std::string	method = req->getMethod();
 
 	if (method == "GET")
-		return handleGET(client);
+		return handleGET(req->getPath(), req->_config->getRoot());
 	return 400;
 }
 

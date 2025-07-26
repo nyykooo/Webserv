@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/26 13:41:31 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/26 15:31:34 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -257,7 +257,7 @@ int WebServer::receiveData(int client_fd)
 			
 			Client *client = findClient(client_fd, _clients_vec);
 			if (client->_request != NULL)
-				delete client->sendResponse;
+				delete client->_request;
 			client->_request = new HttpRequest(requestBuffer);
 			client->_request->_config = findConfigForRequest(*client->_request, client_fd);
 			if (!client->_request->_config)
@@ -279,9 +279,8 @@ void WebServer::sendData(int client_fd)
 {
 	Client *client = findClient(client_fd, _clients_vec);
 
-	int status = execMethod(client);
-	std::cout << status << std::endl;
-	if (client->sendResponse != NULL)
+	execMethod(client);
+	if (client->sendResponse)
 		delete client->sendResponse;
 	client->sendResponse = new HttpResponse(*client->_request, *client->_request->_config);
     // envia a resposta ao cliente
@@ -299,7 +298,6 @@ void WebServer::sendData(int client_fd)
 		ss << "Dados enviados ao cliente - client_fd: " << client_fd;
 		printLog(ss.str(), WHITE);
 	}
-    
 }
 
 void WebServer::setClientTime(int client_fd)
