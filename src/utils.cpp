@@ -6,30 +6,12 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:13:55 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/26 14:27:42 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/26 15:56:19 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"
 
-// ### HTTP METHODS ###
-
-static int	handleGET(const std::string path, const std::string root)
-{
-	std::string fileName = root + path;
-	std::cout << "GET file: " << fileName << std::endl;
-	return 200;
-}
-
-int	execMethod(Client *client)
-{
-	HttpRequest	*req = client->_request;
-	std::string	method = req->getMethod();
-
-	if (method == "GET")
-		return handleGET(req->getPath(), req->_config->getRoot());
-	return 400;
-}
 
 // ### LOCATION HANDLERS ###
 

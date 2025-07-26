@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/26 15:31:34 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/26 16:30:00 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,6 @@ Client *findClient(int client_fd, std::vector<Client*> &client_vec)
 {
 	std::vector<Client *>::iterator it;
 	for (it = client_vec.begin(); it != client_vec.end(); ++it) {
-		std::cout << "client_fd: " << client_fd << " socket_fd: " << (*it)->getSocketFd() << std::endl;
 		if ((*it)->getSocketFd() == client_fd)
 			break ;
 	}
@@ -279,10 +278,10 @@ void WebServer::sendData(int client_fd)
 {
 	Client *client = findClient(client_fd, _clients_vec);
 
-	execMethod(client);
 	if (client->sendResponse)
 		delete client->sendResponse;
 	client->sendResponse = new HttpResponse(*client->_request, *client->_request->_config);
+	client->sendResponse->execMethod(client);
     // envia a resposta ao cliente
 	const char *buf = client->sendResponse->getResponse().c_str();
 	size_t size = client->sendResponse->getResponse().size();

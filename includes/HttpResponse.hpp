@@ -3,21 +3,29 @@
 
 #include "headers.hpp"
 
-class WebServer;
+class Client;
 
 class HttpResponse {
 	private:
 		std::string		_response;
-		int				_responseStatus;
+		std::string		_resHeader;
+		std::string		_resBody;
+		int				_resStatus;
 
 	public:
 
 		//SETTERS
 		void	setResponse(const std::string& response);
-		void	setStatus(int status);
 
 		//GETTERS
 		const std::string&	getResponse(void) const;
+		const std::string&	getResHeader(void) const;
+		const std::string&	getResBody(void) const;
+
+		// EXEC METHOD
+		void	execMethod(Client *client);
+		void	handleGET(const std::string path, const std::string root);
+		void	openFile(std::string path);
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

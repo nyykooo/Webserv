@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/25 18:21:23 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/26 15:44:03 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 # include <sys/socket.h>	// includes socket(), bind(), accept(), connect(), etc.
 # include <netdb.h>			// includes getaddrinfo(), getnameinfo(), etc.
 # include <sys/types.h>		// includes types like sockaddr, socklen_t, etc.
+# include <sys/stat.h>		// includes stat and S_ISxxx macros
 # include <sys/epoll.h>		// includes epoll_create(), epoll_ctl(), epoll_wait(), etc.
 # include <fcntl.h>			// includes fcntl(), open(), O_RDONLY, O_WRONLY, etc.
 # include <cstdlib>			// includes std::exit(), std::atoi(), std::atof(), etc.
