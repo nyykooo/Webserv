@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:35:45 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/06/06 19:48:08 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/07/26 13:33:45 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,8 @@ class HttpRequest
 		HttpRequest(const HttpRequest& other);
 		HttpRequest& operator=(const HttpRequest& other);
 		~HttpRequest();
+
+		Configuration* _config;
 
 		// getters
 		const std::string& getMethod() const;

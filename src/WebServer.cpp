@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 20:22:14 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/26 13:37:52 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -256,15 +256,15 @@ int WebServer::receiveData(int client_fd)
 		{
 			
 			Client *client = findClient(client_fd, _clients_vec);
-			HttpRequest *request = new HttpRequest(requestBuffer);
-			Configuration* config = findConfigForRequest(*request, client_fd);
-			if (!config)
+			if (client->_request != NULL)
+				delete client->sendResponse;
+			client->_request = new HttpRequest(requestBuffer);
+			client->_request->_config = findConfigForRequest(*client->_request, client_fd);
+			if (!client->_request->_config)
 			{
 				std::cerr << "Configuração não encontrada para servidor" << std::endl;
 				return -1;
 			}
-			client->_request = request;
-			client->sendResponse = new HttpResponse(*client->_request, *config);
 		}
 		catch (const std::exception &e)
 		{
@@ -278,12 +278,12 @@ int WebServer::receiveData(int client_fd)
 void WebServer::sendData(int client_fd)
 {
 	Client *client = findClient(client_fd, _clients_vec);
-	// client->sendResponse->setResponse(response);
-	//std::cout << client->sendResponse->getResponse() << std::endl;
 
-	// std::cerr << RED << "||" << client->sendResponse.getResponse() << "||" << RESET << std::endl;
-
-    // envia a resposta ao cliente
+	int status = execMethod(client);
+	std::cout << status << std::endl;
+	if (client->sendResponse != NULL)
+		delete client->sendResponse;
+	client->sendResponse = new HttpResponse(*client->_request, *client->_request->_config);
 	const char *buf = client->sendResponse->getResponse().c_str();
 	size_t size = client->sendResponse->getResponse().size();
     int sent = send(client_fd, buf, size, 0);

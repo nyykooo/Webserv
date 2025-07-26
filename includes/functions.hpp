@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   functions.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:14:08 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/21 19:37:31 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/26 13:35:03 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,10 @@
 # define FUNCTIONS
 
 # include "headers.hpp"
+
+
+int			execMethod(Client *client);
+int			findLocation(Client *client);
 
 // ### TIMESTAMP LOGS ###
 std::string							setTimeStamp();

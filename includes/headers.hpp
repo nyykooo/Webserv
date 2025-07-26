@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   headers.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 17:43:51 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/26 13:35:37 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,6 @@
 
 
 # include "macros.hpp"
-# include "functions.hpp"
 # include "Socket.hpp"
 # include "Configuration.hpp"
 # include "LocationBlock.hpp"
@@ -47,6 +46,7 @@
 # include "WebServer.hpp"
 # include "Client.hpp"
 # include "Server.hpp"
+# include "functions.hpp"
 
 // remover depois!!!! servem para printar o hyperlink no terminal
 # include <netdb.h>
