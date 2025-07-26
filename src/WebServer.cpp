@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/26 16:30:00 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/26 20:09:30 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -284,6 +284,7 @@ void WebServer::sendData(int client_fd)
 	client->sendResponse->execMethod(client);
     // envia a resposta ao cliente
 	const char *buf = client->sendResponse->getResponse().c_str();
+	std::cout << "buf: " << buf << std::endl;
 	size_t size = client->sendResponse->getResponse().size();
     int sent = send(client_fd, buf, size, 0);
 	//int sent = send(client_fd, response.c_str(), response.size(), 0);

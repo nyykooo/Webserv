@@ -25,7 +25,7 @@ class HttpResponse {
 		// EXEC METHOD
 		void	execMethod(Client *client);
 		void	handleGET(const std::string path, const std::string root);
-		void	openFile(std::string path);
+		void	openFileNico(std::string path);
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

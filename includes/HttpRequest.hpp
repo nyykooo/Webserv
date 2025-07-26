@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/29 14:35:45 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/07/25 17:47:32 by ncampbel         ###   ########.fr       */
+/*   Created: Invalid date        by                   #+#    #+#             */
+/*   Updated: 2025/07/26 18:31:29 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include <string>
 #include <sstream> //para std::istringstream
@@ -41,6 +42,7 @@ class HttpRequest
 		~HttpRequest();
 		
 		// utils
+
 		Configuration* _config;
 
 		// getters
