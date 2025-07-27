@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/26 20:09:30 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/27 10:50:27 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -464,7 +464,7 @@ static bool checkForServerName(const std::vector<std::string> & server_names, st
 
 static Configuration *lookForConfigurations(bool numeric_host, std::string host, 
 std::map<int, std::pair<std::string, std::string> >::const_iterator client_it,
-std::vector<Configuration> configs)
+std::vector<Configuration> &configs)
 {
 	Configuration* defaultConfig = NULL;
     // Procurar configuração que corresponde ao host e servidor
