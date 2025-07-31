@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/27 10:50:27 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/29 17:12:20 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -281,10 +281,10 @@ void WebServer::sendData(int client_fd)
 	if (client->sendResponse)
 		delete client->sendResponse;
 	client->sendResponse = new HttpResponse(*client->_request, *client->_request->_config);
-	client->sendResponse->execMethod(client);
+	//client->sendResponse->execMethod(client);
     // envia a resposta ao cliente
 	const char *buf = client->sendResponse->getResponse().c_str();
-	std::cout << "buf: " << buf << std::endl;
+	//std::cout << "buf: " << buf << std::endl;
 	size_t size = client->sendResponse->getResponse().size();
     int sent = send(client_fd, buf, size, 0);
 	//int sent = send(client_fd, response.c_str(), response.size(), 0);

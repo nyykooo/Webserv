@@ -2,12 +2,18 @@
 
 class LocationBlock;
 
+struct errorPageRule {
+	int			error;
+	std::string	errorPath;
+	int			newError = -1;
+};
+
 class Configuration {
 	private:
 		static std::set<std::pair<std::string, std::string> >	_allHosts;
 		std::set<std::pair<std::string, std::string> >			_host;
 		std::vector<std::string>								_serverName;
-		std::set<std::pair<int, std::string> >					_errorPage;
+		std::set<errorPageRule>									_errorPage;
 		std::string												_root;
 		std::vector<std::string>								_defaultFiles;
 		long													_requestSize;
@@ -19,7 +25,7 @@ class Configuration {
 		// SETTERS
 		void							setHost(const std::string& host, const std::string& port);
 		void							setServerName(const std::string& serverName);
-		void							setErrorPage(int errorPage, const std::string& errorPagePath);
+		void							setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
 		void							setRoot(const std::string& root);
 		void							setRequestSize(long reqSize);
 		static void						incrementCurlyBracketsCount(void);
@@ -30,7 +36,7 @@ class Configuration {
 		static std::set<std::pair<std::string, std::string> >&	getAllHosts(void);
 		const std::set<std::pair<std::string, std::string> >&	getHost(void) const;
 		const std::vector<std::string>&							getServerName(void) const;
-		const std::set<std::pair<int, std::string> >&			getErrorPage(void) const;
+		const std::set<errorPageRule>&							getErrorPage(void) const;
 		const std::string&										getRoot(void) const;
 		const std::vector<std::string>&							getDefaultFiles(void) const;
 		long													getRequestSize(void) const;

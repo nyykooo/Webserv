@@ -23,9 +23,13 @@ class HttpResponse {
 		const std::string&	getResBody(void) const;
 
 		// EXEC METHOD
-		void	execMethod(Client *client);
+		void	execMethod(const HttpRequest& request);
 		void	handleGET(const std::string path, const std::string root);
 		void	openFileNico(std::string path);
+		const std::string checkStatusCode(const Configuration& config);
+		std::string	header(const std::string& status);
+		int		openFile(const Configuration& config);
+		const std::string httpFileContent(int errorPage);
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

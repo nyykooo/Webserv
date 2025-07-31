@@ -61,11 +61,17 @@ void	Configuration::setServerName(const std::string& serverName) {
 	this->_serverName.push_back(serverName);
 }
 
-void	Configuration::setErrorPage(int errorPage, const std::string& errorPagePath) {
-	this->_errorPage.insert(std::pair<int, std::string>(errorPage, errorPagePath));
+void	Configuration::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
+
+	errorPageRule rule;
+	rule.error = errorPage;
+	rule.errorPath = errorPagePath;
+	rule.newError = newStatus;
+
+	this->_errorPage.insert(rule);
 }
 
-const std::set<std::pair<int, std::string> >& Configuration::getErrorPage(void) const {
+const std::set<errorPageRule>& Configuration::getErrorPage(void) const {
 	return (this->_errorPage);
 }
 
@@ -213,13 +219,23 @@ static void	parseErrorPage(std::string& line, Configuration& confserv) {
 		words.push_back(word);
 	if (words.size() < 2)
 		throw Configuration::WrongConfigFileException("no error page defined");
-	for (size_t i = 0; i < words.size() - 1; i++) {
+	if (words.size() == 2) {
+		errno = 0;
+		char	*endptr;
+		long value = std::strtol(words[0].c_str(), &endptr, 10);
+		if (errno == ERANGE || *endptr || value > 599 || value < 300)
+			throw Configuration::WrongConfigFileException("value \"" + words[0] + "\" must be between 300 and 599");
+		confserv.setErrorPage(static_cast<int>(value), words.back(), -1);
+		return ;
+	}
+	long newStatusCode = -1;
+	for (size_t i = 0; i < words.size() - 2; i++) {
 		errno = 0;
 		char	*endptr;
 		long value = std::strtol(words[i].c_str(), &endptr, 10);
 		if (errno == ERANGE || *endptr || value > 599 || value < 300)
 			throw Configuration::WrongConfigFileException("value \"" + words[i] + "\" must be between 300 and 599");
-		confserv.setErrorPage(static_cast<int>(value), words.back());
+		confserv.setErrorPage(static_cast<int>(value), words.back(), newStatusCode);
 	}
 }
 

@@ -57,23 +57,14 @@ void	HttpResponse::handleGET(const std::string path, const std::string root)
 	_resStatus = 200;
 }
 
-void	HttpResponse::execMethod(Client *client)
+void	HttpResponse::execMethod(const HttpRequest& req)
 {
-	HttpRequest	*req = client->_request;
-	std::string	method = req->getMethod();
+	std::string	method = req.getMethod();
 
 	if (method == "GET")
-		handleGET(req->getPath(), req->_config->getRoot());
+		handleGET(req.getPath(), req._config->getRoot());
 	else
 		_resStatus = 400;
-	
-    std::ostringstream header;
-    header << "HTTP/1.1 " << _resStatus << " OK\r\n";
-    header << "Content-Type: text/html\r\n";
-    header << "Content-Length: " << _resBody.size() << "\r\n";
-    header << "\r\n";
-	_resHeader = header.str();
-	_response = _resHeader + _resBody;
 }
 
 static const std::string& http_error_404_page =
@@ -110,7 +101,7 @@ static const std::string& http_error_413_page =
 "</body>"
 "</html>";
 
-const std::string httpFileContent(int errorPage) {
+const std::string HttpResponse::httpFileContent(int errorPage) {
 	
 	char buffer[BUFFER_SIZE];
 	std::string result;
@@ -120,18 +111,19 @@ const std::string httpFileContent(int errorPage) {
 		result.append(buffer, bytesRead);
 	}
 	if (bytesRead < 0) {
+		_resStatus = 404;
         return http_error_404_page;
 	}
 	return (result);
 }
 
-static int openFile(const Configuration& config, int statusCode) {
+int HttpResponse::openFile(const Configuration& config) {
 
 	std::set<std::pair<int, std::string> >::const_iterator it = config.getErrorPage().begin();
 
 	while (it != config.getErrorPage().end()) {
-		std::cout << it->first << it->second << std::endl;
-		if (it->first == statusCode)
+		//std::cout << it->first << it->second << std::endl;
+		if (it->first == _resStatus)
 			break ;
 		it++;
 	}
@@ -144,15 +136,33 @@ static int openFile(const Configuration& config, int statusCode) {
 	return (configFile);
 }
 
-static const std::string checkStatusCode(const Configuration& config, int statusCode) {
-	int	errorPage;
+std::string	HttpResponse::header(const std::string& status) {
 
-	switch (statusCode) {
+    std::ostringstream header;
+    header << "HTTP/1.1 " << status << CRLF;
+    header << "Content-Type: text/html" CRLF;
+    header << "Content-Length: " << _resBody.size() << CRLF;
+    header << CRLF;
+	_resHeader = header.str();
+	_response = _resHeader + _resBody;
+
+	return (header.str());
+}
+
+const std::string HttpResponse::checkStatusCode(const Configuration& config) {
+	int	errorPage;
+	std::string fileContent;
+	
+	_resStatus = 413;
+	switch (_resStatus) {
 		case 413:
-			errorPage = openFile(config, statusCode);
-			if (errorPage < 0)
-				return (http_error_404_page);
-			return (httpFileContent(errorPage));
+			errorPage = openFile(config);
+			if (errorPage < 0) {
+				_resBody = http_error_404_page;
+				return (header(ERROR_404) + _resBody);
+			}
+			_resBody = httpFileContent(errorPage);
+			return (header(ERROR_413) + _resBody);
 		default:
 			break ;
 	}
@@ -164,16 +174,10 @@ HttpResponse::HttpResponse(const HttpRequest& request, const Configuration& conf
 	long test2 = config.getRequestSize();
 	test2++;
 	std::string	pageContent;
-	//std::cout << "aqui" << std::endl;
 
-    std::ostringstream header;
-    header << "HTTP/1.1 400 Bad Request" << CRLF;
-    header << "Content-Type: text/html" << CRLF;
-    header << "Content-Length: " << http_error_404_page.size() << CRLF;
-    header << CRLF;
-
-	pageContent = checkStatusCode(config, 413);
-	setResponse(header.str() + pageContent);
+	execMethod(request);
+	pageContent = checkStatusCode(config);
+	setResponse(pageContent);
 }
 
 // ### SETTERS ###
