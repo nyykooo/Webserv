@@ -5,8 +5,20 @@ class LocationBlock;
 struct errorPageRule {
 	int			error;
 	std::string	errorPath;
-	int			newError = -1;
+	int			newError;
+		
+	// Comparador necessário para uso com std::set
+	bool operator<(const errorPageRule& other) const {
+		// Defina a regra de ordenação aqui
+		// Exemplo: ordenar primeiro por código de erro, depois por caminho
+		if (error != other.error)
+			return error < other.error;
+		if (errorPath != other.errorPath)
+			return errorPath < other.errorPath;
+		return newError < other.newError;
+	}
 };
+
 
 class Configuration {
 	private:

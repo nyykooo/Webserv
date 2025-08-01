@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/26 19:44:54 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/07/31 18:56:18 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@
 
 
 # include "macros.hpp"
+# include "structs.hpp"
 # include "Socket.hpp"
 # include "Configuration.hpp"
 # include "LocationBlock.hpp"

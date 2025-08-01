@@ -119,18 +119,18 @@ const std::string HttpResponse::httpFileContent(int errorPage) {
 
 int HttpResponse::openFile(const Configuration& config) {
 
-	std::set<std::pair<int, std::string> >::const_iterator it = config.getErrorPage().begin();
+	std::set<errorPageRule>::const_iterator it = config.getErrorPage().begin();
 
 	while (it != config.getErrorPage().end()) {
 		//std::cout << it->first << it->second << std::endl;
-		if (it->first == _resStatus)
+		if ((*it).error == _resStatus)
 			break ;
 		it++;
 	}
 	if (it == config.getErrorPage().end())
 		return (-1);
 		
-	int	configFile = open(it->second.c_str(), O_RDONLY);
+	int	configFile = open((*it).errorPath.c_str(), O_RDONLY);
 	if (configFile < 0)
 		return (-1);
 	return (configFile);
