@@ -23,6 +23,7 @@ void HttpResponse::openFileNico(std::string path)
 	if (!file.is_open())
 	{
 		std::cerr << "ERRO AO ABRIR FICHEIRO: " << strerror(errno) << std::endl;
+		_resStatus = 404;
 		return ;
 	}
 
@@ -32,6 +33,7 @@ void HttpResponse::openFileNico(std::string path)
 	_resBody = ss.str();
 	std::cout << "resBody: " << _resBody << std::endl;
 	file.close();
+	_resStatus = 200;
 }
 
 void	HttpResponse::handleGET(const std::string path, const std::string root)
@@ -43,6 +45,7 @@ void	HttpResponse::handleGET(const std::string path, const std::string root)
 	if (stat(fileName.c_str(), &st) == -1)
 	{
 		std::cerr << "stat error:" << strerror(errno) << std::endl;
+		_resStatus = 404;
 		return ;
 	}
 
@@ -54,7 +57,6 @@ void	HttpResponse::handleGET(const std::string path, const std::string root)
 		std::cout << "Link simbólico\n";
 	else
 		std::cout << "Outro tipo de arquivo\n";
-	_resStatus = 200;
 }
 
 void	HttpResponse::execMethod(const HttpRequest& req)
@@ -153,7 +155,7 @@ const std::string HttpResponse::checkStatusCode(const Configuration& config) {
 	int	errorPage;
 	std::string fileContent;
 	
-	_resStatus = 413;
+	// _resStatus = 413;
 	switch (_resStatus) {
 		case 413:
 			errorPage = openFile(config);
@@ -163,10 +165,21 @@ const std::string HttpResponse::checkStatusCode(const Configuration& config) {
 			}
 			_resBody = httpFileContent(errorPage);
 			return (header(ERROR_413) + _resBody);
+		case 404:
+			errorPage = openFile(config);
+			if (errorPage < 0) {
+				_resBody = http_error_404_page;
+				return (header(ERROR_404) + _resBody);
+			}
+			_resBody = httpFileContent(errorPage);
+			return (header(ERROR_404) + _resBody);
+		case 200:
+			return (header(HTTP_200) + _resBody);
 		default:
 			break ;
 	}
-	return http_error_413_page;
+	std::cout << "Status code not handled: " << _resStatus << std::endl;
+	return _resBody;
 }
 
 HttpResponse::HttpResponse(const HttpRequest& request, const Configuration& config) {

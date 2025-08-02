@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   macros.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/30 20:55:39 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/29 17:36:32 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/02 13:57:57 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@
 
 # define CRLF "\r\n"
 
+# define HTTP_200 "200 OK"
 # define ERROR_404 "404 Not Found"
 # define ERROR_413 "413 Request Entity Too Large"
 #endif
