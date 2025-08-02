@@ -59,12 +59,12 @@ void	HttpResponse::handleGET(const std::string path, const std::string root)
 		std::cout << "Outro tipo de arquivo\n";
 }
 
-void	HttpResponse::execMethod(const HttpRequest& req)
+void	HttpResponse::execMethod()
 {
-	std::string	method = req.getMethod();
+	std::string	method = _req.getMethod();
 
 	if (method == "GET")
-		handleGET(req.getPath(), req._config->getRoot());
+		handleGET(_req.getPath(), _conf.getRoot());
 	else
 		_resStatus = 400;
 }
@@ -119,17 +119,17 @@ const std::string HttpResponse::httpFileContent(int errorPage) {
 	return (result);
 }
 
-int HttpResponse::openFile(const Configuration& config) {
+int HttpResponse::openFile() {
 
-	std::set<ErrorPageRule>::const_iterator it = config.getErrorPage().begin();
+	std::set<ErrorPageRule>::const_iterator it = _conf.getErrorPage().begin();
 
-	while (it != config.getErrorPage().end()) {
+	while (it != _conf.getErrorPage().end()) {
 		//std::cout << it->first << it->second << std::endl;
 		if ((*it).error == _resStatus)
 			break ;
 		it++;
 	}
-	if (it == config.getErrorPage().end())
+	if (it == _conf.getErrorPage().end())
 		return (-1);
 		
 	int	configFile = open((*it).errorPath.c_str(), O_RDONLY);
@@ -151,14 +151,14 @@ std::string	HttpResponse::header(const std::string& status) {
 	return (header.str());
 }
 
-const std::string HttpResponse::checkStatusCode(const Configuration& config) {
+const std::string HttpResponse::checkStatusCode() {
 	int	errorPage;
 	std::string fileContent;
 	
 	// _resStatus = 413;
 	switch (_resStatus) {
 		case 413:
-			errorPage = openFile(config);
+			errorPage = openFile();
 			if (errorPage < 0) {
 				_resBody = http_error_404_page;
 				return (header(ERROR_404) + _resBody);
@@ -166,7 +166,7 @@ const std::string HttpResponse::checkStatusCode(const Configuration& config) {
 			_resBody = httpFileContent(errorPage);
 			return (header(ERROR_413) + _resBody);
 		case 404:
-			errorPage = openFile(config);
+			errorPage = openFile();
 			if (errorPage < 0) {
 				_resBody = http_error_404_page;
 				return (header(ERROR_404) + _resBody);
@@ -183,13 +183,15 @@ const std::string HttpResponse::checkStatusCode(const Configuration& config) {
 }
 
 HttpResponse::HttpResponse(const HttpRequest& request, const Configuration& config) {
+	_conf = config;
+	_req = request;
 	std::string test = request.getBody();
 	long test2 = config.getRequestSize();
 	test2++;
 	std::string	pageContent;
 
-	execMethod(request);
-	pageContent = checkStatusCode(config);
+	execMethod();
+	pageContent = checkStatusCode();
 	setResponse(pageContent);
 }
 

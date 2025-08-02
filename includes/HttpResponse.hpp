@@ -4,6 +4,7 @@
 #include "headers.hpp"
 
 class Client;
+class HttpRequest;
 
 class HttpResponse {
 	private:
@@ -11,6 +12,8 @@ class HttpResponse {
 		std::string		_resHeader;
 		std::string		_resBody;
 		int				_resStatus;
+		Configuration	_conf;
+		HttpRequest		_req;
 
 	public:
 
@@ -23,12 +26,12 @@ class HttpResponse {
 		const std::string&	getResBody(void) const;
 
 		// EXEC METHOD
-		void	execMethod(const HttpRequest& request);
+		void	execMethod();
 		void	handleGET(const std::string path, const std::string root);
 		void	openFileNico(std::string path);
-		const std::string checkStatusCode(const Configuration& config);
+		const std::string checkStatusCode();
 		std::string	header(const std::string& status);
-		int		openFile(const Configuration& config);
+		int		openFile();
 		const std::string httpFileContent(int errorPage);
 
 		//ORTHODOX CANONICAL FORM
