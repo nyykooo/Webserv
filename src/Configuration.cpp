@@ -63,7 +63,7 @@ void	Configuration::setServerName(const std::string& serverName) {
 
 void	Configuration::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
 
-	errorPageRule rule;
+	ErrorPageRule rule;
 	rule.error = errorPage;
 	rule.errorPath = errorPagePath;
 	rule.newError = newStatus;
@@ -71,7 +71,7 @@ void	Configuration::setErrorPage(int errorPage, const std::string& errorPagePath
 	this->_errorPage.insert(rule);
 }
 
-const std::set<errorPageRule>& Configuration::getErrorPage(void) const {
+const std::set<ErrorPageRule>& Configuration::getErrorPage(void) const {
 	return (this->_errorPage);
 }
 
