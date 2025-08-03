@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/03 18:24:15 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/03 18:34:13 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,10 +50,6 @@ int	main(int argc, char** argv)
 	std::vector<Configuration> configVector;
 	try	{
 		setup(configFile, configVector);
-		if (configVector[0].getAutoIndex() == true)
-			printLog("Autoindex enabled", GREEN);
-		else
-			printLog("Autoindex disabled", RED);
 		WebServer webServer(configVector);
 		webServer.startServer();
 		printHL();
