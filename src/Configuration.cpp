@@ -103,6 +103,19 @@ const std::vector<std::string>&	Configuration::getDefaultFiles(void) const {
 	return (this->_defaultFiles);
 }
 
+void	Configuration::setAutoIndex(const std::string& value) {
+	if (value == "on")
+		this->_autoIndex = true;
+	else if (value == "off")
+		this->_autoIndex = false;
+	else
+		throw Configuration::WrongConfigFileException("Invalid autoindex value");
+}
+
+bool	Configuration::getAutoIndex(void) const {
+	return (this->_autoIndex);
+}
+
 void	checkCurlyBrackets(std::string line) {
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
 	if (line.find('{') != std::string::npos)
@@ -307,6 +320,21 @@ void	parseDefaultFiles(const std::string& line, Configuration& confserv) {
 		confserv.setDefaultFiles(word);
 }
 
+
+void	parseAutoIndex(std::string& line, Configuration& config) {
+	std::stringstream	ss(line);
+	std::string			word;	
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (ss >> word)
+		config.setAutoIndex(word);
+	else
+		throw Configuration::WrongConfigFileException("no value in autoindex defined.");
+	if (ss >> word)
+		throw Configuration::WrongConfigFileException("too many arguments when defining autoindex.");
+}
+
 void parseServer(std::ifstream& file, Configuration& confserv) {
 	std::string	line;
 
@@ -338,6 +366,8 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 			parseRoot(line, confserv);
 		else if (word == "index")
 			parseDefaultFiles(line, confserv);
+		else if (word == "autoindex")
+			parseAutoIndex(line, confserv);
 		else if (word == "location") {
 			confserv.locations.push_back(LocationBlock());
 			parseLocationBlock(file, line, confserv.locations.back());

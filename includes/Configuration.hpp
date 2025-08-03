@@ -28,7 +28,8 @@ class Configuration {
 		std::vector<std::string>								_serverName;
 		std::set<ErrorPageRule>									_errorPage;
 		std::string												_root;
-		std::vector<std::string>								_defaultFiles;
+		std::vector<std::string>								_defaultFiles; // diretiva index
+		bool													_autoIndex;
 		long													_requestSize;
 		static int												_curlyBracketsCount;
 
@@ -38,6 +39,7 @@ class Configuration {
 		// SETTERS
 		void							setHost(const std::string& host, const std::string& port);
 		void							setServerName(const std::string& serverName);
+		void							setAutoIndex(const std::string& value);
 		void							setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
 		void							setRoot(const std::string& root);
 		void							setRequestSize(long reqSize);
@@ -48,6 +50,7 @@ class Configuration {
 		// GETTERS
 		static std::set<std::pair<std::string, std::string> >&	getAllHosts(void);
 		const std::set<std::pair<std::string, std::string> >&	getHost(void) const;
+		bool													getAutoIndex(void) const;
 		const std::vector<std::string>&							getServerName(void) const;
 		const std::set<ErrorPageRule>&							getErrorPage(void) const;
 		const std::string&										getRoot(void) const;

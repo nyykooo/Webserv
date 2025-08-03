@@ -83,9 +83,9 @@ bool	LocationBlock::getAutoIndex(void) const {
 
 void	LocationBlock::setAutoIndex(const std::string& value) {
 	if (value == "on")
-		this->_autoIndex = false;
-	else if (value == "off")
 		this->_autoIndex = true;
+	else if (value == "off")
+		this->_autoIndex = false;
 	else
 		throw Configuration::WrongConfigFileException("Invalid autoindex value");
 }
@@ -181,7 +181,7 @@ void	parseRedirect(std::string& line, LocationBlock& location) {
 
 void	parseAutoIndex(std::string& line, LocationBlock& location) {
 	std::stringstream	ss(line);
-	std::string			word;	
+	std::string			word;
 
 	checkCurlyBrackets(line);
 	ss >> word;
