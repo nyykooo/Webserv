@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/02 12:15:29 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/05 18:00:29 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@
 # include <fcntl.h>			// includes fcntl(), open(), O_RDONLY, O_WRONLY, etc.
 # include <cstdlib>			// includes std::exit(), std::atoi(), std::atof(), etc.
 # include <ctime>			// includes std::time_t and std::time()
+# include <dirent.h>		// includes opendir(), readdir(), closedir(), etc.
 # include <map>
 # include <set>
 # include <stdexcept>

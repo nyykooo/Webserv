@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/29 17:12:20 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/05 20:08:38 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -258,6 +258,11 @@ int WebServer::receiveData(int client_fd)
 			if (client->_request != NULL)
 				delete client->_request;
 			client->_request = new HttpRequest(requestBuffer);
+
+			if (_configurations[0].getAutoIndex() == true)
+				std::cout << "1 Autoindex true" << std::endl;
+			else
+				std::cout << "1 Autoindex false" << std::endl;
 			client->_request->_config = findConfigForRequest(*client->_request, client_fd);
 			if (!client->_request->_config)
 			{
@@ -280,7 +285,7 @@ void WebServer::sendData(int client_fd)
 
 	if (client->sendResponse)
 		delete client->sendResponse;
-	client->sendResponse = new HttpResponse(*client->_request, *client->_request->_config);
+	client->sendResponse = new HttpResponse(client->_request, client->_request->_config);
 	//client->sendResponse->execMethod(client);
     // envia a resposta ao cliente
 	const char *buf = client->sendResponse->getResponse().c_str();
@@ -477,6 +482,10 @@ std::vector<Configuration> &configs)
 		// entender first como ip e second como porta
 		if (host_it->first == client_it->second.first && host_it->second == client_it->second.second)
 		{
+			if ((*config_it).getAutoIndex() == true)
+				std::cout << "1 Autoindex true" << std::endl;
+			else
+				std::cout << "1 Autoindex false" << std::endl;
 			if (defaultConfig == NULL)
 				defaultConfig = &(*config_it);
 			if (numeric_host)

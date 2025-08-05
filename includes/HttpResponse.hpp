@@ -12,8 +12,8 @@ class HttpResponse {
 		std::string		_resHeader;
 		std::string		_resBody;
 		int				_resStatus;
-		Configuration	_conf;
-		HttpRequest		_req;
+		Configuration	*_conf;
+		HttpRequest		*_req;
 
 	public:
 
@@ -28,7 +28,8 @@ class HttpResponse {
 		// EXEC METHOD
 		void	execMethod();
 		void	handleGET(const std::string path, const std::string root);
-		void	openFileNico(std::string path);
+		void	openReg(std::string path);
+		void	openDir(std::string path);
 		const std::string checkStatusCode();
 		std::string	header(const std::string& status);
 		int		openFile();
@@ -36,7 +37,7 @@ class HttpResponse {
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();
-		HttpResponse(const HttpRequest& request, const Configuration& config);
+		HttpResponse(HttpRequest *request, Configuration *config);
 		~HttpResponse();
 		HttpResponse(const HttpResponse& other);
 		HttpResponse operator=(const HttpResponse& other);

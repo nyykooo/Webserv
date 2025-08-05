@@ -17,7 +17,7 @@ HttpResponse::~HttpResponse() {}
 
 // ### EXEC METHOD ###
 
-void HttpResponse::openFileNico(std::string path)
+void HttpResponse::openReg(std::string path)
 {
 	std::ifstream file(path.c_str());
 	if (!file.is_open())
@@ -36,6 +36,48 @@ void HttpResponse::openFileNico(std::string path)
 	_resStatus = 200;
 }
 
+static std::string createDirIndex(std::string path)
+{
+	std::string dirIndex = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Directory Index</title></head><body><h1>Directory Index for " + path + "</h1><ul>";
+
+	DIR* dir = opendir(path.c_str());
+	if (!dir) {
+		std::cerr << "Failed to open directory: " << strerror(errno) << std::endl;
+		return "<p>Error opening directory.</p>";
+	}
+
+	struct dirent* entry;
+	while ((entry = readdir(dir)) != NULL) {
+		if (entry->d_name[0] != '.') { // Skip hidden files
+			dirIndex += "<li>" + std::string(entry->d_name) + "</li>";
+		}
+	}
+
+	dirIndex += "</ul></body></html>";
+	closedir(dir);
+	return dirIndex;
+}
+
+void	HttpResponse::openDir(std::string path)
+{
+	if (_conf->getAutoIndex() == true)
+		std::cout << "Autoindex true" << std::endl;
+	else
+		std::cout << "Autoindex false" << std::endl;
+	switch (_conf->getAutoIndex())
+	{
+		case false:
+			std::cerr << "AutoIndex is disabled for path: " << path << std::endl;
+			_resStatus = 404; // mudar para 403
+			return ;
+		case true:
+			_resBody = createDirIndex(path);
+			_resStatus = 200;
+			std::cout << "Directory index created for: " << path << std::endl;
+			break;
+	}
+}
+
 void	HttpResponse::handleGET(const std::string path, const std::string root)
 {
 	std::string fileName = "./" + root + path;
@@ -50,9 +92,12 @@ void	HttpResponse::handleGET(const std::string path, const std::string root)
 	}
 
 	if (S_ISREG(st.st_mode))
-		openFileNico(fileName);
+		openReg(fileName);
 	else if (S_ISDIR(st.st_mode))
-		std::cout << "Diretório\n";
+	{
+		std::cout << "Diretório encontrado: " << fileName << std::endl;
+		openDir(fileName);
+	}
 	else if (S_ISLNK(st.st_mode))
 		std::cout << "Link simbólico\n";
 	else
@@ -61,10 +106,10 @@ void	HttpResponse::handleGET(const std::string path, const std::string root)
 
 void	HttpResponse::execMethod()
 {
-	std::string	method = _req.getMethod();
+	std::string	method = _req->getMethod();
 
 	if (method == "GET")
-		handleGET(_req.getPath(), _conf.getRoot());
+		handleGET(_req->getPath(), _conf->getRoot());
 	else
 		_resStatus = 400;
 }
@@ -121,15 +166,15 @@ const std::string HttpResponse::httpFileContent(int errorPage) {
 
 int HttpResponse::openFile() {
 
-	std::set<ErrorPageRule>::const_iterator it = _conf.getErrorPage().begin();
+	std::set<ErrorPageRule>::const_iterator it = _conf->getErrorPage().begin();
 
-	while (it != _conf.getErrorPage().end()) {
+	while (it != _conf->getErrorPage().end()) {
 		//std::cout << it->first << it->second << std::endl;
 		if ((*it).error == _resStatus)
 			break ;
 		it++;
 	}
-	if (it == _conf.getErrorPage().end())
+	if (it == _conf->getErrorPage().end())
 		return (-1);
 		
 	int	configFile = open((*it).errorPath.c_str(), O_RDONLY);
@@ -182,11 +227,11 @@ const std::string HttpResponse::checkStatusCode() {
 	return _resBody;
 }
 
-HttpResponse::HttpResponse(const HttpRequest& request, const Configuration& config) {
+HttpResponse::HttpResponse(HttpRequest *request, Configuration *config) {
 	_conf = config;
 	_req = request;
-	std::string test = request.getBody();
-	long test2 = config.getRequestSize();
+	std::string test = request->getBody();
+	long test2 = config->getRequestSize();
 	test2++;
 	std::string	pageContent;
 

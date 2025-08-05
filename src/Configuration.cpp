@@ -5,7 +5,7 @@ Configuration::Configuration(): _requestSize(1000000) {} // we need to put here 
 Configuration::~Configuration() {}
 
 Configuration::Configuration(const Configuration& other): _host(other._host), _serverName(other._serverName), _errorPage(other._errorPage),
-											_root(other._root), _requestSize(other._requestSize){
+											_root(other._root), _defaultFiles(other._defaultFiles), _autoIndex(other._autoIndex) ,_requestSize(other._requestSize){
 }
 
 Configuration&	Configuration::operator=(const Configuration& other) {
@@ -14,6 +14,8 @@ Configuration&	Configuration::operator=(const Configuration& other) {
 		_serverName = other._serverName;
 		_errorPage = other._errorPage;
 		_root = other._root;
+		_defaultFiles = other._defaultFiles;
+		_autoIndex = other._autoIndex;
 		_requestSize = other._requestSize;
 	}
 	return (*this);
