@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/05 20:08:38 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/06 20:02:08 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -259,10 +259,6 @@ int WebServer::receiveData(int client_fd)
 				delete client->_request;
 			client->_request = new HttpRequest(requestBuffer);
 
-			if (_configurations[0].getAutoIndex() == true)
-				std::cout << "1 Autoindex true" << std::endl;
-			else
-				std::cout << "1 Autoindex false" << std::endl;
 			client->_request->_config = findConfigForRequest(*client->_request, client_fd);
 			if (!client->_request->_config)
 			{

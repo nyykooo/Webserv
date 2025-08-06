@@ -60,20 +60,31 @@ static std::string createDirIndex(std::string path)
 
 void	HttpResponse::openDir(std::string path)
 {
-	if (_conf->getAutoIndex() == true)
-		std::cout << "Autoindex true" << std::endl;
-	else
-		std::cout << "Autoindex false" << std::endl;
+	
+
+	for (std::vector<std::string>::const_iterator it = _conf->getDefaultFiles().begin(); it != _conf->getDefaultFiles().end(); ++it)
+	{
+		std::string filePath = path + "/" + *it;
+		std::ifstream file(filePath.c_str());
+		if (file.is_open())
+		{
+			std::stringstream ss;
+			ss << file.rdbuf();
+			_resBody = ss.str();
+			file.close();
+			_resStatus = 200;
+			return ;
+		}
+	}
+
 	switch (_conf->getAutoIndex())
 	{
 		case false:
-			std::cerr << "AutoIndex is disabled for path: " << path << std::endl;
 			_resStatus = 404; // mudar para 403
 			return ;
 		case true:
 			_resBody = createDirIndex(path);
 			_resStatus = 200;
-			std::cout << "Directory index created for: " << path << std::endl;
 			break;
 	}
 }
