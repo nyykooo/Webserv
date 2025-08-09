@@ -139,8 +139,7 @@ void	HttpResponse::execMethod()
 {
 	std::string	method = _req->getMethod();
 
-	LocationBlock* location = checkLocationBlock();
-	(void)location;
+	_loc = checkLocationBlock();
 	if (method == "GET")
 		handleGET(_req->getPath(), _conf->getRoot());
 	else

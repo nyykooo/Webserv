@@ -14,6 +14,7 @@ class HttpResponse {
 		int				_resStatus;
 		Configuration	*_conf;
 		HttpRequest		*_req;
+		LocationBlock	*_loc;
 
 	public:
 

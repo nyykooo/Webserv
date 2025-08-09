@@ -121,6 +121,34 @@ bool	Configuration::getAutoIndex(void) const {
 	return (this->_autoIndex);
 }
 
+void	Configuration::setRedirectStatusCode(const std::string& statusCode) {
+	_redirectStatusCode = statusCode;
+}
+
+const std::string&		Configuration::getStatusCode(void) const {
+	return (_redirectStatusCode);
+}
+
+void	Configuration::setNewLocation(const std::string& newLocation) {
+	_newLocation = newLocation;
+}
+
+const std::string& Configuration::getNewLocation(void) const {
+	return (this->_newLocation);
+}
+
+void	Configuration::setAllowedMethods(const std::string& location) {
+	_allowedMethods.push_back(location);
+}
+
+const std::vector<std::string>&	Configuration::getMethods(void) const {
+	return (this->_allowedMethods);
+}
+
+void	Configuration::removeAllowedMethods(void) {
+	_allowedMethods.clear();
+}
+
 void	checkCurlyBrackets(std::string line) {
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
 	if (line.find('{') != std::string::npos)
@@ -364,6 +392,48 @@ void	parseAutoIndex(std::string& line, Configuration& config) {
 		throw Configuration::WrongConfigFileException("too many arguments when defining autoindex.");
 }
 
+void	parseRedirect(std::string& line, Configuration& config) {
+	std::stringstream	ss(line);
+	std::string			word;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (!(ss >> word))
+		throw Configuration::WrongConfigFileException("wrong syntax in redirect line.");
+	config.setRedirectStatusCode(word);
+	if (!(ss >> word))
+		throw Configuration::WrongConfigFileException("no location defined in redirect line.");
+	config.setNewLocation(word);
+	if (ss >> word)
+		throw Configuration::WrongConfigFileException("too many arguments when defining redirect.");
+}
+
+void	parseAllowedMethods(std::string& line, Configuration& config) {
+	std::stringstream			ss(line);
+	std::string					word;
+	std::vector<std::string>	methods;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	while (ss >> word) {
+		methods.push_back(word);
+	}
+	if (methods.empty())
+		throw Configuration::WrongConfigFileException("wrong syntax in allowed_methods.");
+	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
+		if (*it != "GET" && *it != "POST" && *it != "DELETE")
+			throw Configuration::WrongConfigFileException(*it + "Invalid method");
+	}
+	config.removeAllowedMethods();
+	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
+		config.setAllowedMethods(*it);
+	}
+
+/* 	for (std::vector<std::string>::const_iterator it = location.getMethods().begin(); it != location.getMethods().end(); it++) {
+		std::cout << *it << std::endl;
+	} */
+}
+
 void parseServer(std::ifstream& file, Configuration& confserv) {
 	std::string	line;
 
@@ -397,6 +467,10 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 			parseDefaultFiles(line, confserv);
 		else if (word == "autoindex")
 			parseAutoIndex(line, confserv);
+		else if (word == "allowed_methods")
+			parseAllowedMethods(line, confserv);
+		else if (word == "return")
+			parseRedirect(line, confserv);
 		else if (word == "location") {
 			confserv.locations.push_back(LocationBlock());
 			parseLocationBlock(file, line, confserv.locations.back());
