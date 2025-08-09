@@ -60,8 +60,6 @@ static std::string createDirIndex(std::string path)
 
 void	HttpResponse::openDir(std::string path)
 {
-	
-
 	for (std::vector<std::string>::const_iterator it = _conf->getDefaultFiles().begin(); it != _conf->getDefaultFiles().end(); ++it)
 	{
 		std::string filePath = path + "/" + *it;
@@ -115,10 +113,34 @@ void	HttpResponse::handleGET(const std::string path, const std::string root)
 		std::cout << "Outro tipo de arquivo\n";
 }
 
+LocationBlock* HttpResponse::checkLocationBlock() {
+	std::vector<LocationBlock>::iterator it; 
+	size_t			longestMatch;
+	LocationBlock	*tempLocation = NULL;
+
+	it = _conf->locations.begin();
+	longestMatch = 0;
+	while (it != _conf->locations.end())
+	{
+		const std::string&	locationPath = it->getLocation();
+		const std::string&	requestPath = _req->getPath();
+		if (requestPath.compare(0, locationPath.size(), locationPath) == 0) {
+			if (locationPath.size() > longestMatch) {
+				longestMatch = locationPath.size();
+				tempLocation = &(*it);
+			}
+		}
+		it++;
+	}
+	return (tempLocation);
+}
+
 void	HttpResponse::execMethod()
 {
 	std::string	method = _req->getMethod();
 
+	LocationBlock* location = checkLocationBlock();
+	(void)location;
 	if (method == "GET")
 		handleGET(_req->getPath(), _conf->getRoot());
 	else
@@ -163,7 +185,6 @@ const std::string HttpResponse::httpFileContent(int errorPage) {
 	
 	char buffer[BUFFER_SIZE];
 	std::string result;
-
 	ssize_t bytesRead;
 	while ((bytesRead = read(errorPage, buffer, BUFFER_SIZE)) > 0) {
 		result.append(buffer, bytesRead);
@@ -180,7 +201,6 @@ int HttpResponse::openFile() {
 	std::set<ErrorPageRule>::const_iterator it = _conf->getErrorPage().begin();
 
 	while (it != _conf->getErrorPage().end()) {
-		//std::cout << it->first << it->second << std::endl;
 		if ((*it).error == _resStatus)
 			break ;
 		it++;
@@ -241,10 +261,9 @@ const std::string HttpResponse::checkStatusCode() {
 HttpResponse::HttpResponse(HttpRequest *request, Configuration *config) {
 	_conf = config;
 	_req = request;
-	std::string test = request->getBody();
-	long test2 = config->getRequestSize();
-	test2++;
 	std::string	pageContent;
+
+
 
 	execMethod();
 	pageContent = checkStatusCode();

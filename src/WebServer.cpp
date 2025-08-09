@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/06 20:02:08 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/08 13:32:54 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,13 +31,13 @@ WebServer::WebServer()
 WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(conf)
 {
 	initEpoll();
-	_events = new struct epoll_event[MAX_EVENTS];
+	//_events = new struct epoll_event[MAX_EVENTS];
 
 	// _events.resize(MAX_EVENTS); // Redimensiona o vetor de eventos para o tamanho máximo
 	_events = new struct epoll_event[MAX_EVENTS]; // Aloca memória para o vetor de eventos
 
 	std::set<std::pair<std::string, std::string> >::const_iterator it;
-	for (it = conf[0].getAllHosts().begin(); it != conf[0].getAllHosts().end(); ++it) 
+	for (it = _configurations[0].getAllHosts().begin(); it != conf[0].getAllHosts().end(); ++it) 
 	{
 		Server *server = new Server(it->first, it->second);
 		if (server) {
@@ -281,6 +281,8 @@ void WebServer::sendData(int client_fd)
 
 	if (client->sendResponse)
 		delete client->sendResponse;
+	
+
 	client->sendResponse = new HttpResponse(client->_request, client->_request->_config);
 	//client->sendResponse->execMethod(client);
     // envia a resposta ao cliente

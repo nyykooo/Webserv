@@ -34,6 +34,7 @@ class HttpResponse {
 		std::string	header(const std::string& status);
 		int		openFile();
 		const std::string httpFileContent(int errorPage);
+		LocationBlock*	checkLocationBlock();
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

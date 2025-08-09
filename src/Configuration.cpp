@@ -5,7 +5,8 @@ Configuration::Configuration(): _requestSize(1000000) {} // we need to put here 
 Configuration::~Configuration() {}
 
 Configuration::Configuration(const Configuration& other): _host(other._host), _serverName(other._serverName), _errorPage(other._errorPage),
-											_root(other._root), _defaultFiles(other._defaultFiles), _autoIndex(other._autoIndex) ,_requestSize(other._requestSize){
+											_root(other._root), _defaultFiles(other._defaultFiles), _autoIndex(other._autoIndex),
+											_requestSize(other._requestSize), locations(other.locations){
 }
 
 Configuration&	Configuration::operator=(const Configuration& other) {
@@ -17,6 +18,7 @@ Configuration&	Configuration::operator=(const Configuration& other) {
 		_defaultFiles = other._defaultFiles;
 		_autoIndex = other._autoIndex;
 		_requestSize = other._requestSize;
+		locations = other.locations;
 	}
 	return (*this);
 }
@@ -70,6 +72,7 @@ void	Configuration::setErrorPage(int errorPage, const std::string& errorPagePath
 	rule.errorPath = errorPagePath;
 	rule.newError = newStatus;
 
+	//std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
 	this->_errorPage.insert(rule);
 }
 
@@ -223,13 +226,36 @@ void	parseHost(std::string& line, Configuration& confserv) {
 		throw Configuration::WrongConfigFileException("no host mentioned.");
 }
 
+static long checkNewStatus(std::string word, const std::string& lastWord, Configuration& confserv) {
+	long status;
+	long value;
+	errno = 0;
+	char	*endptr;
+
+	status = -1;
+	if (word[0] == '=') {
+		word = word.substr(1, word.size());
+		status = std::strtol(word.c_str(), &endptr, 10);
+		if (errno == ERANGE || *endptr)
+			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
+		return (status);
+	}
+	value = std::strtol(word.c_str(), &endptr, 10);
+	if (errno == ERANGE || *endptr || value > 599 || value < 300)
+		throw Configuration::WrongConfigFileException("value \"" + word + "\" must be between 300 and 599");
+	confserv.setErrorPage(static_cast<int>(value), lastWord, status);
+	return (status);
+}
+
 static void	parseErrorPage(std::string& line, Configuration& confserv) {
 	std::stringstream 			ss(line);
 	std::string					word;
 	std::vector<std::string>	words;
+	long						newStatusCode;
 
 	checkCurlyBrackets(line);
 	ss >> word;
+	newStatusCode = -1;
 	while (ss >> word)
 		words.push_back(word);
 	if (words.size() < 2)
@@ -243,7 +269,8 @@ static void	parseErrorPage(std::string& line, Configuration& confserv) {
 		confserv.setErrorPage(static_cast<int>(value), words.back(), -1);
 		return ;
 	}
-	long newStatusCode = -1;
+	int index = words.size() - 2;
+	newStatusCode = checkNewStatus(words[index], words.back(), confserv);
 	for (size_t i = 0; i < words.size() - 2; i++) {
 		errno = 0;
 		char	*endptr;
@@ -423,5 +450,10 @@ void	setup(const char* file, std::vector<Configuration>& confserv) {
 /* 	std::set<std::pair<std::string, std::string> >::iterator it;
 	for (it = Configuration::getAllHosts().begin(); it != Configuration::getAllHosts().end(); it++) {
 		std::cout << GREEN << "ip: " << it->first << " porta: " << it->second << std::endl;
+	} */
+/* 	std::vector<LocationBlock> loc = confserv[0].locations;
+	//std::cout << loc[0].getLocation() << std::endl;
+	for (std::vector<LocationBlock>::iterator it = loc.begin(); it != loc.end(); it++)   {
+		std::cout << "location: " << it->getLocation() << std::endl;
 	} */
 }
