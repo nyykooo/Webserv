@@ -31,21 +31,29 @@ class Configuration {
 		std::vector<std::string>								_defaultFiles; // diretiva index
 		bool													_autoIndex;
 		long													_requestSize;
+		std::string												_redirectStatusCode;
+		std::string												_newLocation;
+		std::vector<std::string>								_allowedMethods;
 		static int												_curlyBracketsCount;
 
 	public:
 		std::vector<LocationBlock>			locations;
 
 		// SETTERS
-		void							setHost(const std::string& host, const std::string& port);
-		void							setServerName(const std::string& serverName);
-		void							setAutoIndex(const std::string& value);
-		void							setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
-		void							setRoot(const std::string& root);
-		void							setRequestSize(long reqSize);
-		static void						incrementCurlyBracketsCount(void);
-		static void						decrementCurlyBracketsCount(void);
-		void							setDefaultFiles(const std::string& index);
+		void								setHost(const std::string& host, const std::string& port);
+		void								setServerName(const std::string& serverName);
+		void								setAutoIndex(const std::string& value);
+		void								setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
+		void								setRoot(const std::string& root);
+		void								setRequestSize(long reqSize);
+		static void							incrementCurlyBracketsCount(void);
+		static void							decrementCurlyBracketsCount(void);
+		void								setDefaultFiles(const std::string& index);
+		void								setRedirectStatusCode(const std::string& statusCode);
+		void								setNewLocation(const std::string& newLocation);
+		void								setAllowedMethods(const std::string& method);
+		const std::vector<std::string>&		getMethods(void) const;
+		void								removeAllowedMethods(void);
 
 		// GETTERS
 		static std::set<std::pair<std::string, std::string> >&	getAllHosts(void);
@@ -57,6 +65,8 @@ class Configuration {
 		const std::vector<std::string>&							getDefaultFiles(void) const;
 		long													getRequestSize(void) const;
 		static int												getCurlyBracketsCount(void);
+		const std::string&										getStatusCode(void) const;
+		const std::string&										getNewLocation(void) const;
 
 		// ORTHODOX CANONICAL FORM 
 		
