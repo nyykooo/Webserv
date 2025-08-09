@@ -89,7 +89,18 @@ void	HttpResponse::openDir(std::string path)
 
 void	HttpResponse::handleGET(const std::string path, const std::string root)
 {
-	std::string fileName = "./" + root + path;
+	std::string locPath;
+	if (_loc != NULL){
+		size_t locIndex = path.find(_loc->getLocation());
+		if (locIndex == 0)
+		{
+			locPath = path.substr(_loc->getLocation().size());
+			if (locPath[0] == '/')
+				locPath.erase(0, 1);
+		}
+	}
+
+	std::string fileName = "./" + root + locPath;
 	std::cout << "GET file: " << fileName << std::endl;
 
 	struct stat st;
@@ -137,14 +148,32 @@ LocationBlock* HttpResponse::checkLocationBlock() {
 
 void	HttpResponse::execMethod()
 {
+	bool methodFound = false;
+	std::string root;
 	std::string	method = _req->getMethod();
+	_loc = checkLocationBlock();
 
-	LocationBlock* location = checkLocationBlock();
-	(void)location;
-	if (method == "GET")
-		handleGET(_req->getPath(), _conf->getRoot());
+	if (_loc) {
+		std::vector<std::string>::const_iterator it;
+
+		for (it = _loc->getMethods().begin(); it != _loc->getMethods().end(); ++it) {
+			if (*it == method)
+				methodFound = true;
+		}
+		if (methodFound == false)
+		{
+			_resStatus = 405; // Method Not Allowed
+			return ;
+		}
+		root = _loc->getRoot();
+	}
 	else
-		_resStatus = 400;
+		root = _conf->getRoot();
+
+	if (method == "GET")
+		handleGET(_req->getPath(), root);
+
+	_resStatus = 400;
 }
 
 static const std::string& http_error_404_page =
