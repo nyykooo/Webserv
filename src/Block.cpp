@@ -6,13 +6,13 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/10 13:08:44 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/10 16:08:05 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"
 
-Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode("")
+Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1)
 {
 }
 
@@ -93,10 +93,10 @@ void Block::removeAllowedMethods(void)
 	_allowedMethods.clear();
 }
 
-void Block::setRedirectStatusCode(const std::string& statusCode)
-{
+void	Block::setRedirectStatusCode(int statusCode) {
 	_redirectStatusCode = statusCode;
 }
+
 
 // GETTERS
 
@@ -125,8 +125,6 @@ const std::vector<std::string>& Block::getMethods(void) const
 	return _allowedMethods;
 }
 
-const std::string &Block::getRedirectStatusCode(void) const
-{
-	return _redirectStatusCode;
+int Block::getRedirectStatusCode(void) const {
+	return (_redirectStatusCode);
 }
-

@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:26 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/10 12:59:21 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/10 16:07:21 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ class Block
 		std::string					_newLocation; // block
 		std::vector<std::string>	_defaultFiles; // block
 		std::vector<std::string>	_allowedMethods; // block
-		std::string					_redirectStatusCode; // block
+		int							_redirectStatusCode; // block
 		
 	public:
 		// ORTHODOX CANONICAL FORM
@@ -39,7 +39,7 @@ class Block
 		void setDefaultFiles(const std::string& index);
 		void setAllowedMethods(const std::string& method);
 		void removeAllowedMethods(void);
-		void setRedirectStatusCode(const std::string& statusCode);
+		void setRedirectStatusCode(const int statusCode);
 		
 		// GETTERS
 		const std::string& getRoot(void) const;
@@ -48,7 +48,7 @@ class Block
 		const std::vector<std::string>& getDefaultFiles(void) const;
 		const std::vector<std::string>& getMethods(void) const;
 		const std::string& getStatusCode(void) const;
-		const std::string& getRedirectStatusCode(void) const;
+		int getRedirectStatusCode(void) const;
 };
 
 

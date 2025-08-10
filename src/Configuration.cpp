@@ -210,7 +210,7 @@ void	parseHost(std::string& line, Configuration& confserv) {
 }
 
 static long checkNewStatus(std::string word, const std::string& lastWord, Configuration& confserv) {
-	long status;
+	long status = -1;
 	long value;
 	errno = 0;
 	char	*endptr;
@@ -219,7 +219,8 @@ static long checkNewStatus(std::string word, const std::string& lastWord, Config
 	if (word[0] == '=') {
 		word = word.substr(1, word.size());
 		status = std::strtol(word.c_str(), &endptr, 10);
-		if (errno == ERANGE || *endptr)
+		std::cout << status << std::endl;
+		if (errno == ERANGE || *endptr || status < 0 || word.empty())
 			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
 		return (status);
 	}
@@ -350,12 +351,18 @@ void	parseAutoIndex(std::string& line, Configuration& config) {
 void	parseRedirect(std::string& line, Configuration& config) {
 	std::stringstream	ss(line);
 	std::string			word;
+	long				value;
+	char				*endptr;
 
+	errno = 0;
 	checkCurlyBrackets(line);
 	ss >> word;
 	if (!(ss >> word))
 		throw Configuration::WrongConfigFileException("wrong syntax in redirect line.");
-	config.setRedirectStatusCode(word);
+	value = std::strtol(word.c_str(), &endptr, 10);
+	if (errno == ERANGE || *endptr || value > 599 || value < 100)
+		throw Configuration::WrongConfigFileException("value \"" + word + "\" must be between 300 and 599");
+	config.setRedirectStatusCode(value);
 	if (!(ss >> word))
 		throw Configuration::WrongConfigFileException("no location defined in redirect line.");
 	config.setNewLocation(word);

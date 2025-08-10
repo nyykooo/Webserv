@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   macros.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/30 20:55:39 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/02 13:57:57 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/10 14:44:38 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,4 +33,6 @@
 # define HTTP_200 "200 OK"
 # define ERROR_404 "404 Not Found"
 # define ERROR_413 "413 Request Entity Too Large"
+# define ERROR_405 "405 Method Not Allowed"
+
 #endif
