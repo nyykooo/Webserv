@@ -1,0 +1,132 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Block.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
+/*   Updated: 2025/08/10 13:08:44 by ncampbel         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../includes/headers.hpp"
+
+Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode("")
+{
+}
+
+Block::Block(const Block& other)
+{
+	_root = other._root;
+	_autoIndex = other._autoIndex;
+	_newLocation = other._newLocation;
+	_defaultFiles = other._defaultFiles;
+	_allowedMethods = other._allowedMethods;
+	_redirectStatusCode = other._redirectStatusCode;
+}
+
+Block::~Block()
+{
+}
+
+Block &Block::operator=(const Block &other)
+{
+	if (this != &other)
+	{
+		_root = other._root;
+		_autoIndex = other._autoIndex;
+		_newLocation = other._newLocation;
+		_defaultFiles = other._defaultFiles;
+		_allowedMethods = other._allowedMethods;
+		_redirectStatusCode = other._redirectStatusCode;
+	}
+	return *this;
+}
+
+// SETTERS
+
+void Block::setRoot(const std::string& root)
+{
+	_root = root;
+}
+
+void Block::setAutoIndex(const std::string& value)
+{
+	if (value == "on")
+		_autoIndex = true;
+	else if (value == "off")
+		_autoIndex = false;
+	else
+		throw std::invalid_argument("Invalid value for autoindex: " + value);
+}
+
+void Block::setNewLocation(const std::string& newLocation)
+{
+	_newLocation = newLocation;
+}
+
+void Block::setDefaultFiles(const std::string& index)
+{
+	std::istringstream iss(index);
+	std::string file;
+	while (std::getline(iss, file, ' '))
+	{
+		if (!file.empty())
+			_defaultFiles.push_back(file);
+	}
+}
+
+void Block::setAllowedMethods(const std::string& method)
+{
+	std::istringstream iss(method);
+	std::string m;
+	while (std::getline(iss, m, ' '))
+	{
+		if (!m.empty())
+			_allowedMethods.push_back(m);
+	}
+}
+
+void Block::removeAllowedMethods(void)
+{
+	_allowedMethods.clear();
+}
+
+void Block::setRedirectStatusCode(const std::string& statusCode)
+{
+	_redirectStatusCode = statusCode;
+}
+
+// GETTERS
+
+const std::string &Block::getRoot(void) const
+{
+	return _root;
+}
+
+bool Block::getAutoIndex(void) const
+{
+	return _autoIndex;
+}
+
+const std::string &Block::getNewLocation(void) const
+{
+	return _newLocation;
+}
+
+const std::vector<std::string>& Block::getDefaultFiles(void) const
+{
+	return _defaultFiles;
+}
+
+const std::vector<std::string>& Block::getMethods(void) const
+{
+	return _allowedMethods;
+}
+
+const std::string &Block::getRedirectStatusCode(void) const
+{
+	return _redirectStatusCode;
+}
+

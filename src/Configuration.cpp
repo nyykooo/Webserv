@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-Configuration::Configuration(): _autoIndex(false), _requestSize(1000000) {
+Configuration::Configuration(): Block(), _requestSize(1000000) {
 	_allowedMethods.push_back("GET");
 	_allowedMethods.push_back("POST");
 	_allowedMethods.push_back("DELETE");
@@ -8,11 +8,14 @@ Configuration::Configuration(): _autoIndex(false), _requestSize(1000000) {
 
 Configuration::~Configuration() {}
 
-Configuration::Configuration(const Configuration& other): _host(other._host), _serverName(other._serverName), _errorPage(other._errorPage),
-											_root(other._root), _defaultFiles(other._defaultFiles), _autoIndex(other._autoIndex),
-											_requestSize(other._requestSize), _redirectStatusCode(other._redirectStatusCode),
-											_newLocation(other._newLocation),  
-											_allowedMethods(other._allowedMethods), locations(other.locations) {
+Configuration::Configuration(const Configuration& other): Block(other), _host(other._host), _serverName(other._serverName), _errorPage(other._errorPage),
+	_requestSize(other._requestSize), locations(other.locations) {
+	// _root(other._root), _defaultFiles(other._defaultFiles),_redirectStatusCode(other._redirectStatusCode),  _autoIndex(other._autoIndex),_newLocation(other._newLocation), _allowedMethods(other._allowedMethods),
+	_root = other.getRoot();
+	_defaultFiles = other.getDefaultFiles();
+	_autoIndex = other.getAutoIndex();
+	_redirectStatusCode = other.getRedirectStatusCode();
+	_allowedMethods = other.getMethods();
 }
 
 Configuration&	Configuration::operator=(const Configuration& other) {
@@ -99,63 +102,6 @@ void	Configuration::setRequestSize(long reqSize) {
 
 long	Configuration::getRequestSize(void) const {
 	return (this->_requestSize);
-}
-
-const std::string&	Configuration::getRoot(void) const {
-	return (this->_root);
-}
-
-void	Configuration::setRoot(const std::string& root) {
-	this->_root = root;
-}
-
-void	Configuration::setDefaultFiles(const std::string& index) {
-	this->_defaultFiles.push_back(index);
-}
-
-const std::vector<std::string>&	Configuration::getDefaultFiles(void) const {
-	return (this->_defaultFiles);
-}
-
-void	Configuration::setAutoIndex(const std::string& value) {
-	if (value == "on")
-		this->_autoIndex = true;
-	else if (value == "off")
-		this->_autoIndex = false;
-	else
-		throw Configuration::WrongConfigFileException("Invalid autoindex value");
-}
-
-bool	Configuration::getAutoIndex(void) const {
-	return (this->_autoIndex);
-}
-
-void	Configuration::setRedirectStatusCode(const std::string& statusCode) {
-	_redirectStatusCode = statusCode;
-}
-
-const std::string&		Configuration::getStatusCode(void) const {
-	return (_redirectStatusCode);
-}
-
-void	Configuration::setNewLocation(const std::string& newLocation) {
-	_newLocation = newLocation;
-}
-
-const std::string& Configuration::getNewLocation(void) const {
-	return (this->_newLocation);
-}
-
-void	Configuration::setAllowedMethods(const std::string& location) {
-	_allowedMethods.push_back(location);
-}
-
-const std::vector<std::string>&	Configuration::getMethods(void) const {
-	return (this->_allowedMethods);
-}
-
-void	Configuration::removeAllowedMethods(void) {
-	_allowedMethods.clear();
 }
 
 void	checkCurlyBrackets(std::string line) {
