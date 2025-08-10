@@ -3,24 +3,23 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:13:55 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/26 19:45:19 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/10 18:47:45 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"
 
-
 // ### LOCATION HANDLERS ###
 
-int	handleLocation(Client *client, LocationBlock loc)
+int handleLocation(Client *client, LocationBlock loc)
 {
 	std::vector<std::string> methods = loc.getMethods();
-	HttpRequest	*req = client->_request;
-	std::string	reqMethod = req->getMethod();
-	
+	HttpRequest *req = client->_request;
+	std::string reqMethod = req->getMethod();
+
 	std::vector<std::string>::iterator it;
 	for (it = methods.begin(); it != methods.end(); ++it)
 	{
@@ -30,7 +29,7 @@ int	handleLocation(Client *client, LocationBlock loc)
 	return 0;
 }
 
-int	findLocation(Client *client)
+int findLocation(Client *client)
 {
 	std::string path = client->_request->getPath();
 	std::vector<LocationBlock> loc = client->_request->_config->locations;
@@ -51,18 +50,28 @@ std::string setTimeStamp()
 	std::tm *timeinfo = std::localtime(&timestamp);
 
 	std::ostringstream oss;
-	oss << (1900 + timeinfo->tm_year) 
-	<< "-" << std::setfill('0') << std::setw(2) << (1 + timeinfo->tm_mon) 
-	<< "-" << std::setfill('0') << std::setw(2) << (timeinfo->tm_mday) 
-	<< "T" << std::setfill('0') << std::setw(2) << (timeinfo->tm_hour)
-	<< ":" << std::setfill('0') << std::setw(2) << (timeinfo->tm_min)
-	<< ":" << std::setfill('0') << std::setw(2) << (timeinfo->tm_sec);
+	oss << (1900 + timeinfo->tm_year)
+		<< "-" << std::setfill('0') << std::setw(2) << (1 + timeinfo->tm_mon)
+		<< "-" << std::setfill('0') << std::setw(2) << (timeinfo->tm_mday)
+		<< "T" << std::setfill('0') << std::setw(2) << (timeinfo->tm_hour)
+		<< ":" << std::setfill('0') << std::setw(2) << (timeinfo->tm_min)
+		<< ":" << std::setfill('0') << std::setw(2) << (timeinfo->tm_sec);
 
 	return oss.str();
 }
 
-void	printLog(std::string message, const char	*color)
+void printLog(std::string message, const char *color)
 {
 	std::string time = setTimeStamp();
 	std::cout << "[" + time + "]: " << color << message << RESET << std::endl;
+}
+
+std::string toLower(const std::string &str)
+{
+	std::string result = str;
+	for (size_t i = 0; i < result.length(); ++i)
+	{
+		result[i] = std::tolower(result[i]);
+	}
+	return result;
 }
