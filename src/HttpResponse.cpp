@@ -135,6 +135,24 @@ LocationBlock* HttpResponse::checkLocationBlock() {
 	return (tempLocation);
 }
 
+void HttpResponse::handleDELETE() {
+	std::vector<std::string>::const_iterator it;
+	for (it = _loc->getMethods().begin(); it != _loc->getMethods().end(); it++) {
+		if (*it == "DELETE")
+			break;
+	}
+	if (it == _loc->getMethods().end()) {
+		_resStatus = 405;
+		return ;
+	}
+
+	if (!(_loc->getNewLocation().empty())) {
+
+		_resStatus = _loc->getStatusCode();
+		//std::cout << _resStatus << std::endl;
+	}
+}
+
 void	HttpResponse::execMethod()
 {
 	std::string	method = _req->getMethod();
@@ -142,6 +160,8 @@ void	HttpResponse::execMethod()
 	_loc = checkLocationBlock();
 	if (method == "GET")
 		handleGET(_req->getPath(), _conf->getRoot());
+	else if (method == "DELETE")
+		handleDELETE();
 	else
 		_resStatus = 400;
 }
@@ -160,6 +180,23 @@ static const std::string& http_error_404_page =
 "</head>"
 "<body>"
 "<h1>Page not found.</h1>"
+"</body>"
+"</html>";
+
+static const std::string& http_error_405_page =
+"<!DOCTYPE html>"
+"<html lang=\"en\">"
+"<head>"
+"<meta charset=\"UTF-8\">"
+"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+"<title>405</title>"
+"<style>"
+"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
+"h1 { color: #333; }"
+"</style>"
+"</head>"
+"<body>"
+"<h1>Method Not Allowed.</h1>"
 "</body>"
 "</html>";
 
@@ -231,6 +268,8 @@ const std::string HttpResponse::checkStatusCode() {
 	std::string fileContent;
 	
 	// _resStatus = 413;
+
+	// esta função so valida caso o error_page esteja definido no .config file. tem de ser ajustada para caso não exista.
 	switch (_resStatus) {
 		case 413:
 			errorPage = openFile();
@@ -248,6 +287,14 @@ const std::string HttpResponse::checkStatusCode() {
 			}
 			_resBody = httpFileContent(errorPage);
 			return (header(ERROR_404) + _resBody);
+		case 405:
+			errorPage = openFile();
+			if (errorPage < 0) {
+				_resBody = http_error_404_page;
+				return (header(ERROR_404) + _resBody);
+			}
+			_resBody = httpFileContent(errorPage);
+			return (header(ERROR_405) + _resBody);
 		case 200:
 			return (header(HTTP_200) + _resBody);
 		default:

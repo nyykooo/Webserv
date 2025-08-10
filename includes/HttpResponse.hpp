@@ -29,6 +29,7 @@ class HttpResponse {
 		// EXEC METHOD
 		void	execMethod();
 		void	handleGET(const std::string path, const std::string root);
+		void	handleDELETE();
 		void	openReg(std::string path);
 		void	openDir(std::string path);
 		const std::string checkStatusCode();
