@@ -1,6 +1,7 @@
 #include "headers.hpp"
 
 class WebServer;
+class  ErrorPageRule;
 
 class LocationBlock {
 	private:
@@ -10,12 +11,12 @@ class LocationBlock {
 		bool													_exactMatchModifier;
 		std::string												_location;
 		std::string												_redirectStatusCode;
-		std::string												_defaultFile;
+		std::vector<std::string>								_defaultFiles;
 		std::string												_newLocation;
 		std::vector<std::string>								_cgiExtension;
 		std::vector<std::string>								_cgiPath;
 		static int												_locationCurlyBracketsCount;
-		std::set<std::pair<std::string, std::string> >			_errorPage;
+		std::set<ErrorPageRule>									_errorPage;
 	public:
 
 	// SETTERS
@@ -28,10 +29,10 @@ class LocationBlock {
 	void			setNewLocation(const std::string& newLocation);
 	void			setExactMatchModifier(bool value);
 	void			setLocation(const std::string& location);
-	void			setErrorPage(const std::string& errorPage, const std::string& errorPagePath);
+	void			setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
 	static void		incrementLocationCurlyBracketsCount(void);
 	static void		decrementLocationCurlyBracketsCount(void);
-	void			setDefaultFile(const std::string& index);
+	void			setDefaultFiles(const std::string& index);
 
 
 	// GETTERS
@@ -43,13 +44,14 @@ class LocationBlock {
 	const std::string&											getStatusCode(void) const;
 	const std::string&											getNewLocation(void) const;
 	const std::string&											getLocation(void) const;
-	const std::set<std::pair<std::string, std::string> >&		getErrorPage(void) const;
+	const std::set<ErrorPageRule>&								getErrorPage(void) const;
 	static int													getLocationCurlyBracketsCount(void);
-	const std::string&											getDefaultFile(void) const;
+	const std::vector<std::string>&								getDefaultFiles(void) const;
 
 	// ORTHODOX CANONICAL FORM
 
 	LocationBlock();
+	LocationBlock(const Configuration&);
 	~LocationBlock();
 	LocationBlock(const LocationBlock& other);
 	LocationBlock& operator=(const LocationBlock& other);

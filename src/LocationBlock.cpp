@@ -1,17 +1,28 @@
 #include "../includes/headers.hpp"
 
-LocationBlock::LocationBlock(): _autoIndex(false), _exactMatchModifier(false) {
-	_allowedMethods.push_back("GET");
-	_allowedMethods.push_back("POST");
-	_allowedMethods.push_back("DELETE");
+LocationBlock::LocationBlock() {}
+
+
+LocationBlock::LocationBlock(const Configuration& other): _exactMatchModifier(false)  {
+	_root = other.getRoot(); 
+	_allowedMethods = other.getMethods();
+	_autoIndex = other.getAutoIndex();
+	_redirectStatusCode = other.getStatusCode();
+	_defaultFiles = other.getDefaultFiles();
+	_newLocation = other.getNewLocation();
+	/* _cgiExtension = other.get;
+	_cgiPath = other._cgiPath; */
+	_errorPage = other.getErrorPage();
 }
 
 LocationBlock::~LocationBlock() {}
 
 LocationBlock::LocationBlock(const LocationBlock& other): _root(other._root), _allowedMethods(other._allowedMethods), 
 													_autoIndex(other._autoIndex), _exactMatchModifier(other._exactMatchModifier),
-													_location(other._location), 
-													_cgiExtension(other._cgiExtension), _cgiPath(other._cgiPath) {}
+													_location(other._location), _redirectStatusCode(other._redirectStatusCode),
+													_defaultFiles(other._defaultFiles), _newLocation(other._newLocation),
+													_cgiExtension(other._cgiExtension), _cgiPath(other._cgiPath),
+													_errorPage(other._errorPage) {}
 
 LocationBlock& LocationBlock::operator=(const LocationBlock& other) {
 	if (this != &other) {
@@ -20,8 +31,12 @@ LocationBlock& LocationBlock::operator=(const LocationBlock& other) {
 		_autoIndex = other._autoIndex;
 		_exactMatchModifier = other._exactMatchModifier;
 		_location = other._location;
+		_redirectStatusCode = other._redirectStatusCode;
+		_defaultFiles = other._defaultFiles;
+		_newLocation = other._newLocation;
 		_cgiExtension = other._cgiExtension;
 		_cgiPath = other._cgiPath;
+		_errorPage = other._errorPage;
 	}
 	return (*this);
 }
@@ -106,20 +121,27 @@ const std::string& LocationBlock::getNewLocation(void) const {
 	return (this->_newLocation);
 }
 
-void	LocationBlock::setErrorPage(const std::string& errorPage, const std::string& errorPagePath) {
-	this->_errorPage.insert(std::pair<std::string, std::string>(errorPage, errorPagePath));
+void	LocationBlock::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
+
+	ErrorPageRule rule;
+	rule.error = errorPage;
+	rule.errorPath = errorPagePath;
+	rule.newError = newStatus;
+
+	//std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
+	this->_errorPage.insert(rule);
 }
 
-const std::set<std::pair<std::string, std::string> >&	LocationBlock::getErrorPage(void) const {
+const std::set<ErrorPageRule>& LocationBlock::getErrorPage(void) const {
 	return (this->_errorPage);
 }
 
-void	LocationBlock::setDefaultFile(const std::string& index) {
-	this->_defaultFile = index;
+void	LocationBlock::setDefaultFiles(const std::string& index) {
+	this->_defaultFiles.push_back(index);
 }
 
-const std::string&	LocationBlock::getDefaultFile(void) const {
-	return (this->_defaultFile);
+const std::vector<std::string>&	LocationBlock::getDefaultFiles(void) const {
+	return (this->_defaultFiles);
 }
 
 void	parseRoot(std::string& line, LocationBlock& location) {
@@ -193,22 +215,59 @@ void	parseAutoIndex(std::string& line, LocationBlock& location) {
 		throw Configuration::WrongConfigFileException("too many arguments when defining autoindex.");
 }
 
-void	parseErrorPage(std::string& line, LocationBlock& location) {
+static long checkNewStatus(std::string word, const std::string& lastWord, LocationBlock& location) {
+	long status;
+	long value;
+	errno = 0;
+	char	*endptr;
+
+	status = -1;
+	if (word[0] == '=') {
+		word = word.substr(1, word.size());
+		status = std::strtol(word.c_str(), &endptr, 10);
+		if (errno == ERANGE || *endptr)
+			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
+		return (status);
+	}
+	value = std::strtol(word.c_str(), &endptr, 10);
+	if (errno == ERANGE || *endptr || value > 599 || value < 300)
+		throw Configuration::WrongConfigFileException("value \"" + word + "\" must be between 300 and 599");
+	location.setErrorPage(static_cast<int>(value), lastWord, status);
+	return (status);
+}
+
+static void	parseErrorPage(std::string& line, LocationBlock& location) {
 	std::stringstream 			ss(line);
 	std::string					word;
 	std::vector<std::string>	words;
+	long						newStatusCode;
 
 	checkCurlyBrackets(line);
 	ss >> word;
+	newStatusCode = -1;
 	while (ss >> word)
 		words.push_back(word);
 	if (words.size() < 2)
 		throw Configuration::WrongConfigFileException("no error page defined");
-	for (size_t i = 0; i < words.size() - 1; i++)
-		location.setErrorPage(words[i], words.back());
-	/* 	for (std::set<std::pair<std::string, std::string> >::iterator it = getHost().begin(); it != this->getHost().end(); it++) {
-		std::cout << GRAY<< it->first << it->second << std::endl;
-	} */
+	if (words.size() == 2) {
+		errno = 0;
+		char	*endptr;
+		long value = std::strtol(words[0].c_str(), &endptr, 10);
+		if (errno == ERANGE || *endptr || value > 599 || value < 300)
+			throw Configuration::WrongConfigFileException("value \"" + words[0] + "\" must be between 300 and 599");
+		location.setErrorPage(static_cast<int>(value), words.back(), -1);
+		return ;
+	}
+	int index = words.size() - 2;
+	newStatusCode = checkNewStatus(words[index], words.back(), location);
+	for (size_t i = 0; i < words.size() - 2; i++) {
+		errno = 0;
+		char	*endptr;
+		long value = std::strtol(words[i].c_str(), &endptr, 10);
+		if (errno == ERANGE || *endptr || value > 599 || value < 300)
+			throw Configuration::WrongConfigFileException("value \"" + words[i] + "\" must be between 300 and 599");
+		location.setErrorPage(static_cast<int>(value), words.back(), newStatusCode);
+	}
 }
 
 void	parseDefaultFile(const std::string& line, LocationBlock& location) {
@@ -218,7 +277,7 @@ void	parseDefaultFile(const std::string& line, LocationBlock& location) {
 	checkCurlyBrackets(line);
 	ss >> word;
 	if (ss >> word)
-		location.setDefaultFile(word);
+		location.setDefaultFiles(word);
 	else
 		throw Configuration::WrongConfigFileException("no index defined.");
 	if (ss >> word)
