@@ -1,12 +1,18 @@
 #include "../includes/headers.hpp"
 
-Configuration::Configuration(): _requestSize(1000000) {} // we need to put here the default files for all the possible errors
+Configuration::Configuration(): _autoIndex(false), _requestSize(1000000) {
+	_allowedMethods.push_back("GET");
+	_allowedMethods.push_back("POST");
+	_allowedMethods.push_back("DELETE");
+} // we need to put here the default files for all the possible errors
 
 Configuration::~Configuration() {}
 
 Configuration::Configuration(const Configuration& other): _host(other._host), _serverName(other._serverName), _errorPage(other._errorPage),
 											_root(other._root), _defaultFiles(other._defaultFiles), _autoIndex(other._autoIndex),
-											_requestSize(other._requestSize), locations(other.locations){
+											_requestSize(other._requestSize), _redirectStatusCode(other._redirectStatusCode),
+											_newLocation(other._newLocation),  
+											_allowedMethods(other._allowedMethods), locations(other.locations) {
 }
 
 Configuration&	Configuration::operator=(const Configuration& other) {
@@ -18,6 +24,9 @@ Configuration&	Configuration::operator=(const Configuration& other) {
 		_defaultFiles = other._defaultFiles;
 		_autoIndex = other._autoIndex;
 		_requestSize = other._requestSize;
+		_redirectStatusCode = other._redirectStatusCode;
+		_newLocation = other._newLocation;
+		_allowedMethods = other._allowedMethods;
 		locations = other.locations;
 	}
 	return (*this);
@@ -472,7 +481,7 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 		else if (word == "return")
 			parseRedirect(line, confserv);
 		else if (word == "location") {
-			confserv.locations.push_back(LocationBlock());
+			confserv.locations.push_back(LocationBlock(confserv));
 			parseLocationBlock(file, line, confserv.locations.back());
 		}
 		else

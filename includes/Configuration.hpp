@@ -52,7 +52,6 @@ class Configuration {
 		void								setRedirectStatusCode(const std::string& statusCode);
 		void								setNewLocation(const std::string& newLocation);
 		void								setAllowedMethods(const std::string& method);
-		const std::vector<std::string>&		getMethods(void) const;
 		void								removeAllowedMethods(void);
 
 		// GETTERS
@@ -67,6 +66,7 @@ class Configuration {
 		static int												getCurlyBracketsCount(void);
 		const std::string&										getStatusCode(void) const;
 		const std::string&										getNewLocation(void) const;
+		const std::vector<std::string>&							getMethods(void) const;
 
 		// ORTHODOX CANONICAL FORM 
 		
