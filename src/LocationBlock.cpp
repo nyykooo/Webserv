@@ -105,11 +105,11 @@ void	LocationBlock::setAutoIndex(const std::string& value) {
 		throw Configuration::WrongConfigFileException("Invalid autoindex value");
 }
 
-void	LocationBlock::setRedirectStatusCode(const std::string& statusCode) {
+void	LocationBlock::setRedirectStatusCode(int statusCode) {
 	_redirectStatusCode = statusCode;
 }
 
-const std::string&		LocationBlock::getStatusCode(void) const {
+int		LocationBlock::getStatusCode(void) const {
 	return (_redirectStatusCode);
 }
 
@@ -188,12 +188,18 @@ void	parseAllowedMethods(std::string& line, LocationBlock& location) {
 void	parseRedirect(std::string& line, LocationBlock& location) {
 	std::stringstream	ss(line);
 	std::string			word;
+	long				value;
+	char				*endptr;
 
+	errno = 0;
 	checkCurlyBrackets(line);
 	ss >> word;
 	if (!(ss >> word))
 		throw Configuration::WrongConfigFileException("wrong syntax in redirect line.");
-	location.setRedirectStatusCode(word);
+	value = std::strtol(word.c_str(), &endptr, 10);
+	if (errno == ERANGE || *endptr || value > 599 || value < 100)
+		throw Configuration::WrongConfigFileException("value \"" + word + "\" must be between 300 and 599");
+	location.setRedirectStatusCode(value);
 	if (!(ss >> word))
 		throw Configuration::WrongConfigFileException("no location defined in redirect line.");
 	location.setNewLocation(word);
@@ -225,7 +231,7 @@ static long checkNewStatus(std::string word, const std::string& lastWord, Locati
 	if (word[0] == '=') {
 		word = word.substr(1, word.size());
 		status = std::strtol(word.c_str(), &endptr, 10);
-		if (errno == ERANGE || *endptr)
+		if (errno == ERANGE || *endptr || status < 0 || word.empty())
 			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
 		return (status);
 	}

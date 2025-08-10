@@ -10,7 +10,7 @@ class LocationBlock {
 		bool													_autoIndex;
 		bool													_exactMatchModifier;
 		std::string												_location;
-		std::string												_redirectStatusCode;
+		int														_redirectStatusCode;
 		std::vector<std::string>								_defaultFiles;
 		std::string												_newLocation;
 		std::vector<std::string>								_cgiExtension;
@@ -25,7 +25,7 @@ class LocationBlock {
 	void			setAllowedMethods(const std::string& method);
 	void			removeAllowedMethods(void);
 	void			setAutoIndex(const std::string& value);
-	void			setRedirectStatusCode(const std::string& statusCode);
+	void			setRedirectStatusCode(int statusCode);
 	void			setNewLocation(const std::string& newLocation);
 	void			setExactMatchModifier(bool value);
 	void			setLocation(const std::string& location);
@@ -41,7 +41,7 @@ class LocationBlock {
 	const std::vector<std::string>&								getMethods(void) const;
 	bool														getAutoIndex(void) const;
 	bool														getExactMatchModifier(void) const;
-	const std::string&											getStatusCode(void) const;
+	int															getStatusCode(void) const;
 	const std::string&											getNewLocation(void) const;
 	const std::string&											getLocation(void) const;
 	const std::set<ErrorPageRule>&								getErrorPage(void) const;

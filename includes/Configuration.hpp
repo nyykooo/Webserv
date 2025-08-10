@@ -31,7 +31,7 @@ class Configuration {
 		std::vector<std::string>								_defaultFiles; // diretiva index
 		bool													_autoIndex;
 		long													_requestSize;
-		std::string												_redirectStatusCode;
+		int														_redirectStatusCode;
 		std::string												_newLocation;
 		std::vector<std::string>								_allowedMethods;
 		static int												_curlyBracketsCount;
@@ -49,7 +49,7 @@ class Configuration {
 		static void							incrementCurlyBracketsCount(void);
 		static void							decrementCurlyBracketsCount(void);
 		void								setDefaultFiles(const std::string& index);
-		void								setRedirectStatusCode(const std::string& statusCode);
+		void								setRedirectStatusCode(int statusCode);
 		void								setNewLocation(const std::string& newLocation);
 		void								setAllowedMethods(const std::string& method);
 		void								removeAllowedMethods(void);
@@ -64,7 +64,7 @@ class Configuration {
 		const std::vector<std::string>&							getDefaultFiles(void) const;
 		long													getRequestSize(void) const;
 		static int												getCurlyBracketsCount(void);
-		const std::string&										getStatusCode(void) const;
+		int														getStatusCode(void) const;
 		const std::string&										getNewLocation(void) const;
 		const std::vector<std::string>&							getMethods(void) const;
 
