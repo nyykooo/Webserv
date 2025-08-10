@@ -60,7 +60,7 @@ static std::string createDirIndex(std::string path)
 
 void	HttpResponse::openDir(std::string path)
 {
-	for (std::vector<std::string>::const_iterator it = _conf->getDefaultFiles().begin(); it != _conf->getDefaultFiles().end(); ++it)
+	for (std::vector<std::string>::const_iterator it = _block->getDefaultFiles().begin(); it != _block->getDefaultFiles().end(); ++it)
 	{
 		std::string filePath = path + "/" + *it;
 		std::ifstream file(filePath.c_str());
@@ -75,7 +75,7 @@ void	HttpResponse::openDir(std::string path)
 		}
 	}
 
-	switch (_conf->getAutoIndex())
+	switch (_block->getAutoIndex())
 	{
 		case false:
 			_resStatus = 404; // mudar para 403
@@ -89,7 +89,7 @@ void	HttpResponse::openDir(std::string path)
 
 void	HttpResponse::handleGET(const std::string path, const std::string root)
 {
-	std::string locPath;
+	std::string locPath = path;
 	if (_loc != NULL){
 		size_t locIndex = path.find(_loc->getLocation());
 		if (locIndex == 0)
@@ -151,29 +151,23 @@ void	HttpResponse::execMethod()
 	bool methodFound = false;
 	std::string root;
 	std::string	method = _req->getMethod();
-	_loc = checkLocationBlock();
+	std::vector<std::string>::const_iterator it;
 
-	if (_loc) {
-		std::vector<std::string>::const_iterator it;
-
-		for (it = _loc->getMethods().begin(); it != _loc->getMethods().end(); ++it) {
-			if (*it == method)
-				methodFound = true;
-		}
-		if (methodFound == false)
-		{
-			_resStatus = 405; // Method Not Allowed
-			return ;
-		}
-		root = _loc->getRoot();
+	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it) {
+		if (*it == method)
+			methodFound = true;
 	}
-	else
-		root = _conf->getRoot();
+	if (methodFound == false)
+	{
+		_resStatus = 405; // Method Not Allowed
+		return ;
+	}
+	root = _block->getRoot();
 
 	if (method == "GET")
 		handleGET(_req->getPath(), root);
-
-	_resStatus = 400;
+	else
+		_resStatus = 405; // Not Found, as we only handle GET for now
 }
 
 static const std::string& http_error_404_page =
@@ -290,6 +284,11 @@ const std::string HttpResponse::checkStatusCode() {
 HttpResponse::HttpResponse(HttpRequest *request, Configuration *config) {
 	_conf = config;
 	_req = request;
+	_loc = checkLocationBlock();
+	if (_loc != NULL)
+		_block = _loc;
+	else
+		_block = _conf;
 	std::string	pageContent;
 
 

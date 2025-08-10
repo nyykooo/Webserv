@@ -3,8 +3,7 @@
 
 #include "headers.hpp"
 
-class Client;
-class HttpRequest;
+class Block;
 
 class HttpResponse {
 	private:
@@ -15,6 +14,7 @@ class HttpResponse {
 		Configuration	*_conf;
 		HttpRequest		*_req;
 		LocationBlock	*_loc;
+		Block			*_block;
 
 	public:
 
