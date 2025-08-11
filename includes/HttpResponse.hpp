@@ -15,6 +15,7 @@ class HttpResponse {
 		HttpRequest		*_req;
 		LocationBlock	*_loc;
 		Block			*_block;
+		bool			_useNewLocation;
 
 	public:
 

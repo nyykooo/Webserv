@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-HttpResponse::HttpResponse() {}
+HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false) {}
 
 HttpResponse::HttpResponse(const HttpResponse& other) {
 	*this = other;
@@ -182,6 +182,13 @@ void	HttpResponse::execMethod()
 	}
 	root = _block->getRoot();
 
+	if (_block->getRedirectStatusCode() != -1)
+	{
+		_resStatus = _block->getRedirectStatusCode();
+		_useNewLocation = true;
+		return;
+	}
+
 	if (method == "GET")
 		handleGET(_req->getPath(), _conf->getRoot());
 	else if (method == "DELETE")
@@ -278,6 +285,8 @@ std::string	HttpResponse::header(const std::string& status) {
 
     std::ostringstream header;
     header << "HTTP/1.1 " << status << CRLF;
+	if (_useNewLocation)
+		header << "Location: " << _block->getNewLocation() << CRLF;
     header << "Content-Type: text/html" CRLF;
     header << "Content-Length: " << _resBody.size() << CRLF;
     header << CRLF;
@@ -299,28 +308,32 @@ const std::string HttpResponse::checkStatusCode() {
 			errorPage = openFile();
 			if (errorPage < 0) {
 				_resBody = http_error_404_page;
-				return (header(ERROR_404) + _resBody);
+				return (header(HTTP_404) + _resBody);
 			}
 			_resBody = httpFileContent(errorPage);
-			return (header(ERROR_413) + _resBody);
+			return (header(HTTP_413) + _resBody);
 		case 404:
 			errorPage = openFile();
 			if (errorPage < 0) {
 				_resBody = http_error_404_page;
-				return (header(ERROR_404) + _resBody);
+				return (header(HTTP_404) + _resBody);
 			}
 			_resBody = httpFileContent(errorPage);
-			return (header(ERROR_404) + _resBody);
+			return (header(HTTP_404) + _resBody);
 		case 405:
 			errorPage = openFile();
 			if (errorPage < 0) {
 				_resBody = http_error_404_page;
-				return (header(ERROR_404) + _resBody);
+				return (header(HTTP_404) + _resBody);
 			}
 			_resBody = httpFileContent(errorPage);
-			return (header(ERROR_405) + _resBody);
+			return (header(HTTP_405) + _resBody);
 		case 200:
 			return (header(HTTP_200) + _resBody);
+		case 301:
+			return (header(HTTP_301) + _resBody);
+		case 302:
+			return (header(HTTP_302) + _resBody);
 		default:
 			break ;
 	}
