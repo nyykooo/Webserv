@@ -87,6 +87,10 @@ void	HttpResponse::openDir(std::string path)
 	}
 }
 
+const std::string fullPath () {
+	
+}
+
 void	HttpResponse::handleGET(const std::string path, const std::string root)
 {
 	std::string locPath = path;
@@ -147,19 +151,8 @@ LocationBlock* HttpResponse::checkLocationBlock() {
 }
 
 void HttpResponse::handleDELETE() {
-	std::vector<std::string>::const_iterator it;
-	for (it = _loc->getMethods().begin(); it != _loc->getMethods().end(); it++) {
-		if (*it == "DELETE")
-			break;
-	}
-	if (it == _loc->getMethods().end()) {
-		_resStatus = 405;
-		return ;
-	}
-
-	if (!(_loc->getNewLocation().empty())) {
-
-		_resStatus = _loc->getRedirectStatusCode();
+	if (!(_block->getNewLocation().empty())) {
+		_resStatus = _block->getRedirectStatusCode();
 		//std::cout << _resStatus << std::endl;
 	}
 }
@@ -172,6 +165,10 @@ void	HttpResponse::execMethod()
 	std::vector<std::string>::const_iterator it;
 
 	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it) {
+		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
+			_resStatus = 501;
+			return ;
+		}
 		if (*it == method)
 			methodFound = true;
 	}
@@ -186,8 +183,6 @@ void	HttpResponse::execMethod()
 		handleGET(_req->getPath(), _conf->getRoot());
 	else if (method == "DELETE")
 		handleDELETE();
-	else
-		_resStatus = 405; // Not Found, as we only handle GET for now
 }
 
 static const std::string& http_error_404_page =
@@ -333,7 +328,7 @@ HttpResponse::HttpResponse(HttpRequest *request, Configuration *config) {
 	_req = request;
 	_loc = checkLocationBlock();
 	if (_loc != NULL)
-		_block = _loc;
+		_block = _loc;	
 	else
 		_block = _conf;
 	std::string	pageContent;
@@ -342,7 +337,7 @@ HttpResponse::HttpResponse(HttpRequest *request, Configuration *config) {
 
 	execMethod();
 	pageContent = checkStatusCode();
-	setResponse(pageContent);
+	//setResponse(pageContent);
 }
 
 // ### SETTERS ###
