@@ -58,11 +58,30 @@ static std::string createDirIndex(std::string path)
 	return dirIndex;
 }
 
+std::string removeSlashes(std::string path) {
+	std::string newPath;
+	size_t		index;
+	
+	newPath = path;
+	index = 0;
+	std::cout << "before: " << path << std::endl;
+	index = newPath.find_first_not_of('/');
+	if (index != newPath.npos)
+		newPath.erase(0, index);
+	size_t end = newPath.find_last_not_of('/');
+	if (end != std::string::npos)
+		newPath.erase(end + 1);
+	std::cout << "after: " << newPath << std::endl;
+	return (newPath);
+}
+
 void	HttpResponse::openDir(std::string path)
 {
+	std::string newPath = removeSlashes(path);
 	for (std::vector<std::string>::const_iterator it = _block->getDefaultFiles().begin(); it != _block->getDefaultFiles().end(); ++it)
 	{
-		std::string filePath = path + "/" + *it;
+		std::string newDefault = removeSlashes(*it);
+		std::string filePath = newPath + "/" + newDefault;
 		std::ifstream file(filePath.c_str());
 		if (file.is_open())
 		{
@@ -78,7 +97,7 @@ void	HttpResponse::openDir(std::string path)
 	switch (_block->getAutoIndex())
 	{
 		case false:
-			_resStatus = 404; // mudar para 403
+			_resStatus = 403; // mudar para 403
 			return ;
 		case true:
 			_resBody = createDirIndex(path);
@@ -89,8 +108,11 @@ void	HttpResponse::openDir(std::string path)
 
 std::string HttpResponse::getFullPath () {
 	std::string locPath = _req->getPath();
+	if (_block->getRoot().empty())
+		return (locPath);
 	if (_loc != NULL){
 		size_t locIndex = _req->getPath().find(_loc->getLocation());
+		
 		if (locIndex == 0)
 		{
 			locPath = _req->getPath().substr(_loc->getLocation().size());
@@ -101,13 +123,7 @@ std::string HttpResponse::getFullPath () {
 	return (locPath);
 }
 
-void	HttpResponse::handleGET()
-{
-	std::string locPath = this->getFullPath();
-
-	std::string fileName = "./" + _conf->getRoot() + locPath;
-	std::cout << "GET file: " << fileName << std::endl;
-
+void	HttpResponse::checkFile(std::string fileName) {
 	struct stat st;
 	if (stat(fileName.c_str(), &st) == -1)
 	{
@@ -127,6 +143,18 @@ void	HttpResponse::handleGET()
 		std::cout << "Link simbólico\n";
 	else
 		std::cout << "Outro tipo de arquivo\n";
+}
+
+void	HttpResponse::handleGET()
+{
+	std::string	newRoot = removeSlashes(_conf->getRoot());
+	std::string locPath = removeSlashes(this->getFullPath());
+	if (!newRoot.empty())
+		newRoot = "/" + newRoot;
+	std::string fileName = newRoot + "/" + locPath;
+	std::cout << "GET file: " << fileName << std::endl;
+	checkFile(fileName);
+	
 }
 
 LocationBlock* HttpResponse::checkLocationBlock() {
@@ -156,7 +184,12 @@ void HttpResponse::handleDELETE() {
 		_resStatus = _block->getRedirectStatusCode();
 		//std::cout << _resStatus << std::endl;
 	}
-	std::string locPath = this->getFullPath();
+	std::string	newRoot = removeSlashes(_conf->getRoot());
+	std::string locPath = removeSlashes(this->getFullPath());
+	if (!newRoot.empty())
+		newRoot = "/" + newRoot;
+	std::string fileName = newRoot + "/" + locPath;
+	checkFile(fileName);
 }
 
 void	HttpResponse::execMethod()
