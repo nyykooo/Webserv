@@ -25,10 +25,10 @@ class HttpResponse {
 		const std::string&	getResponse(void) const;
 		const std::string&	getResHeader(void) const;
 		const std::string&	getResBody(void) const;
-
+		std::string			getFullPath(void);
 		// EXEC METHOD
 		void	execMethod();
-		void	handleGET(const std::string path, const std::string root);
+		void	handleGET();
 		void	handleDELETE();
 		void	openReg(std::string path);
 		void	openDir(std::string path);

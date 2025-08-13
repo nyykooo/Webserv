@@ -87,24 +87,25 @@ void	HttpResponse::openDir(std::string path)
 	}
 }
 
-const std::string fullPath () {
-	
-}
-
-void	HttpResponse::handleGET(const std::string path, const std::string root)
-{
-	std::string locPath = path;
+std::string HttpResponse::getFullPath () {
+	std::string locPath = _req->getPath();
 	if (_loc != NULL){
-		size_t locIndex = path.find(_loc->getLocation());
+		size_t locIndex = _req->getPath().find(_loc->getLocation());
 		if (locIndex == 0)
 		{
-			locPath = path.substr(_loc->getLocation().size());
+			locPath = _req->getPath().substr(_loc->getLocation().size());
 			if (locPath[0] == '/')
 				locPath.erase(0, 1);
 		}
 	}
+	return (locPath);
+}
 
-	std::string fileName = "./" + root + locPath;
+void	HttpResponse::handleGET()
+{
+	std::string locPath = this->getFullPath();
+
+	std::string fileName = "./" + _conf->getRoot() + locPath;
 	std::cout << "GET file: " << fileName << std::endl;
 
 	struct stat st;
@@ -155,6 +156,7 @@ void HttpResponse::handleDELETE() {
 		_resStatus = _block->getRedirectStatusCode();
 		//std::cout << _resStatus << std::endl;
 	}
+	std::string locPath = this->getFullPath();
 }
 
 void	HttpResponse::execMethod()
@@ -180,7 +182,7 @@ void	HttpResponse::execMethod()
 	root = _block->getRoot();
 
 	if (method == "GET")
-		handleGET(_req->getPath(), _conf->getRoot());
+		handleGET();
 	else if (method == "DELETE")
 		handleDELETE();
 }
