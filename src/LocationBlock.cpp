@@ -1,13 +1,13 @@
 #include "../includes/headers.hpp"
 
-LocationBlock::LocationBlock() {}
+LocationBlock::LocationBlock() : Block() {}
 
 
 LocationBlock::LocationBlock(const Configuration& other): _exactMatchModifier(false)  {
 	_root = other.getRoot(); 
 	_allowedMethods = other.getMethods();
 	_autoIndex = other.getAutoIndex();
-	_redirectStatusCode = other.getStatusCode();
+	_redirectStatusCode = other.getRedirectStatusCode();
 	_defaultFiles = other.getDefaultFiles();
 	_newLocation = other.getNewLocation();
 	/* _cgiExtension = other.get;
@@ -17,12 +17,15 @@ LocationBlock::LocationBlock(const Configuration& other): _exactMatchModifier(fa
 
 LocationBlock::~LocationBlock() {}
 
-LocationBlock::LocationBlock(const LocationBlock& other): _root(other._root), _allowedMethods(other._allowedMethods), 
-													_autoIndex(other._autoIndex), _exactMatchModifier(other._exactMatchModifier),
-													_location(other._location), _redirectStatusCode(other._redirectStatusCode),
-													_defaultFiles(other._defaultFiles), _newLocation(other._newLocation),
-													_cgiExtension(other._cgiExtension), _cgiPath(other._cgiPath),
-													_errorPage(other._errorPage) {}
+LocationBlock::LocationBlock(const LocationBlock& other): Block(other), _exactMatchModifier(other._exactMatchModifier), _location(other._location),
+	_cgiExtension(other._cgiExtension), _cgiPath(other._cgiPath), _errorPage(other._errorPage) {
+	_root = other.getRoot();
+	_allowedMethods = other.getMethods();
+	_autoIndex = other.getAutoIndex();
+	_redirectStatusCode = other.getRedirectStatusCode();
+	_defaultFiles = other.getDefaultFiles();
+	_newLocation = other.getNewLocation();
+}
 
 LocationBlock& LocationBlock::operator=(const LocationBlock& other) {
 	if (this != &other) {
@@ -72,55 +75,6 @@ void	LocationBlock::decrementLocationCurlyBracketsCount(void) {
 	_locationCurlyBracketsCount--;
 }
 
-const std::string&	LocationBlock::getRoot(void) const {
-	return (this->_root);
-}
-
-void	LocationBlock::setRoot(const std::string& root) {
-	this->_root = root;
-}
-
-void	LocationBlock::setAllowedMethods(const std::string& location) {
-	_allowedMethods.push_back(location);
-}
-
-const std::vector<std::string>&	LocationBlock::getMethods(void) const {
-	return (this->_allowedMethods);
-}
-
-void	LocationBlock::removeAllowedMethods(void) {
-	_allowedMethods.clear();
-}
-
-bool	LocationBlock::getAutoIndex(void) const {
-	return (this->_autoIndex);
-}
-
-void	LocationBlock::setAutoIndex(const std::string& value) {
-	if (value == "on")
-		this->_autoIndex = true;
-	else if (value == "off")
-		this->_autoIndex = false;
-	else
-		throw Configuration::WrongConfigFileException("Invalid autoindex value");
-}
-
-void	LocationBlock::setRedirectStatusCode(const std::string& statusCode) {
-	_redirectStatusCode = statusCode;
-}
-
-const std::string&		LocationBlock::getStatusCode(void) const {
-	return (_redirectStatusCode);
-}
-
-void	LocationBlock::setNewLocation(const std::string& newLocation) {
-	_newLocation = newLocation;
-}
-
-const std::string& LocationBlock::getNewLocation(void) const {
-	return (this->_newLocation);
-}
-
 void	LocationBlock::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
 
 	ErrorPageRule rule;
@@ -134,14 +88,6 @@ void	LocationBlock::setErrorPage(int errorPage, const std::string& errorPagePath
 
 const std::set<ErrorPageRule>& LocationBlock::getErrorPage(void) const {
 	return (this->_errorPage);
-}
-
-void	LocationBlock::setDefaultFiles(const std::string& index) {
-	this->_defaultFiles.push_back(index);
-}
-
-const std::vector<std::string>&	LocationBlock::getDefaultFiles(void) const {
-	return (this->_defaultFiles);
 }
 
 void	parseRoot(std::string& line, LocationBlock& location) {
@@ -188,12 +134,18 @@ void	parseAllowedMethods(std::string& line, LocationBlock& location) {
 void	parseRedirect(std::string& line, LocationBlock& location) {
 	std::stringstream	ss(line);
 	std::string			word;
+	long				value;
+	char				*endptr;
 
+	errno = 0;
 	checkCurlyBrackets(line);
 	ss >> word;
 	if (!(ss >> word))
 		throw Configuration::WrongConfigFileException("wrong syntax in redirect line.");
-	location.setRedirectStatusCode(word);
+	value = std::strtol(word.c_str(), &endptr, 10);
+	if (errno == ERANGE || *endptr || value > 599 || value < 100)
+		throw Configuration::WrongConfigFileException("value \"" + word + "\" must be between 300 and 599");
+	location.setRedirectStatusCode(value);
 	if (!(ss >> word))
 		throw Configuration::WrongConfigFileException("no location defined in redirect line.");
 	location.setNewLocation(word);
@@ -225,7 +177,7 @@ static long checkNewStatus(std::string word, const std::string& lastWord, Locati
 	if (word[0] == '=') {
 		word = word.substr(1, word.size());
 		status = std::strtol(word.c_str(), &endptr, 10);
-		if (errno == ERANGE || *endptr)
+		if (errno == ERANGE || *endptr || status < 0 || word.empty())
 			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
 		return (status);
 	}

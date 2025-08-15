@@ -58,11 +58,30 @@ static std::string createDirIndex(std::string path)
 	return dirIndex;
 }
 
+std::string removeSlashes(std::string path) {
+	std::string newPath;
+	size_t		index;
+	
+	newPath = path;
+	index = 0;
+	std::cout << "before: " << path << std::endl;
+	index = newPath.find_first_not_of('/');
+	if (index != newPath.npos)
+		newPath.erase(0, index);
+	size_t end = newPath.find_last_not_of('/');
+	if (end != std::string::npos)
+		newPath.erase(end + 1);
+	std::cout << "after: " << newPath << std::endl;
+	return (newPath);
+}
+
 void	HttpResponse::openDir(std::string path)
 {
-	for (std::vector<std::string>::const_iterator it = _conf->getDefaultFiles().begin(); it != _conf->getDefaultFiles().end(); ++it)
+	std::string newPath = removeSlashes(path);
+	for (std::vector<std::string>::const_iterator it = _block->getDefaultFiles().begin(); it != _block->getDefaultFiles().end(); ++it)
 	{
-		std::string filePath = path + "/" + *it;
+		std::string newDefault = removeSlashes(*it);
+		std::string filePath = newPath + "/" + newDefault;
 		std::ifstream file(filePath.c_str());
 		if (file.is_open())
 		{
@@ -75,10 +94,10 @@ void	HttpResponse::openDir(std::string path)
 		}
 	}
 
-	switch (_conf->getAutoIndex())
+	switch (_block->getAutoIndex())
 	{
 		case false:
-			_resStatus = 404; // mudar para 403
+			_resStatus = 403; // mudar para 403
 			return ;
 		case true:
 			_resBody = createDirIndex(path);
@@ -87,11 +106,24 @@ void	HttpResponse::openDir(std::string path)
 	}
 }
 
-void	HttpResponse::handleGET(const std::string path, const std::string root)
-{
-	std::string fileName = "./" + root + path;
-	std::cout << "GET file: " << fileName << std::endl;
+std::string HttpResponse::getFullPath () {
+	std::string locPath = _req->getPath();
+	if (_block->getRoot().empty())
+		return (locPath);
+	if (_loc != NULL){
+		size_t locIndex = _req->getPath().find(_loc->getLocation());
+		
+		if (locIndex == 0)
+		{
+			locPath = _req->getPath().substr(_loc->getLocation().size());
+			if (locPath[0] == '/')
+				locPath.erase(0, 1);
+		}
+	}
+	return (locPath);
+}
 
+void	HttpResponse::checkFile(std::string fileName) {
 	struct stat st;
 	if (stat(fileName.c_str(), &st) == -1)
 	{
@@ -111,6 +143,18 @@ void	HttpResponse::handleGET(const std::string path, const std::string root)
 		std::cout << "Link simbólico\n";
 	else
 		std::cout << "Outro tipo de arquivo\n";
+}
+
+void	HttpResponse::handleGET()
+{
+	std::string	newRoot = removeSlashes(_conf->getRoot());
+	std::string locPath = removeSlashes(this->getFullPath());
+	if (!newRoot.empty())
+		newRoot = "/" + newRoot;
+	std::string fileName = newRoot + "/" + locPath;
+	std::cout << "GET file: " << fileName << std::endl;
+	checkFile(fileName);
+	
 }
 
 LocationBlock* HttpResponse::checkLocationBlock() {
@@ -135,15 +179,45 @@ LocationBlock* HttpResponse::checkLocationBlock() {
 	return (tempLocation);
 }
 
+void HttpResponse::handleDELETE() {
+	if (!(_block->getNewLocation().empty())) {
+		_resStatus = _block->getRedirectStatusCode();
+		//std::cout << _resStatus << std::endl;
+	}
+	std::string	newRoot = removeSlashes(_conf->getRoot());
+	std::string locPath = removeSlashes(this->getFullPath());
+	if (!newRoot.empty())
+		newRoot = "/" + newRoot;
+	std::string fileName = newRoot + "/" + locPath;
+	checkFile(fileName);
+}
+
 void	HttpResponse::execMethod()
 {
+	bool methodFound = false;
+	std::string root;
 	std::string	method = _req->getMethod();
+	std::vector<std::string>::const_iterator it;
 
-	_loc = checkLocationBlock();
+	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it) {
+		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
+			_resStatus = 501;
+			return ;
+		}
+		if (*it == method)
+			methodFound = true;
+	}
+	if (methodFound == false)
+	{
+		_resStatus = 405; // Method Not Allowed
+		return ;
+	}
+	root = _block->getRoot();
+
 	if (method == "GET")
-		handleGET(_req->getPath(), _conf->getRoot());
-	else
-		_resStatus = 400;
+		handleGET();
+	else if (method == "DELETE")
+		handleDELETE();
 }
 
 static const std::string& http_error_404_page =
@@ -160,6 +234,23 @@ static const std::string& http_error_404_page =
 "</head>"
 "<body>"
 "<h1>Page not found.</h1>"
+"</body>"
+"</html>";
+
+static const std::string& http_error_405_page =
+"<!DOCTYPE html>"
+"<html lang=\"en\">"
+"<head>"
+"<meta charset=\"UTF-8\">"
+"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+"<title>405</title>"
+"<style>"
+"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
+"h1 { color: #333; }"
+"</style>"
+"</head>"
+"<body>"
+"<h1>Method Not Allowed.</h1>"
 "</body>"
 "</html>";
 
@@ -231,6 +322,8 @@ const std::string HttpResponse::checkStatusCode() {
 	std::string fileContent;
 	
 	// _resStatus = 413;
+
+	// esta função so valida caso o error_page esteja definido no .config file. tem de ser ajustada para caso não exista.
 	switch (_resStatus) {
 		case 413:
 			errorPage = openFile();
@@ -248,6 +341,14 @@ const std::string HttpResponse::checkStatusCode() {
 			}
 			_resBody = httpFileContent(errorPage);
 			return (header(ERROR_404) + _resBody);
+		case 405:
+			errorPage = openFile();
+			if (errorPage < 0) {
+				_resBody = http_error_404_page;
+				return (header(ERROR_404) + _resBody);
+			}
+			_resBody = httpFileContent(errorPage);
+			return (header(ERROR_405) + _resBody);
 		case 200:
 			return (header(HTTP_200) + _resBody);
 		default:
@@ -260,13 +361,18 @@ const std::string HttpResponse::checkStatusCode() {
 HttpResponse::HttpResponse(HttpRequest *request, Configuration *config) {
 	_conf = config;
 	_req = request;
+	_loc = checkLocationBlock();
+	if (_loc != NULL)
+		_block = _loc;	
+	else
+		_block = _conf;
 	std::string	pageContent;
 
 
 
 	execMethod();
 	pageContent = checkStatusCode();
-	setResponse(pageContent);
+	//setResponse(pageContent);
 }
 
 // ### SETTERS ###

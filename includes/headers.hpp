@@ -6,7 +6,7 @@
 /*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/10 18:47:16 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/15 14:15:54 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@
 # include "macros.hpp"
 # include "structs.hpp"
 # include "Socket.hpp"
+# include "Block.hpp"
 # include "Configuration.hpp"
 # include "LocationBlock.hpp"
 # include "HttpRequest.hpp"

@@ -6,7 +6,7 @@
 #    By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/10 19:46:12 by ncampbel          #+#    #+#              #
-#    Updated: 2025/08/02 12:19:18 by ncampbel         ###   ########.fr        #
+#    Updated: 2025/08/10 13:09:23 by ncampbel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,7 +20,7 @@ SRC = main.cpp src/Socket.cpp src/HttpRequest.cpp \
 	   src/WebServer.cpp src/Client.cpp src/Server.cpp \
 	   src/LocationBlock.cpp src/Configuration.cpp \
 	   src/utils.cpp  src/HttpResponse.cpp \
-	   src/ErrorPageRule.cpp \
+	   src/ErrorPageRule.cpp src/Block.cpp
 
 TIMENAME= timeexec
 
