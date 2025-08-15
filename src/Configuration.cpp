@@ -3,7 +3,7 @@
 Configuration::Configuration(): Block(), _requestSize(1000000) {
 	_allowedMethods.push_back("GET");
 	_allowedMethods.push_back("POST");
-	_allowedMethods.push_back("DELETE");
+	//_allowedMethods.push_back("DELETE");
 } // we need to put here the default files for all the possible errors
 
 Configuration::~Configuration() {}

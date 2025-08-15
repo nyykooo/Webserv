@@ -26,10 +26,10 @@ class HttpResponse {
 		const std::string&	getResponse(void) const;
 		const std::string&	getResHeader(void) const;
 		const std::string&	getResBody(void) const;
-
+		std::string			getFullPath(void);
 		// EXEC METHOD
 		void	execMethod();
-		void	handleGET(const std::string path, const std::string root);
+		void	handleGET();
 		void	handleDELETE();
 		void	openReg(std::string path);
 		void	openDir(std::string path);
@@ -38,6 +38,7 @@ class HttpResponse {
 		int		openFile();
 		const std::string httpFileContent(int errorPage);
 		LocationBlock*	checkLocationBlock();
+		void	checkFile(std::string fileName);
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();
