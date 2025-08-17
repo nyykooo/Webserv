@@ -16,6 +16,9 @@ class HttpResponse {
 		LocationBlock	*_loc;
 		Block			*_block;
 		bool			_useNewLocation;
+		int				_pipeIn;
+		int				_pipeOut;
+		int				_cgiPid;
 
 	public:
 
@@ -46,6 +49,10 @@ class HttpResponse {
 		~HttpResponse();
 		HttpResponse(const HttpResponse& other);
 		HttpResponse operator=(const HttpResponse& other);
+
+		// CGI
+		bool	lookForCgi();
+		void	forkExecCgi(std::string interpreter);
 };
 
 #endif

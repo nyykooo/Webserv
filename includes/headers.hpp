@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/10 12:20:06 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/17 13:05:55 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@
 # include <cstdlib>			// includes std::exit(), std::atoi(), std::atof(), etc.
 # include <ctime>			// includes std::time_t and std::time()
 # include <dirent.h>		// includes opendir(), readdir(), closedir(), etc.
+# include <sys/wait.h>		// includes waitpid(), WNOHANG, etc.
 # include <map>
 # include <set>
 # include <stdexcept>

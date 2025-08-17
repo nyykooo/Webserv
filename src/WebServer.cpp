@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/08 13:32:54 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/16 13:57:02 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -480,10 +480,6 @@ std::vector<Configuration> &configs)
 		// entender first como ip e second como porta
 		if (host_it->first == client_it->second.first && host_it->second == client_it->second.second)
 		{
-			if ((*config_it).getAutoIndex() == true)
-				std::cout << "1 Autoindex true" << std::endl;
-			else
-				std::cout << "1 Autoindex false" << std::endl;
 			if (defaultConfig == NULL)
 				defaultConfig = &(*config_it);
 			if (numeric_host)
