@@ -6,11 +6,13 @@
 /*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/10 19:12:29 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/17 18:54:20 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"
+
+#define MAX_MEMORY_FILE_SIZE (1024 * 1024) // 1MB
 
 // ### STATIC FUNCTIONS ###
 Client *findClient(int client_fd, std::vector<Client *> &client_vec)
@@ -280,33 +282,6 @@ int WebServer::extractContentLength(const std::string &headers_lower)
 	std::string length_str = headers_lower.substr(start, pos - start);
 	return std::atoi(length_str.c_str());
 }
-
-bool WebServer::isRequestComplete(const std::string &data)
-{
-	size_t header_end = data.find("\r\n\r\n");
-	if (header_end == std::string::npos)
-		return false;
-
-	std::string headers = data.substr(0, header_end);
-	std::string headers_lower = toLower(headers); // Converte uma vez
-
-	// Transfer-Encoding: chunked
-	if (headers_lower.find("transfer-encoding: chunked") != std::string::npos)
-		return data.find("0\r\n\r\n") != std::string::npos;
-
-	// Content-Length
-	if (headers_lower.find("content-length:") != std::string::npos)
-	{
-		int content_length = extractContentLength(headers_lower);
-		if (content_length >= 0)
-		{
-			size_t body_start = header_end + 4;
-			return (data.length() >= body_start + content_length);
-		}
-	}
-
-	return true;
-}
 int WebServer::receiveData(int client_fd)
 {
 	ssize_t bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
@@ -318,8 +293,8 @@ int WebServer::receiveData(int client_fd)
 	_partial_requests[client_fd] += newData;
 
 	if (!isRequestComplete(_partial_requests[client_fd]))
-		return 0; // Aguarda mais dados
-		
+	return 0; // Aguarda mais dados
+	
 	HttpRequest *request = NULL;
 	try
 	{
@@ -331,15 +306,15 @@ int WebServer::receiveData(int client_fd)
 		std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
 		return -1;
 	}
-
+	
 	_partial_requests.erase(client_fd);
-
+	
 	Client *client = findClient(client_fd, _clients_vec);
 	if (client->_request != NULL)
-		delete client->_request;
-
+	delete client->_request;
+	
 	client->_request = request;
-
+	
 	client->_request->_config = findConfigForRequest(*client->_request, client_fd);
 	if (!client->_request->_config)
 	{
@@ -349,6 +324,33 @@ int WebServer::receiveData(int client_fd)
 	return (1);
 }
 
+// void WebServer::sendData(int client_fd)
+// {
+	// 	Client *client = findClient(client_fd, _clients_vec);
+	
+	// 	if (client->sendResponse)
+	// 		delete client->sendResponse;
+	
+	// 	client->sendResponse = new HttpResponse(client->_request, client->_request->_config);
+// 	// client->sendResponse->execMethod(client);
+// 	//  envia a resposta ao cliente
+// 	const char *buf = client->sendResponse->getResponse().c_str();
+// 	// std::cout << "buf: " << buf << std::endl;
+// 	size_t size = client->sendResponse->getResponse().size();
+// 	int sent = send(client_fd, buf, size, 0);
+// 	// int sent = send(client_fd, response.c_str(), response.size(), 0);
+// 	if (sent == -1)
+// 	{
+// 		return;
+// 	}
+// 	else
+// 	{
+// 		std::stringstream ss;
+// 		ss << "Dados enviados ao cliente - client_fd: " << client_fd;
+// 		printLog(ss.str(), WHITE);
+// 	}
+// }
+
 void WebServer::sendData(int client_fd)
 {
 	Client *client = findClient(client_fd, _clients_vec);
@@ -356,30 +358,33 @@ void WebServer::sendData(int client_fd)
 	if (client->sendResponse)
 		delete client->sendResponse;
 
-	client->sendResponse = new HttpResponse(client->_request, client->_request->_config);
-	// client->sendResponse->execMethod(client);
-	//  envia a resposta ao cliente
-	const char *buf = client->sendResponse->getResponse().c_str();
-	// std::cout << "buf: " << buf << std::endl;
-	size_t size = client->sendResponse->getResponse().size();
-	int sent = send(client_fd, buf, size, 0);
-	// int sent = send(client_fd, response.c_str(), response.size(), 0);
-	if (sent == -1)
+	if (isLargeFileRequest(client->_request)) // verifica se é um arquivo grande
 	{
+		client->setProcessingState(PROCESSING_LARGE); // Mudamos o estado para PROCESSING_LARGE para ser tratado no próximo ciclo
 		return;
 	}
+
+	client->setProcessingState(PROCESSING); // Comportamento atual
+	client->sendResponse = new HttpResponse(client->_request, client->_request->_config);
+	
+	const char *buf = client->sendResponse->getResponse().c_str();
+	size_t size = client->sendResponse->getResponse().size();
+	int sent = send(client_fd, buf, size, 0);
+	if (sent == -1)
+	return;
 	else
 	{
 		std::stringstream ss;
 		ss << "Dados enviados ao cliente - client_fd: " << client_fd;
 		printLog(ss.str(), WHITE);
 	}
+	client->setProcessingState(COMPLETED);
 }
 
 void WebServer::setClientTime(int client_fd)
 {
 	std::vector<Client *>::iterator it;
-
+	
 	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
 	{
 		if ((*it)->getSocketFd() == client_fd)
@@ -414,33 +419,13 @@ void WebServer::deleteClient(int fd)
 
 void WebServer::treatExistingClient(int i)
 {
+	Client *client = findClient(_events[i].data.fd, _clients_vec);
+	
 	if (_events[i].events == EPOLLIN)
-	{
-		int data = receiveData(_events[i].data.fd);
-		if (data == -1)
-		{
-			deleteClient(_events[i].data.fd);
-			return;
-		}
-		else if (data == 0)
-		{
-			// Vamos aguardar mais dados e não mudar para EPOLLOUT ainda
-			setClientTime(_events[i].data.fd);
-			return;
-		}
-		_events[i].events = EPOLLOUT; // Muda o evento para EPOLLOUT após receber dados
-		epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]);
-		setClientTime(_events[i].data.fd);
-	}
+	handleClientInput(client, i);
 	else if (_events[i].events == EPOLLOUT)
-	{
-		sendData(_events[i].data.fd);
-		_events[i].events = EPOLLIN; // Muda o evento de volta para EPOLLIN após enviar dados
-		epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]);
-		setClientTime(_events[i].data.fd);
-	}
+	handleClientOutput(client, i);
 }
-
 void WebServer::handleEvents(int event_count)
 {
 	for (int i = 0; i < event_count; ++i)
@@ -590,8 +575,311 @@ Configuration *WebServer::findConfigForRequest(const HttpRequest &request, int c
 	return (lookForConfigurations(numeric_host, host, client_it, _configurations));
 }
 
-// ### EXCEPTION ###
+// ### PRIVATE METHODS ###
+bool WebServer::isRequestComplete(const std::string &data)
+{
+	size_t header_end = data.find("\r\n\r\n");
+	if (header_end == std::string::npos)
+		return false;
 
+	std::string headers = data.substr(0, header_end);
+	std::string headers_lower = toLower(headers); // Converte uma vez
+
+	// Transfer-Encoding: chunked
+	if (headers_lower.find("transfer-encoding: chunked") != std::string::npos)
+		return data.find("0\r\n\r\n") != std::string::npos;
+
+	// Content-Length
+	if (headers_lower.find("content-length:") != std::string::npos)
+	{
+		int content_length = extractContentLength(headers_lower);
+		if (content_length >= 0)
+		{
+			size_t body_start = header_end + 4;
+			return (data.length() >= body_start + content_length);
+		}
+	}
+
+	return true;
+}
+
+void WebServer::handleClientInput(Client *client, int i)
+{
+	if (client->getProcessingState() == RECEIVING)
+	{
+		int data = receiveData(_events[i].data.fd);
+		if (data == -1)
+		{
+			deleteClient(_events[i].data.fd);
+			return;
+		}
+		else if (data == 0)
+		{
+			setClientTime(_events[i].data.fd);
+			return;
+		}
+		if (data == 1)
+		{
+			client->setProcessingState(PROCESSING);
+			_events[i].events = EPOLLOUT; // Nos mudamos para o evento de WRITE, quer dizer que o client esta pronto para enviar dados
+			epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]);
+			setClientTime(_events[i].data.fd);
+		}
+	}
+	else
+	{ // se o mano client esta com EPOLLIN siginidca que ele da pronto pra ser lido. E o status do processamento da req no server eh RECEIVING.
+		std::cerr << "AVISO: Cliente " << client->getSocketFd()
+				  << " com estado " << client->getProcessingState()
+				  << " recebeu EPOLLIN (esperado: RECEIVING)" << std::endl;
+
+		// Reset para estado seguro. Podemos explorar mais.
+		client->setProcessingState(RECEIVING);
+	}
+}
+
+void WebServer::handleClientOutput(Client *client, int i)
+{
+	switch (client->getProcessingState())
+	{
+	case PROCESSING:
+		sendData(_events[i].data.fd);
+		client->setProcessingState(COMPLETED);
+		break;
+
+	case PROCESSING_LARGE: // Processamento de arquivos grandes
+		if (startLargeFileStreaming(client))
+			client->setProcessingState(STREAMING);
+		else
+			client->setProcessingState(COMPLETED);
+		break;
+
+	case STREAMING: // Streaming de arquivos grandes
+		if (!continueLargeFileStreaming(client))
+			client->setProcessingState(COMPLETED);
+		break;
+
+	case COMPLETED:
+		client->setProcessingState(RECEIVING);
+		_events[i].events = EPOLLIN;
+		epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]);
+		setClientTime(_events[i].data.fd);
+		break;
+
+	case RECEIVING: // apenas para testar, pois se o event eh EPOLLOUT, o estado deve ser COMPLETED
+		std::cerr << "Warning: EPOLLOUT para cliente em estado RECEIVING" << std::endl;
+		break;
+
+	default:
+		std::cerr << "Estado inválido: " << client->getProcessingState() << " para cliente " << client->getSocketFd() << std::endl;
+		client->setProcessingState(COMPLETED);
+		break;
+	}
+}
+
+
+bool WebServer::isLargeFileRequest(const HttpRequest *request)
+{
+	// eh soh para GETs!
+	if (request->getMethod() != "GET")
+	{
+		return false;
+	}
+
+	// Pulo do gato para obter o fil path correto considerando a logica dos location blocks
+	HttpResponse tempResponse(const_cast<HttpRequest *>(request), request->_config);
+
+	// imitando a handleGet
+	std::string newRoot = removeSlashes(tempResponse.getConfig().getRoot());
+	std::string locPath = removeSlashes(tempResponse.getFullPath());
+	if (!newRoot.empty())
+		newRoot = "/" + newRoot;
+	std::string fileName = newRoot + "/" + locPath;
+
+	struct stat st;
+	if (stat(fileName.c_str(), &st) == -1)
+	{
+		// Arquivo não existe - não é large file
+		return false;
+	}
+
+	// S_ISREG verifica se o arquivo é um "regular file"
+	// st.st_mode contém informações sobre o tipo do arquivo
+
+	// Retorna:
+	// true  = É arquivo regular (dados normais)
+	// false = NÃO é arquivo regular (diretório, link, device, etc.)
+	// eh possivel explandir essa macro e fazer de forma manual. Mas nao acredito ser um problema de norme da 42.
+	if (!S_ISREG(st.st_mode))
+		return false;
+
+	return (st.st_size > MAX_MEMORY_FILE_SIZE);
+}
+
+std::string WebServer::getContentType(const std::string &filePath)
+{
+	size_t dotPos = filePath.find_last_of('.');
+	if (dotPos == std::string::npos)
+	{
+		return "application/octet-stream";
+	}
+
+	std::string extension = filePath.substr(dotPos + 1);
+
+	if (extension == "html" || extension == "htm")
+		return "text/html";
+	if (extension == "css")
+		return "text/css";
+	if (extension == "js")
+		return "application/javascript";
+	if (extension == "jpg" || extension == "jpeg")
+		return "image/jpeg";
+	if (extension == "png")
+		return "image/png";
+	if (extension == "gif")
+		return "image/gif";
+	if (extension == "pdf")
+		return "application/pdf";
+	if (extension == "mp4")
+		return "video/mp4";
+	if (extension == "mp3")
+		return "audio/mpeg";
+	if (extension == "txt")
+		return "text/plain";
+
+	return "application/octet-stream";
+}
+
+bool WebServer::startLargeFileStreaming(Client *client)
+{
+	// Depois encapsular essa logica do file path
+	HttpResponse tempResponse(client->_request, client->_request->_config);
+	std::string newRoot = removeSlashes(tempResponse.getConfig().getRoot());
+	std::string locPath = removeSlashes(tempResponse.getFullPath());
+	if (!newRoot.empty())
+		newRoot = "/" + newRoot;
+	std::string fileName = newRoot + "/" + locPath;
+
+	struct stat st;
+	if (stat(fileName.c_str(), &st) == -1)
+	{
+		logStreamingError(client->getSocketFd(), "stat arquivo", fileName);
+		return false;
+	}
+
+	// aqui a diferenca em relacao ao processamento normal eh que abriremos o file para leitura sequencial. Evitamos aquela copia total para a memoria
+	int fd = open(fileName.c_str(), O_RDONLY);
+	if (fd < 0)
+	{
+		logStreamingError(client->getSocketFd(), "abertura arquivo", fileName);
+		return false;
+	}
+
+	client->setFileFd(fd); // mantem aberto para leitura sequencial e ao fim eh fechado pela resetFileStreaming do client
+	client->setFileSize(st.st_size);
+	client->setBytesSent(0);
+
+	std::ostringstream info;
+	info << "iniciando streaming de " << fileName << " (" << st.st_size << " bytes)";
+	logStreamingInfo(client->getSocketFd(), info.str());
+
+	std::ostringstream headers;
+	headers << "HTTP/1.1 200 OK\r\n";
+	headers << "Content-Type: " << getContentType(fileName) << "\r\n";
+	headers << "Content-Length: " << st.st_size << "\r\n";
+	headers << "\r\n";
+
+	std::string headerStr = headers.str();
+	ssize_t headersSent = send(client->getSocketFd(), headerStr.c_str(), headerStr.length(), 0);
+
+	if (headersSent < 0)
+	{
+		logStreamingError(client->getSocketFd(), "envio headers");
+		client->resetFileStreaming();
+		return false;
+	}
+	else if (headersSent == 0)
+	{
+		logStreamingError(client->getSocketFd(), "send headers retornou 0", "cliente possivelmente desconectado");
+		client->resetFileStreaming();
+		return false;
+	}
+	else if (headersSent < static_cast<ssize_t>(headerStr.length()))
+	{
+		std::ostringstream warning;
+		warning << "headers enviados parcialmente: " << headersSent << "/" << headerStr.length() << " bytes";
+		logStreamingInfo(client->getSocketFd(), warning.str());
+	}
+	else
+	{
+		logStreamingInfo(client->getSocketFd(), "headers enviados com sucesso");
+	}
+
+	return (true);
+}
+
+bool WebServer::continueLargeFileStreaming(Client *client)
+{
+	const size_t CHUNK_SIZE = 8192;
+	char buffer[CHUNK_SIZE];
+
+	ssize_t bytesRead = read(client->getFileFd(), buffer, CHUNK_SIZE);
+	if (bytesRead <= 0)
+	{
+		if (bytesRead < 0)
+			logStreamingError(client->getSocketFd(), "read");
+		else
+			logStreamingInfo(client->getSocketFd(), "streaming completo");
+		client->resetFileStreaming();
+		return false;
+	}
+
+	size_t totalSent = 0;
+	while (totalSent < static_cast<size_t>(bytesRead))
+	{
+		ssize_t bytesSent = send(client->getSocketFd(),
+								 buffer + totalSent,
+								 bytesRead - totalSent,
+								 0);
+
+		if (bytesSent <= 0)
+		{
+			if (bytesSent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+			{
+				break; // Temporário - tenta depois
+			}
+			else
+			{
+				// Erro permanente
+				logStreamingError(client->getSocketFd(), "send");
+				client->resetFileStreaming();
+				return false;
+			}
+		}
+
+		totalSent += bytesSent;
+	}
+
+	client->setBytesSent(client->getBytesSent() + totalSent);
+	return (client->getBytesSent() < client->getFileSize());
+}
+
+void WebServer::logStreamingError(int client_fd, const std::string &operation, const std::string &details)
+{
+	std::cerr << "[STREAMING ERROR] Cliente " << client_fd
+			  << " - " << operation;
+	if (!details.empty())
+	{
+		std::cerr << ": " << details;
+	}
+	std::cerr << " (" << strerror(errno) << ")" << std::endl;
+}
+
+void WebServer::logStreamingInfo(int client_fd, const std::string &message)
+{
+	std::cout << "[STREAMING INFO] Cliente " << client_fd
+			  << " - " << message << std::endl;
+}
+// ### EXCEPTION ###
 const char *WebServer::WebServerErrorException::what() const throw()
 {
 	return (_message.c_str());

@@ -6,7 +6,7 @@
 /*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/15 14:15:54 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/15 20:12:22 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,5 +59,6 @@
 
 // utils 
 std::string toLower(const std::string &str);
+std::string removeSlashes(std::string path);
 
 #endif
