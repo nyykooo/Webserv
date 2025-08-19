@@ -207,23 +207,6 @@ static std::string createDirIndex(std::string path)
 	return dirIndex;
 }
 
-std::string removeSlashes(std::string path) {
-	std::string newPath;
-	size_t		index;
-	
-	newPath = path;
-	index = 0;
-	std::cout << "before: " << path << std::endl;
-	index = newPath.find_first_not_of('/');
-	if (index != newPath.npos)
-		newPath.erase(0, index);
-	size_t end = newPath.find_last_not_of('/');
-	if (end != std::string::npos)
-		newPath.erase(end + 1);
-	std::cout << "after: " << newPath << std::endl;
-	return (newPath);
-}
-
 void	HttpResponse::openDir(std::string path)
 {
 	std::string newPath = removeSlashes(path);
@@ -809,3 +792,6 @@ const std::string&	HttpResponse::getResponse(void) const {
 	return (_response);
 }
 
+const Configuration&	HttpResponse::getConfig(void) const {
+	return (*_conf);
+}

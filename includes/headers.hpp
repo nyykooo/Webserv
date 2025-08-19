@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/14 13:50:54 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/19 20:20:17 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,5 +57,9 @@
 // remover depois!!!! servem para printar o hyperlink no terminal
 # include <netdb.h>
 # include <arpa/inet.h>
+
+// utils 
+std::string toLower(const std::string &str);
+std::string removeSlashes(std::string path);
 
 #endif
