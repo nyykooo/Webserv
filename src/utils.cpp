@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:13:55 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/26 19:45:19 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/15 15:17:21 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,20 @@ std::string setTimeStamp()
 	<< ":" << std::setfill('0') << std::setw(2) << (timeinfo->tm_sec);
 
 	return oss.str();
+}
+
+std::string get_http_date()
+{
+	char buf[100];
+	std::time_t now = std::time(0);
+
+	std::tm *gmt = std::gmtime(&now);
+	if (gmt == NULL)
+		return "";
+
+    std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", gmt);
+
+    return std::string(buf);
 }
 
 void	printLog(std::string message, const char	*color)

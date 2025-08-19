@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/30 20:55:39 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/10 14:44:38 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/15 14:47:44 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,8 +31,16 @@
 # define CRLF "\r\n"
 
 # define HTTP_200 "200 OK"
+# define HTTP_204 "204 No Content"
 # define ERROR_404 "404 Not Found"
 # define ERROR_413 "413 Request Entity Too Large"
 # define ERROR_405 "405 Method Not Allowed"
+
+typedef enum 	e_method_type
+{
+	GET,
+	POST,
+	DELETE,
+}				t_method_type;
 
 #endif

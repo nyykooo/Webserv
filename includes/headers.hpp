@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   headers.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/10 12:20:06 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/14 13:50:54 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 # include <arpa/inet.h>		// includes inet_ntop(), inet_pton(), etc.
 # include <cstring>			// includes memset(), memcpy(), etc.
 # include <sys/socket.h>	// includes socket(), bind(), accept(), connect(), etc.
+# include <sys/wait.h>		// includes waitpid, etc.
 # include <netdb.h>			// includes getaddrinfo(), getnameinfo(), etc.
 # include <sys/types.h>		// includes types like sockaddr, socklen_t, etc.
 # include <sys/stat.h>		// includes stat and S_ISxxx macros
