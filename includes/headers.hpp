@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/19 18:42:15 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/19 19:19:29 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@
 
 
 # include "macros.hpp"
+# include "enums.hpp"
 # include "structs.hpp"
 # include "Socket.hpp"
 # include "Block.hpp"
@@ -51,8 +52,8 @@
 # include "WebServer.hpp"
 # include "Client.hpp"
 # include "Server.hpp"
-# include "functions.hpp"
 # include "ErrorPageRule.hpp"
+# include "functions.hpp"
 
 // remover depois!!!! servem para printar o hyperlink no terminal
 # include <netdb.h>

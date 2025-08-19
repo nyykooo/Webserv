@@ -138,7 +138,6 @@ void HttpResponse::openReg(std::string path)
 
 	ss << file.rdbuf();
 	_resBody = ss.str();
-	std::cout << "resBody: " << _resBody << std::endl;
 	file.close();
 	_resStatus = 200;
 }
@@ -226,7 +225,6 @@ void	HttpResponse::checkFile(std::string fileName) {
 		openReg(fileName);
 	else if (S_ISDIR(st.st_mode))
 	{
-		std::cout << "Diretório encontrado: " << fileName << std::endl;
 		openDir(fileName);
 	}
 	else if (S_ISLNK(st.st_mode))
@@ -240,9 +238,8 @@ void	HttpResponse::handleGET()
 	std::string	newRoot = removeSlashes(_conf->getRoot());
 	std::string locPath = removeSlashes(this->getFullPath());
 	if (!newRoot.empty())
-		newRoot = "/" + newRoot;
+		newRoot = "./" + newRoot;
 	std::string fileName = newRoot + "/" + locPath;
-	std::cout << "GET file: " << fileName << std::endl;
 	checkFile(fileName);
 	
 }
@@ -460,7 +457,6 @@ const std::string HttpResponse::checkStatusCode() {
 		default:
 			break ;
 	}
-	std::cout << "Status code not handled: " << _resStatus << std::endl;
 	return _resBody;
 }
 

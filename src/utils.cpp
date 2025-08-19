@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:13:55 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/15 20:12:22 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/19 19:23:49 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,13 +82,11 @@ std::string removeSlashes(std::string path) {
 	
 	newPath = path;
 	index = 0;
-	std::cout << "before: " << path << std::endl;
 	index = newPath.find_first_not_of('/');
 	if (index != newPath.npos)
 		newPath.erase(0, index);
 	size_t end = newPath.find_last_not_of('/');
 	if (end != std::string::npos)
 		newPath.erase(end + 1);
-	std::cout << "after: " << newPath << std::endl;
 	return (newPath);
 }
