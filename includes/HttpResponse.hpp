@@ -11,7 +11,6 @@ class HttpResponse {
 		std::string		_resHeader;
 		std::string		_resBody;
 		int				_resStatus;
-		Configuration	*_conf;
 		HttpRequest		*_req;
 		LocationBlock	*_loc;
 		Block			*_block;
@@ -20,16 +19,19 @@ class HttpResponse {
 		int				_pipeOut;
 		int				_cgiPid;
 
+		Configuration	*_conf;
+		
 	public:
 
 		//SETTERS
 		void	setResponse(const std::string& response);
 
 		//GETTERS
-		const std::string&	getResponse(void) const;
-		const std::string&	getResHeader(void) const;
-		const std::string&	getResBody(void) const;
-		std::string			getFullPath(void);
+		const std::string&		getResponse(void) const;
+		const std::string&		getResHeader(void) const;
+		const std::string&		getResBody(void) const;
+		std::string				getFullPath(void);
+		const Configuration&	getConfig(void) const;
 		// EXEC METHOD
 		void	execMethod();
 		void	handleGET();
