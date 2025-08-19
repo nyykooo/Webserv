@@ -16,6 +16,21 @@ HttpResponse HttpResponse::operator=(const HttpResponse& other) {
 HttpResponse::~HttpResponse() {}
 
 
+std::string removeSlashes(std::string path) {
+	std::string newPath;
+	size_t		index;
+	
+	newPath = path;
+	index = 0;
+	index = newPath.find_first_not_of('/');
+	if (index != newPath.npos)
+		newPath.erase(0, index);
+	size_t end = newPath.find_last_not_of('/');
+	if (end != std::string::npos)
+		newPath.erase(end + 1);
+	return (newPath);
+}
+
 // ### CGI ###
 void HttpResponse::forkExecCgi(std::string interpreter)
 {
@@ -164,21 +179,6 @@ static std::string createDirIndex(std::string path)
 	dirIndex += "</ul></body></html>";
 	closedir(dir);
 	return dirIndex;
-}
-
-std::string removeSlashes(std::string path) {
-	std::string newPath;
-	size_t		index;
-	
-	newPath = path;
-	index = 0;
-	index = newPath.find_first_not_of('/');
-	if (index != newPath.npos)
-		newPath.erase(0, index);
-	size_t end = newPath.find_last_not_of('/');
-	if (end != std::string::npos)
-		newPath.erase(end + 1);
-	return (newPath);
 }
 
 void	HttpResponse::openDir(std::string path)
