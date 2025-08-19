@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Block.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:26 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/17 15:00:53 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/19 19:54:36 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ class Block
 		std::vector<std::string>	_defaultFiles; // block
 		std::vector<std::string>	_allowedMethods; // block
 		int							_redirectStatusCode; // block
+		std::map<std::string, std::string> _cgiMap; // block
 		
 	public:
 		// ORTHODOX CANONICAL FORM
@@ -49,6 +50,7 @@ class Block
 		const std::vector<std::string>& getMethods(void) const;
 		const std::string& getStatusCode(void) const;
 		int getRedirectStatusCode(void) const;
+		const std::map<std::string, std::string>& getCgiMap(void) const;
 };
 
 

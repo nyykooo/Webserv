@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/17 18:54:20 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/19 20:27:03 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -364,14 +364,14 @@ void WebServer::sendData(int client_fd)
 		return;
 	}
 
-	client->setProcessingState(PROCESSING); // Comportamento atual
-	client->sendResponse = new HttpResponse(client->_request, client->_request->_config);
+	client->setProcessingState(PROCESSING); // Comportamento atual // Precisa desse set de processing? o case para entrar na sendData ja eh processing
+	client->sendResponse = new HttpResponse(client->_request, client->_request->_config); // mudar esse construtor para um metodo para evitar multiplas alocacoes de memoria aqui (pode dar problemas)
 	
-	const char *buf = client->sendResponse->getResponse().c_str();
+	const char *buf = client->sendResponse->getResponse().c_str(); // HttpResponse poderia ter um metodo para ter um buffer em const char * e outro size_t
 	size_t size = client->sendResponse->getResponse().size();
 	int sent = send(client_fd, buf, size, 0);
 	if (sent == -1)
-	return;
+		return;
 	else
 	{
 		std::stringstream ss;
@@ -545,10 +545,6 @@ static Configuration *lookForConfigurations(bool numeric_host, std::string host,
 		// entender first como ip e second como porta
 		if (host_it->first == client_it->second.first && host_it->second == client_it->second.second)
 		{
-			if ((*config_it).getAutoIndex() == true)
-				std::cout << "1 Autoindex true" << std::endl;
-			else
-				std::cout << "1 Autoindex false" << std::endl;
 			if (defaultConfig == NULL)
 				defaultConfig = &(*config_it);
 			if (numeric_host)

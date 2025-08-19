@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   functions.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:14:08 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/15 15:17:51 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/19 19:54:42 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,5 +23,9 @@ int			findLocation(Client *client);
 std::string	setTimeStamp();
 std::string get_http_date();
 void		printLog(std::string message, const char *color);
+
+// ### UTILS ### 
+std::string toLower(const std::string &str);
+std::string removeSlashes(std::string path);
 
 #endif

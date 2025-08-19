@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/19 20:20:17 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/19 20:26:02 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@
 # include <cstdlib>			// includes std::exit(), std::atoi(), std::atof(), etc.
 # include <ctime>			// includes std::time_t and std::time()
 # include <dirent.h>		// includes opendir(), readdir(), closedir(), etc.
+# include <sys/wait.h>		// includes waitpid(), WNOHANG, etc.
 # include <map>
 # include <set>
 # include <stdexcept>
@@ -41,6 +42,7 @@
 
 
 # include "macros.hpp"
+# include "enums.hpp"
 # include "structs.hpp"
 # include "Socket.hpp"
 # include "Block.hpp"
@@ -51,8 +53,8 @@
 # include "WebServer.hpp"
 # include "Client.hpp"
 # include "Server.hpp"
-# include "functions.hpp"
 # include "ErrorPageRule.hpp"
+# include "functions.hpp"
 
 // remover depois!!!! servem para printar o hyperlink no terminal
 # include <netdb.h>

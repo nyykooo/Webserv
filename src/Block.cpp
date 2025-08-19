@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Block.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/10 16:11:04 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/16 13:29:55 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 
 Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1)
 {
+	_cgiMap[".php"] = "/usr/bin/php-cgi";
+	_cgiMap[".py"] = "/usr/bin/python3";
 }
 
 Block::Block(const Block& other)
@@ -24,6 +26,7 @@ Block::Block(const Block& other)
 	_defaultFiles = other._defaultFiles;
 	_allowedMethods = other._allowedMethods;
 	_redirectStatusCode = other._redirectStatusCode;
+	_cgiMap = other._cgiMap;
 }
 
 Block::~Block()
@@ -40,6 +43,7 @@ Block &Block::operator=(const Block &other)
 		_defaultFiles = other._defaultFiles;
 		_allowedMethods = other._allowedMethods;
 		_redirectStatusCode = other._redirectStatusCode;
+		_cgiMap = other._cgiMap;
 	}
 	return *this;
 }
@@ -127,4 +131,8 @@ const std::vector<std::string>& Block::getMethods(void) const
 
 int Block::getRedirectStatusCode(void) const {
 	return (_redirectStatusCode);
+}
+
+const std::map<std::string, std::string>& Block::getCgiMap(void) const {
+	return (_cgiMap);
 }

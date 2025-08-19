@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-HttpResponse::HttpResponse() {}
+HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1) {}
 
 HttpResponse::HttpResponse(const HttpResponse& other) {
 	*this = other;
@@ -14,6 +14,113 @@ HttpResponse HttpResponse::operator=(const HttpResponse& other) {
 }
 
 HttpResponse::~HttpResponse() {}
+
+// ### CGI ###
+void HttpResponse::forkExecCgi(std::string interpreter)
+{
+	// ordem da funcao
+	// double pipes
+	// fork
+	// dup2 do stdout e stdin do processo filho para os pipes
+	// chdir
+	// execve
+	std::string path = removeSlashes(_req->getPath());
+	char *args[2];
+	int pipeInput[2];
+	int pipeOutput[2];
+	int doneProcess;
+
+	args[0] = const_cast<char *>(interpreter.c_str());
+	args[1] = const_cast<char *>(path.c_str());
+
+	pipeInput[0] = _pipeIn;
+	pipeInput[1] = STDIN_FILENO;
+
+	pipeOutput[0] = STDOUT_FILENO;
+	pipeOutput[1] = _pipeOut;
+
+	if (_cgiPid > 0)
+	{
+		doneProcess = waitpid(_cgiPid, NULL, WNOHANG); // permite verificar se o processo filho terminou sem bloquear o servidor
+		if (doneProcess == 0)
+		{
+			// filho ainda esta correndo
+			return;
+		}
+		else if (doneProcess == _cgiPid)
+		{
+			// filho terminou
+			// alterar o status da reposta para indicar ao servidor que se pode ler do _pipeOut
+			close(_pipeIn);
+			close(_pipeOut);
+			_pipeIn = -1; // Reset pipeIn
+			_pipeOut = -1; // Reset pipeOut
+			_cgiPid = -1; // Reset cgiPid
+			_resStatus = 200;
+			std::cout << "CGI process finished." << std::endl;
+			return; // Retorna para não bloquear o servidor
+		}
+	}
+
+	// Create pipes for input and output
+	if (pipe(pipeInput) == -1 || pipe(pipeOutput) == -1) {
+		std::cerr << "Pipe error: " << strerror(errno) << std::endl;
+		_resStatus = 500; // Internal Server Error
+		return;
+	}
+
+	pid_t pid = fork();
+	if (pid < 0) {
+		std::cerr << "Fork error: " << strerror(errno) << std::endl;
+		_resStatus = 500; // Internal Server Error
+		return;
+	}
+	if (pid == 0)
+	{
+		// processo filho
+		dup2(pipeInput[0], STDIN_FILENO); // Redirect stdin to pipe input
+		dup2(pipeOutput[1], STDOUT_FILENO); // Redirect stdout to pipe output
+		
+		// mudar de diretorio para o diretorio do CGI
+		if (chdir(_block->getRoot().c_str()) == -1) {
+			std::cerr << "Chdir error: " << strerror(errno) << std::endl;
+			exit(500); // Internal Server Error
+		}
+
+		// Preparar variaveis de ambiente futuramente (pesquisar melhor sobre elas e sobre como o CGI as usa)
+		
+		// Execve interpretador do cgi, passando como arg o path para cgi e as envps
+		execve(interpreter.c_str(), const_cast<char **>(args), NULL);
+		std::cerr << "Execve error: " << strerror(errno) << std::endl;
+		exit(500); // Internal Server Error
+	} else {
+		// processo pai
+		_cgiPid = pid;
+		close(pipeInput[0]);
+		close(pipeOutput[1]);
+		_pipeIn = pipeInput[1];     // lado de escrita (pai -> CGI stdin)
+		_pipeOut = pipeOutput[0];   // lado de leitura (pai <- CGI stdout)
+
+		return ; // Retorna para não bloquear o servidor
+	}
+}
+
+bool HttpResponse::lookForCgi(void)
+{
+	std::string fileExtension = removeSlashes(_req->getPath());
+	size_t pos = fileExtension.find_last_of('.');
+	if (pos != std::string::npos) {
+		fileExtension = fileExtension.substr(pos);
+		std::map<std::string, std::string>::const_iterator it = _block->getCgiMap().find(fileExtension);
+		if (it != _block->getCgiMap().end()) {
+			std::cout << "CGI found for extension: " << fileExtension << std::endl;
+			forkExecCgi(it->second);
+			return true;
+		}
+	}
+	std::cout << "No CGI found for extension: " << fileExtension << std::endl;
+	return false;
+}
 
 // ### EXEC METHOD ###
 
@@ -33,7 +140,6 @@ void HttpResponse::openReg(std::string path, int methodType)
 
 	ss << file.rdbuf();
 	_resBody = ss.str();
-	std::cout << "resBody: " << _resBody << std::endl;
 	file.close();
 	
 }
@@ -289,10 +395,10 @@ void	HttpResponse::handleGET()
 	std::string	newRoot = removeSlashes(_conf->getRoot());
 	std::string locPath = removeSlashes(this->getFullPath());
 	if (!newRoot.empty())
-		newRoot = "/" + newRoot;
-	std::string _fileName = newRoot + "/" + locPath;
-	std::cout << "GET file: " << _fileName << std::endl;
+		newRoot = "./" + newRoot;
+	std::string fileName = newRoot + "/" + locPath;
 	checkFile(GET);
+	
 }
 
 LocationBlock* HttpResponse::checkLocationBlock() {
@@ -359,6 +465,16 @@ void	HttpResponse::execMethod()
 		return ;
 	}
 	root = _block->getRoot();
+
+	if (_block->getRedirectStatusCode() != -1)
+	{
+		_resStatus = _block->getRedirectStatusCode();
+		_useNewLocation = true;
+		return;
+	}
+
+	if (lookForCgi() == true)
+		return ; // mudar status do HttpResponse/Client Bruno feature e retorna para nao bloquear o server
 
 	if (method == "GET")
 		handleGET();
@@ -644,6 +760,8 @@ std::string	HttpResponse::header(const std::string& status) {
 
     std::ostringstream header;
     header << "HTTP/1.1 " << status << CRLF;
+	if (_useNewLocation)
+		header << "Location: " << _block->getNewLocation() << CRLF;
 	header << "Server: MyServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
 	header << "Content-Type: " << getMimeType(_fileName) << CRLF;
@@ -695,12 +813,15 @@ const std::string HttpResponse::checkErrorResponse(const std::string& httpStatus
 	errorPage = openFile();
 	if (errorPage < 0) {
 		_resBody = http_error_404_page;
-		return (header(ERROR_404) + _resBody);
+		std::cout << "estou no erroPage < 0\n";
+		return (header(HTTP_404) + _resBody);
 	}
-	else if (errorPage == 0)
+	else if (errorPage == 0){
 		_resBody = page;
-	else
+		std::cout << "estou no erroPage == 0\n";}
+	else{
 		_resBody = httpFileContent(errorPage);
+		std::cout << "estou no erroPage > 0\n";}
 	httpStatus.c_str();
 	return (header(httpStatus) + _resBody);
 }
@@ -760,7 +881,6 @@ const std::string HttpResponse::checkStatusCode() {
 		case 505:
 			return (checkErrorResponse("505 HTTP Version Not Supported", http_error_505_page));
 	}
-	std::cout << "Status code not handled: " << _resStatus << std::endl;
 	return _resBody;
 }
 

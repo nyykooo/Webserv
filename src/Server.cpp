@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/21 19:50:11 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/16 12:22:01 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,9 @@ Server &Server::operator=(const Server &other) {
 }
 
 Server::~Server() {
-	std::cout << "‼️ WARNING: Server is down! ‼️" << std::endl;
+	std::stringstream ss;
+	ss << "‼️ WARNING: Server is down! ‼️\n";
+	printLog(ss.str(), RED);
 }
 
 // ### INIT SERVER SOCKET ###

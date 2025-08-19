@@ -7,10 +7,15 @@ class Block;
 
 class HttpResponse {
 	private:
+		int									_resStatus;
+		std::string							_resHeader;
+		bool								_useNewLocation;
+		int									_pipeIn;
+		int									_pipeOut;
+		int									_cgiPid;
 		std::string							_response;
 		std::string							_resBody;
 		std::string							_fileName;
-		int									_resStatus;
 		Configuration						*_conf;
 		HttpRequest							*_req;
 		LocationBlock						*_loc;
@@ -18,6 +23,7 @@ class HttpResponse {
 		int									_method;
 		std::map<std::string, std::string>	_mimeTypes;
 
+		
 	public:
 
 		//SETTERS
@@ -25,11 +31,12 @@ class HttpResponse {
 		void	setMimeTypes();
 
 		//GETTERS
-		const std::string&	getResponse(void) const;
-		const std::string&	getResHeader(void) const;
-		const std::string&	getResBody(void) const;
-		std::string			getFullPath(void);
-		const std::string	getMimeType(const std::string& fileExtension);
+		const std::string&		getResponse(void) const;
+		const std::string&		getResHeader(void) const;
+		const std::string&		getResBody(void) const;
+		std::string				getFullPath(void);
+		const std::string		getMimeType(const std::string& fileExtension);
+		const Configuration&	getConfig(void) const;
 
 		// EXEC METHOD
 		void	execMethod();
@@ -52,6 +59,10 @@ class HttpResponse {
 		~HttpResponse();
 		HttpResponse(const HttpResponse& other);
 		HttpResponse operator=(const HttpResponse& other);
+
+		// CGI
+		bool	lookForCgi();
+		void	forkExecCgi(std::string interpreter);
 };
 
 #endif
