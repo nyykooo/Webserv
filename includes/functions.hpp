@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:14:08 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/19 18:42:28 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/19 19:54:42 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ int			findLocation(Client *client);
 
 // ### TIMESTAMP LOGS ###
 std::string	setTimeStamp();
+std::string get_http_date();
 void		printLog(std::string message, const char *color);
 
 // ### UTILS ### 

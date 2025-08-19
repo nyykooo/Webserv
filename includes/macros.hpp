@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/30 20:55:39 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/11 20:03:51 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/19 20:01:16 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,11 @@
 # define CRLF "\r\n"
 
 # define HTTP_200 "200 OK"
+# define HTTP_204 "204 No Content"
 # define HTTP_301 "301 Moved Permanently"
 # define HTTP_302 "302 Found"
 # define HTTP_404 "404 Not Found"
-# define HTTP_413 "413 Request Entity Too Large"
 # define HTTP_405 "405 Method Not Allowed"
+# define HTTP_413 "413 Request Entity Too Large"
 
 #endif

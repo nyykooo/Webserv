@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/19 18:41:32 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/19 20:10:19 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -364,14 +364,14 @@ void WebServer::sendData(int client_fd)
 		return;
 	}
 
-	client->setProcessingState(PROCESSING); // Comportamento atual
-	client->sendResponse = new HttpResponse(client->_request, client->_request->_config);
+	client->setProcessingState(PROCESSING); // Comportamento atual // Precisa desse set de processing? o case para entrar na sendData ja eh processing
+	client->sendResponse = new HttpResponse(client->_request, client->_request->_config); // mudar esse construtor para um metodo para evitar multiplas alocacoes de memoria aqui (pode dar problemas)
 	
-	const char *buf = client->sendResponse->getResponse().c_str();
+	const char *buf = client->sendResponse->getResponse().c_str(); // HttpResponse poderia ter um metodo para ter um buffer em const char * e outro size_t
 	size_t size = client->sendResponse->getResponse().size();
 	int sent = send(client_fd, buf, size, 0);
 	if (sent == -1)
-	return;
+		return;
 	else
 	{
 		std::stringstream ss;

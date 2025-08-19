@@ -9,7 +9,7 @@ class LocationBlock : public Block
 		bool													_exactMatchModifier;
 		std::string												_location;
 		std::vector<std::string>								_cgiExtension;
-		std::vector<std::string>								_cgiPath;
+		std::map<std::string, std::string>						_cgiPath;
 		static int												_locationCurlyBracketsCount;
 		std::set<ErrorPageRule>									_errorPage;
 	public:
@@ -21,14 +21,17 @@ class LocationBlock : public Block
 	void			setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
 	static void		incrementLocationCurlyBracketsCount(void);
 	static void		decrementLocationCurlyBracketsCount(void);
-
+	void			setCgiPath(const std::string& extension, const std::string& path);
+	void			setCgiExtension(const std::string& extension);
 
 	// GETTERS
 
-	bool														getExactMatchModifier(void) const;
-	const std::string&											getLocation(void) const;
-	const std::set<ErrorPageRule>&								getErrorPage(void) const;
-	static int													getLocationCurlyBracketsCount(void);
+	bool										getExactMatchModifier(void) const;
+	const std::string&							getLocation(void) const;
+	const std::set<ErrorPageRule>&				getErrorPage(void) const;
+	static int									getLocationCurlyBracketsCount(void);
+	const std::vector<std::string>&				getCgiExtension(void) const;
+	const std::map<std::string, std::string>&	getCgiPath(void) const;
 
 	// ORTHODOX CANONICAL FORM
 

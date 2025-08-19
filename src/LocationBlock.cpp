@@ -90,6 +90,22 @@ const std::set<ErrorPageRule>& LocationBlock::getErrorPage(void) const {
 	return (this->_errorPage);
 }
 
+void	LocationBlock::setCgiExtension(const std::string& extension) {
+	_cgiExtension.push_back(extension);
+}
+
+const std::vector<std::string>&	LocationBlock::getCgiExtension() const {
+	return (_cgiExtension);
+}
+
+void	LocationBlock::setCgiPath(const std::string& extension, const std::string& path) {
+	_cgiPath[extension] = path;
+}
+
+const std::map<std::string, std::string>&	LocationBlock::getCgiPath(void) const {
+	return (_cgiPath);
+}
+
 void	parseRoot(std::string& line, LocationBlock& location) {
 	std::stringstream ss(line);
 	std::string word;
@@ -236,6 +252,31 @@ void	parseDefaultFile(const std::string& line, LocationBlock& location) {
 		throw Configuration::WrongConfigFileException("too many arguments when defining index.");	
 }
 
+void	parseCgiExtension(const std::string& line, LocationBlock& location) {
+	std::stringstream ss(line);
+	std::string word;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (ss >> word)
+		location.setCgiExtension(word);
+	else
+		throw Configuration::WrongConfigFileException("no cgi_extension defined.");
+	while (ss >> word)
+		location.setCgiExtension(word);
+}
+
+void	parseCgiPath(const std::string& line, LocationBlock& location) {
+	std::stringstream ss(line);
+	std::string word, word2;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (!(ss >> word) || !(ss >> word2))
+		throw Configuration::WrongConfigFileException("no cgi_path defined.");
+	location.setCgiPath(word, word2);
+}
+
 void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& location) {
 	std::stringstream	ss(line);
 	std::string			word;
@@ -280,6 +321,10 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 			parseErrorPage(line, location);
 		else if (word == "index")
 			parseDefaultFile(line, location);
+		else if (word == "cgi_extension")
+			parseCgiExtension(line, location);
+		else if (word == "cgi_path")
+			parseCgiPath(line, location);
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}

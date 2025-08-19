@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:13:55 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/19 19:23:49 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/19 20:02:32 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,21 @@ std::string setTimeStamp()
 	return oss.str();
 }
 
-void printLog(std::string message, const char *color)
+std::string get_http_date()
+{
+	char buf[100];
+	std::time_t now = std::time(0);
+
+	std::tm *gmt = std::gmtime(&now);
+	if (gmt == NULL)
+		return "";
+
+    std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", gmt);
+
+    return std::string(buf);
+}
+
+void	printLog(std::string message, const char	*color)
 {
 	std::string time = setTimeStamp();
 	std::cout << "[" + time + "]: " << color << message << RESET << std::endl;

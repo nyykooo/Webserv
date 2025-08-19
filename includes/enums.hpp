@@ -11,4 +11,12 @@ enum	RequestProcessingState
 	COMPLETED // server finalizou o processamento da requisição do cliente
 };
 
+typedef enum 	e_method_type
+{
+	GET,
+	POST,
+	DELETE,
+}				t_method_type;
+
+
 #endif
