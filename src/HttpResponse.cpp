@@ -83,7 +83,9 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		
 		// mudar de diretorio para o diretorio do CGI
 		if (chdir(_block->getRoot().c_str()) == -1) {
-			std::cerr << "Chdir error: " << strerror(errno) << std::endl;
+			std::stringstream ss;
+			ss << "Chdir error: " << strerror(errno) << std::endl;
+			printLog(ss.str(), RED);
 			exit(500); // Internal Server Error
 		}
 
@@ -365,7 +367,9 @@ void	HttpResponse::checkFile(int methodType) {
 	struct stat st;
 	if (stat(_fileName.c_str(), &st) == -1)
 	{
-		std::cerr << "stat error:" << strerror(errno) << std::endl;
+		std::stringstream ss;
+		ss << "stat error: " << strerror(errno) << " '" << _fileName << "'";
+		printLog(ss.str(), RED);
 		_resStatus = 404;
 		return ;
 	}
@@ -396,7 +400,7 @@ void	HttpResponse::handleGET()
 	std::string locPath = removeSlashes(this->getFullPath());
 	if (!newRoot.empty())
 		newRoot = "./" + newRoot;
-	std::string fileName = newRoot + "/" + locPath;
+	_fileName = newRoot + "/" + locPath;
 	checkFile(GET);
 	
 }
@@ -813,15 +817,12 @@ const std::string HttpResponse::checkErrorResponse(const std::string& httpStatus
 	errorPage = openFile();
 	if (errorPage < 0) {
 		_resBody = http_error_404_page;
-		std::cout << "estou no erroPage < 0\n";
 		return (header(HTTP_404) + _resBody);
 	}
-	else if (errorPage == 0){
+	else if (errorPage == 0)
 		_resBody = page;
-		std::cout << "estou no erroPage == 0\n";}
-	else{
+	else
 		_resBody = httpFileContent(errorPage);
-		std::cout << "estou no erroPage > 0\n";}
 	httpStatus.c_str();
 	return (header(httpStatus) + _resBody);
 }
@@ -829,7 +830,9 @@ const std::string HttpResponse::checkErrorResponse(const std::string& httpStatus
 const std::string HttpResponse::checkStatusCode() {
 	std::string fileContent;
 	
-	std::cout << "status: " << _resStatus << std::endl;
+	std::stringstream ss;
+	ss << "HTTP Response status: " << _resStatus;
+	printLog(ss.str(), WHITE);
 	// esta função so valida caso o error_page esteja definido no .config file. tem de ser ajustada para caso não exista.
 	switch (_resStatus) {
 		case 200:
