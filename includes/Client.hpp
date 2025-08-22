@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/19 20:25:04 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/19 20:27:46 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,6 @@
 # define CLIENT_HPP
 
 # include "headers.hpp"
-
-enum	RequestProcessingState
-{
-	RECEIVING, // server está recebendo dados do cliente
-	PROCESSING, // server está processando a requisição do cliente
-	PROCESSING_LARGE, // server está processando a requisição do cliente, mas a PIZZA a ser preparada eh GRANDE
-	STREAMING, // server está servindo pedaço a pedaço da PIZZA GRANDE
-	COMPLETED // server finalizou o processamento da requisição do cliente
-};
 
 class Client : public Socket {
 	private:
