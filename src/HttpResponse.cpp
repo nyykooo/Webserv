@@ -836,7 +836,7 @@ std::string	HttpResponse::header(const std::string& status) {
 
     std::ostringstream header;
 
-	std::cout << RED << "file: " << _fileName << RESET << std::endl;
+	// std::cout << RED << "file: " << _fileName << RESET << std::endl;
     header << "HTTP/1.1 " << status << CRLF;
 	header << "Server: MyServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
@@ -980,7 +980,7 @@ HttpResponse::HttpResponse(HttpRequest *request, Configuration *config):_method(
 	setMimeTypes();
 	execMethod();
 	pageContent = checkStatusCode();
-	std::cout << YELLOW << pageContent << RESET << std::endl;
+	// std::cout << YELLOW << pageContent << RESET << std::endl;
 	
 	setResponse(pageContent);
 }
