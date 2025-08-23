@@ -275,6 +275,46 @@ void HttpResponse::setMimeTypes() {
 	_mimeTypes["avi"]   = "video/x-msvideo";
 }
 
+void HttpResponse::setStatusTexts() {
+	_statusTexts.insert(std::make_pair(200, "200 OK"));
+	_statusTexts.insert(std::make_pair(201, "201 Created"));
+	_statusTexts.insert(std::make_pair(202, "202 Accepted"));
+	_statusTexts.insert(std::make_pair(204, "204 No Content"));
+	_statusTexts.insert(std::make_pair(206, "206 Partial Content"));
+	_statusTexts.insert(std::make_pair(301, "301 Moved Permanently"));
+	_statusTexts.insert(std::make_pair(302, "302 Found"));
+	_statusTexts.insert(std::make_pair(303, "303 See Other"));
+	_statusTexts.insert(std::make_pair(304, "304 Not Modified"));
+	_statusTexts.insert(std::make_pair(307, "307 Temporary Redirect"));
+	_statusTexts.insert(std::make_pair(308, "308 Permanent Redirect"));
+	_statusTexts.insert(std::make_pair(400, "400 Bad Request"));
+	_statusTexts.insert(std::make_pair(401, "401 Unauthorized"));
+	_statusTexts.insert(std::make_pair(402, "402 Payment Required"));
+	_statusTexts.insert(std::make_pair(403, "403 Forbidden"));
+	_statusTexts.insert(std::make_pair(404, "404 Not Found"));
+	_statusTexts.insert(std::make_pair(405, "405 Method Not Allowed"));
+	_statusTexts.insert(std::make_pair(406, "406 Not Acceptable"));
+	_statusTexts.insert(std::make_pair(408, "408 Request Timeout"));
+	_statusTexts.insert(std::make_pair(409, "409 Conflict"));
+	_statusTexts.insert(std::make_pair(410, "410 Gone"));
+	_statusTexts.insert(std::make_pair(411, "411 Length Required"));
+	_statusTexts.insert(std::make_pair(412, "412 Precondition Failed"));
+	_statusTexts.insert(std::make_pair(413, "413 Payload Too Large"));
+	_statusTexts.insert(std::make_pair(414, "414 URI Too Long"));
+	_statusTexts.insert(std::make_pair(415, "415 Unsupported Media Type"));
+	_statusTexts.insert(std::make_pair(416, "416 Requested Range Not Satisfiable"));
+	_statusTexts.insert(std::make_pair(421, "421 Misdirected Request"));
+	_statusTexts.insert(std::make_pair(429, "429 Too Many Requests"));
+	_statusTexts.insert(std::make_pair(500, "500 Internal Server Error"));
+	_statusTexts.insert(std::make_pair(501, "501 Not Implemented"));
+	_statusTexts.insert(std::make_pair(502, "502 Bad Gateway"));
+	_statusTexts.insert(std::make_pair(503, "503 Service Unavailable"));
+	_statusTexts.insert(std::make_pair(504, "504 Gateway Timeout"));
+	_statusTexts.insert(std::make_pair(505, "505 HTTP Version Not Supported"));
+	_statusTexts.insert(std::make_pair(507, "507 Insufficient Storage"));
+}
+
+
 const std::string	HttpResponse::getMimeType(const std::string& fileExtension) {
 	size_t pos = fileExtension.find_last_of('.');
     
@@ -436,11 +476,11 @@ void HttpResponse::handleDELETE() {
 	std::string locPath = removeSlashes(this->getFullPath());
 	if (!newRoot.empty())
 		newRoot = "/" + newRoot;
-	std::string _fileName = newRoot + "/" + locPath;
+	_fileName = newRoot + "/" + locPath;
 	checkFile(DELETE);
 	if (_resStatus != 200)
 		return ;
-	std::cout << _fileName << std::endl;
+	//std::cout << _fileName << std::endl;
 	int removed = std::remove(_fileName.c_str());
 	if (removed == 0)
 		_resStatus = 204;
@@ -674,6 +714,23 @@ static const std::string& http_error_501_page =
 "</body>"
 "</html>";
 
+static const std::string& http_error_502_page =
+"<!DOCTYPE html>"
+"<html lang=\"en\">"
+"<head>"
+"<meta charset=\"UTF-8\">"
+"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+"<title>502</title>"
+"<style>"
+"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
+"h1 { color: #333; }"
+"</style>"
+"</head>"
+"<body>"
+"<h1>Bad Gateway</h1>"
+"</body>"
+"</html>";
+
 static const std::string& http_error_503_page =
 "<!DOCTYPE html>"
 "<html lang=\"en\">"
@@ -736,6 +793,7 @@ const std::string HttpResponse::httpFileContent(int errorPage) {
 		result.append(buffer, bytesRead);
 	}
 	if (bytesRead < 0) {
+		_fileName = ".html";
 		_resStatus = 404;
         return http_error_404_page;
 	}
@@ -747,35 +805,48 @@ int HttpResponse::openFile() {
 	std::set<ErrorPageRule>::const_iterator it = _conf->getErrorPage().begin();
 
 	while (it != _conf->getErrorPage().end()) {
-		if ((*it).error == _resStatus)
+		if ((*it).error == _resStatus) {
+			if ((*it).newError != -1)
+				_resStatus = (*it).newError;
 			break ;
+		}
+			
 		it++;
 	}
-	if (it == _conf->getErrorPage().end())
+	std::map<int, std::string>::iterator itt = _statusTexts.find(_resStatus);
+	if (itt != _statusTexts.end())
+		_httpStatus = itt->second;
+	else {
+		std::ostringstream oss;
+		oss << _resStatus;
+		_httpStatus = oss.str();
+	}
+	if (it == _conf->getErrorPage().end()) {
+		_fileName = ".html";
 		return (0);
-		
+	}
 	int	configFile = open((*it).errorPath.c_str(), O_RDONLY);
 	if (configFile < 0)
 		return (-1);
+	_fileName = (*it).errorPath.c_str();
 	return (configFile);
 }
 
 std::string	HttpResponse::header(const std::string& status) {
 
     std::ostringstream header;
+
+	std::cout << RED << "file: " << _fileName << RESET << std::endl;
     header << "HTTP/1.1 " << status << CRLF;
-	if (_useNewLocation)
-		header << "Location: " << _block->getNewLocation() << CRLF;
 	header << "Server: MyServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
 	header << "Content-Type: " << getMimeType(_fileName) << CRLF;
     header << "Content-Length: " << _resBody.size() << CRLF;
     header << CRLF;
-
 	return (header.str());
 }
 
-std::string setHeader(const std::string& str) {
+std::string setHeader(const std::string& str) {	
 	std::ostringstream response;
 	
 	response << "HTTP/1.1" << str << CRLF;
@@ -811,7 +882,7 @@ const std::string	HttpResponse::setRedirectHeader(const std::string& str) {
 	return (response.str() + _resBody);
 }
 
-const std::string HttpResponse::checkErrorResponse(const std::string& httpStatus, const std::string& page) {
+const std::string HttpResponse::checkErrorResponse(const std::string& page) {
 	int	errorPage;
 
 	errorPage = openFile();
@@ -823,9 +894,11 @@ const std::string HttpResponse::checkErrorResponse(const std::string& httpStatus
 		_resBody = page;
 	else
 		_resBody = httpFileContent(errorPage);
-	httpStatus.c_str();
-	return (header(httpStatus) + _resBody);
+	if (_resStatus == 204 || _resStatus == 304)
+		return (header(_httpStatus));
+	return (header(_httpStatus) + _resBody);
 }
+
 
 const std::string HttpResponse::checkStatusCode() {
 	std::string fileContent;
@@ -836,9 +909,12 @@ const std::string HttpResponse::checkStatusCode() {
 	// esta função so valida caso o error_page esteja definido no .config file. tem de ser ajustada para caso não exista.
 	switch (_resStatus) {
 		case 200:
+		case 206:
 			if (_method == DELETE || _method == POST)
 				return (setHeader("200 OK"));
 			return (header("200 OK") + _resBody);
+		case 201:
+			return (header("201 Created")); // adicionar nesta parte o body que sera gerado pela resposta do CGI
 		case 202:
 			return ("HTTP/1.1 202 Accepted");
 		case 204:
@@ -856,33 +932,35 @@ const std::string HttpResponse::checkStatusCode() {
 		case 308:
 			return (setRedirectHeader("308 Permanent Redirect"));
 		case 400:
-			return (checkErrorResponse("400 Bad Request", http_error_400_page));
+			return (checkErrorResponse(http_error_400_page));
 		case 403:
-			return (checkErrorResponse("403 Forbidden", http_error_403_page));
+			return (checkErrorResponse(http_error_403_page));
 		case 404:
-			return (checkErrorResponse("404 Not Found", http_error_404_page));
+			return (checkErrorResponse(http_error_404_page));
 		case 405:
-			return (checkErrorResponse("405 Method Not Allowed", http_error_405_page));
+			return (checkErrorResponse(http_error_405_page));
 		case 408:
-			return (checkErrorResponse("408 Request Timeout", http_error_408_page));
+			return (checkErrorResponse(http_error_408_page));
 		case 409:
-			return (checkErrorResponse("409 Conflict", http_error_409_page));
+			return (checkErrorResponse(http_error_409_page));
 		case 411:
-			return (checkErrorResponse("411 Length Required", http_error_411_page));
+			return (checkErrorResponse(http_error_411_page));
 		case 413:
-			return (checkErrorResponse("413 Payload Too Large", http_error_413_page));
+			return (checkErrorResponse(http_error_413_page));
 		case 414:
-			return (checkErrorResponse("414 URI Too Long", http_error_414_page));
+			return (checkErrorResponse(http_error_414_page));
 		case 500:
-			return (checkErrorResponse("500 Internal Server error", http_error_500_page));
+			return (checkErrorResponse(http_error_500_page));
 		case 501:
-			return (checkErrorResponse("501 Not Implemented", http_error_501_page));
+			return (checkErrorResponse(http_error_501_page));
+		case 502:
+			return (checkErrorResponse(http_error_502_page));
 		case 503:
-			return (checkErrorResponse("503 Service Unavailable", http_error_503_page));
+			return (checkErrorResponse(http_error_503_page));
 		case 504:
-			return (checkErrorResponse("504 Gateway Timeout", http_error_504_page));
+			return (checkErrorResponse(http_error_504_page));
 		case 505:
-			return (checkErrorResponse("505 HTTP Version Not Supported", http_error_505_page));
+			return (checkErrorResponse(http_error_505_page));
 	}
 	return _resBody;
 }
@@ -891,6 +969,7 @@ HttpResponse::HttpResponse(HttpRequest *request, Configuration *config):_method(
 	_conf = config;
 	_req = request;
 	_loc = checkLocationBlock();
+	setStatusTexts();
 	if (_loc != NULL)
 		_block = _loc;	
 	else
@@ -901,7 +980,8 @@ HttpResponse::HttpResponse(HttpRequest *request, Configuration *config):_method(
 	setMimeTypes();
 	execMethod();
 	pageContent = checkStatusCode();
-	//std::cout << YELLOW << pageContent << RESET << std::endl;
+	std::cout << YELLOW << pageContent << RESET << std::endl;
+	
 	setResponse(pageContent);
 }
 

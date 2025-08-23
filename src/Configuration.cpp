@@ -84,7 +84,7 @@ void	Configuration::setErrorPage(int errorPage, const std::string& errorPagePath
 	rule.errorPath = errorPagePath;
 	rule.newError = newStatus;
 
-	//std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
+	std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
 	this->_errorPage.insert(rule);
 }
 
