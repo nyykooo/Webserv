@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/22 14:01:57 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/23 17:25:21 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -364,7 +364,6 @@ void WebServer::sendData(int client_fd)
 		return;
 	}
 
-	client->setProcessingState(PROCESSING); // Comportamento atual // Precisa desse set de processing? o case para entrar na sendData ja eh processing
 	client->sendResponse = new HttpResponse(client->_request, client->_request->_config); // mudar esse construtor para um metodo para evitar multiplas alocacoes de memoria aqui (pode dar problemas)
 	
 	const char *buf = client->sendResponse->getResponse().c_str(); // HttpResponse poderia ter um metodo para ter um buffer em const char * e outro size_t
@@ -378,7 +377,6 @@ void WebServer::sendData(int client_fd)
 		ss << "Dados enviados ao cliente - client_fd: " << client_fd;
 		printLog(ss.str(), WHITE);
 	}
-	client->setProcessingState(COMPLETED);
 }
 
 void WebServer::setClientTime(int client_fd)
@@ -839,22 +837,12 @@ bool WebServer::continueLargeFileStreaming(Client *client)
 
 		if (bytesSent <= 0)
 		{
-			if (bytesSent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
-			{
-				break; // Temporário - tenta depois
-			}
-			else
-			{
-				// Erro permanente
-				logStreamingError(client->getSocketFd(), "send");
-				client->resetFileStreaming();
-				return false;
-			}
+			logStreamingError(client->getSocketFd(), "send");
+			client->resetFileStreaming();
+			return false;
 		}
-
 		totalSent += bytesSent;
 	}
-
 	client->setBytesSent(client->getBytesSent() + totalSent);
 	return (client->getBytesSent() < client->getFileSize());
 }
