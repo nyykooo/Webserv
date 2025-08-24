@@ -15,6 +15,30 @@ HttpResponse HttpResponse::operator=(const HttpResponse& other) {
 
 HttpResponse::~HttpResponse() {}
 
+static std::string readFd(int fd)
+{
+    const size_t bufSize = 4096;   // usa-se 4KB pois eh um meio termo entre chamadas pequenas e muito longas
+    char buffer[bufSize];
+    std::string result;
+    ssize_t bytesRead;
+
+    while (true) {
+        bytesRead = read(fd, buffer, bufSize);
+        if (bytesRead > 0) {
+            result.append(buffer, bytesRead);
+        } else if (bytesRead == 0) {
+            break;
+        } else {
+			std::stringstream ss;
+			ss << "Erro ao ler ficheiro de saida do CGI fd (" << fd << ")";
+			printLog(ss.str(), RED);
+			return "";
+        }
+    }
+
+    return result;
+}
+
 // ### CGI ###
 void HttpResponse::forkExecCgi(std::string interpreter)
 {
@@ -24,14 +48,16 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	// dup2 do stdout e stdin do processo filho para os pipes
 	// chdir
 	// execve
-	std::string path = removeSlashes(_req->getPath());
+	_fileName = removeSlashes(_fileName);
 	char *args[2];
 	int pipeInput[2];
 	int pipeOutput[2];
 	int doneProcess;
+	int childrenStatus;
 
 	args[0] = const_cast<char *>(interpreter.c_str());
-	args[1] = const_cast<char *>(path.c_str());
+	args[1] = const_cast<char *>(_fileName.c_str());
+	args[2] = NULL; // Terminate the args array with NULL
 
 	pipeInput[0] = _pipeIn;
 	pipeInput[1] = STDIN_FILENO;
@@ -41,7 +67,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 
 	if (_cgiPid > 0)
 	{
-		doneProcess = waitpid(_cgiPid, NULL, WNOHANG); // permite verificar se o processo filho terminou sem bloquear o servidor
+		doneProcess = waitpid(_cgiPid, &childrenStatus, WNOHANG); // permite verificar se o processo filho terminou sem bloquear o servidor
 		if (doneProcess == 0)
 		{
 			// filho ainda esta correndo
@@ -50,14 +76,25 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		else if (doneProcess == _cgiPid)
 		{
 			// filho terminou
-			// alterar o status da reposta para indicar ao servidor que se pode ler do _pipeOut
+			_client->setProcessingState(CGI_COMPLETED);
+			int exitStatus = WEXITSTATUS(childrenStatus);
+			if(exitStatus == 1)
+				_resStatus = 500; // Internal Server Error
+			else if (exitStatus == 0)
+				_resStatus = 200; // OK
+			
+			_response = readFd(_pipeOut); // Lê a saída do CGI
+			if (_response == "")
+				_resStatus = 500; // Internal Server Error
+
+			std::stringstream ss;
+			ss << "CGI process finished:\n\t-PID: " << _cgiPid << ";\n\t-Status: " << _resStatus;
+			printLog(ss.str(), WHITE);
 			close(_pipeIn);
 			close(_pipeOut);
 			_pipeIn = -1; // Reset pipeIn
 			_pipeOut = -1; // Reset pipeOut
 			_cgiPid = -1; // Reset cgiPid
-			_resStatus = 200;
-			std::cout << "CGI process finished." << std::endl;
 			return; // Retorna para não bloquear o servidor
 		}
 	}
@@ -68,6 +105,10 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		_resStatus = 500; // Internal Server Error
 		return;
 	}
+
+	std::stringstream ss;
+	ss << "CGI execution: \n\t-interpreter: " << interpreter << ";\n\t-args: " << _fileName; // adicionar variaveis de ambiente depois
+	printLog(ss.str(), WHITE);
 
 	pid_t pid = fork();
 	if (pid < 0) {
@@ -82,23 +123,27 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		dup2(pipeOutput[1], STDOUT_FILENO); // Redirect stdout to pipe output
 		
 		// mudar de diretorio para o diretorio do CGI
-		if (chdir(_block->getRoot().c_str()) == -1) {
-			std::stringstream ss;
-			ss << "Chdir error: " << strerror(errno) << std::endl;
-			printLog(ss.str(), RED);
-			exit(500); // Internal Server Error
-		}
+		// if (chdir(_block->getRoot().c_str()) == -1) {
+		// 	std::stringstream ss;
+		// 	ss << "Chdir error: " << strerror(errno) << std::endl;
+		// 	printLog(ss.str(), RED);
+		// 	exit(1); // Internal Server Error
+		// }
 
 		// Preparar variaveis de ambiente futuramente (pesquisar melhor sobre elas e sobre como o CGI as usa)
 		
 		// Execve interpretador do cgi, passando como arg o path para cgi e as envps
 		execve(interpreter.c_str(), const_cast<char **>(args), NULL);
 		std::cerr << "Execve error: " << strerror(errno) << std::endl;
-		exit(500); // Internal Server Error
+		exit(1); // Internal Server Error
 	} else {
 		// processo pai
 		_cgiPid = pid;
-		close(pipeInput[0]);
+		std::stringstream ss;
+		ss << "CGI process started:\n\t-PID: " << _cgiPid;
+		printLog(ss.str(), WHITE);
+		_client->setProcessingState(CGI_PROCESSING);
+		close(pipeInput[0]); // entender melhor a ordem de fechamento dos fds aqui
 		close(pipeOutput[1]);
 		_pipeIn = pipeInput[1];     // lado de escrita (pai -> CGI stdin)
 		_pipeOut = pipeOutput[0];   // lado de leitura (pai <- CGI stdout)
@@ -109,22 +154,33 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 
 bool HttpResponse::lookForCgi(void)
 {
-	std::string fileExtension = removeSlashes(_req->getPath());
+	std::string fileExtension = removeSlashes(_fileName);
 	size_t pos = fileExtension.find_last_of('.');
 	if (pos != std::string::npos) {
 		fileExtension = fileExtension.substr(pos);
 		std::map<std::string, std::string>::const_iterator it = _block->getCgiMap().find(fileExtension);
 		if (it != _block->getCgiMap().end()) {
-			std::cout << "CGI found for extension: " << fileExtension << std::endl;
+			// avaliar se o ficheiro existe, se nao existir retornar 404(?)
 			forkExecCgi(it->second);
 			return true;
 		}
 	}
-	std::cout << "No CGI found for extension: " << fileExtension << std::endl;
 	return false;
 }
 
 // ### EXEC METHOD ###
+
+void HttpResponse::startResponse(void)
+{
+	if (_block->getRedirectStatusCode() != -1)
+	{
+		_resStatus = _block->getRedirectStatusCode();
+		_useNewLocation = true;
+		return;
+	}
+	execMethod();
+	_response = checkStatusCode();
+}
 
 void HttpResponse::openReg(std::string path, int methodType)
 {
@@ -386,6 +442,7 @@ void	HttpResponse::openDir(std::string path)
 	}
 }
 
+// pensar se uma exact match interferiria definicao dessa fullpath (redirecao)
 std::string HttpResponse::getFullPath () {
 	std::string locPath = _req->getPath();
 	if (_block->getRoot().empty())
@@ -413,6 +470,9 @@ void	HttpResponse::checkFile(int methodType) {
 		_resStatus = 404;
 		return ;
 	}
+	if (lookForCgi() == true)
+		return ; // mudar status do HttpResponse/Client Bruno feature e retorna para nao bloquear o server
+
 	if (S_ISREG(st.st_mode)) {
 		openReg(_fileName, methodType);	
 	}
@@ -439,7 +499,7 @@ void	HttpResponse::handleGET()
 	std::string	newRoot = removeSlashes(_conf->getRoot());
 	std::string locPath = removeSlashes(this->getFullPath());
 	if (!newRoot.empty())
-		newRoot = "./" + newRoot;
+		newRoot = newRoot;
 	_fileName = newRoot + "/" + locPath;
 	checkFile(GET);
 	
@@ -509,16 +569,6 @@ void	HttpResponse::execMethod()
 		return ;
 	}
 	root = _block->getRoot();
-
-	if (_block->getRedirectStatusCode() != -1)
-	{
-		_resStatus = _block->getRedirectStatusCode();
-		_useNewLocation = true;
-		return;
-	}
-
-	if (lookForCgi() == true)
-		return ; // mudar status do HttpResponse/Client Bruno feature e retorna para nao bloquear o server
 
 	if (method == "GET")
 		handleGET();
@@ -902,19 +952,19 @@ const std::string HttpResponse::checkErrorResponse(const std::string& page) {
 
 const std::string HttpResponse::checkStatusCode() {
 	std::string fileContent;
-	
-	std::stringstream ss;
-	ss << "HTTP Response status: " << _resStatus;
-	printLog(ss.str(), WHITE);
+
 	// esta função so valida caso o error_page esteja definido no .config file. tem de ser ajustada para caso não exista.
 	switch (_resStatus) {
 		case 200:
+			if (_client->getProcessingState() == CGI_COMPLETED)
+				return (_response); // nao usa header pois a _response eh toda montada pelo cgi
+			return (header("200 OK") + _resBody);
 		case 206:
 			if (_method == DELETE || _method == POST)
 				return (setHeader("200 OK"));
 			return (header("200 OK") + _resBody);
-		case 201:
-			return (header("201 Created")); // adicionar nesta parte o body que sera gerado pela resposta do CGI
+		case 201: // [NCC] pelo que entendi o 201 so sera gerado pelo POST, por isso podemos garantir que o CGI atuara sempre
+			return (_response); // nao usa header pois a _response eh toda montada pelo cgi
 		case 202:
 			return ("HTTP/1.1 202 Accepted");
 		case 204:
@@ -965,24 +1015,18 @@ const std::string HttpResponse::checkStatusCode() {
 	return _resBody;
 }
 
-HttpResponse::HttpResponse(HttpRequest *request, Configuration *config):_method(-1) {
-	_conf = config;
-	_req = request;
+// HttpResponse::HttpResponse(HttpRequest *request, Configuration *config):_method(-1) {
+HttpResponse::HttpResponse(Client *client):  _resStatus(-1), _method(-1) {
+	_client = client;
+	_conf = client->_request->_config;
+	_req = client->_request;
 	_loc = checkLocationBlock();
 	setStatusTexts();
 	if (_loc != NULL)
 		_block = _loc;	
 	else
 		_block = _conf;
-	std::string	pageContent;
-
-
 	setMimeTypes();
-	execMethod();
-	pageContent = checkStatusCode();
-	// std::cout << YELLOW << pageContent << RESET << std::endl;
-	
-	setResponse(pageContent);
 }
 
 // ### SETTERS ###

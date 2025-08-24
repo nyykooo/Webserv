@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/17 18:28:36 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/24 15:07:09 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,15 +21,16 @@ Client::Client() : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0)
 Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0)
 {
 	_time = std::time(NULL);
-	sendResponse = NULL;
+	_response = NULL;
 	_request = NULL;
 	initClientSocket(server_fd);
 }
 
-Client::Client(const Client &other) : Socket(other), _time(other.getTime()), _state(other._state), _fileFd(-1), _fileSize(0), _bytesSent(0)
+Client::Client(const Client &other) : Socket(other), _time(other.getTime()), _fileFd(-1), _fileSize(0), _bytesSent(0)
 {
-	sendResponse = NULL;
+	_response = NULL;
 	_request = NULL;
+	_state = other._state;
 }
 
 Client &Client::operator=(const Client &other)
@@ -45,10 +46,10 @@ Client &Client::operator=(const Client &other)
 		_fileFd = -1;
 		_fileSize = 0;
 		_bytesSent = 0;
-		if (sendResponse)
+		if (_response)
 		{
-			delete sendResponse;
-			sendResponse = NULL;
+			delete _response;
+			_response = NULL;
 		}
 		if (_request)
 		{
@@ -66,8 +67,8 @@ Client::~Client()
 		close(_fileFd);
 		_fileFd = -1; // analisar se eh realmente necessario
 	}
-	if (sendResponse)
-		delete sendResponse;
+	if (_response)
+		delete _response;
 	if (_request)
 		delete _request;
 }

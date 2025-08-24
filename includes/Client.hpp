@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/19 20:27:46 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/24 15:03:49 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ class Client : public Socket {
 		int						_fileFd; // usado para o streaming de arquivos
 		size_t					_fileSize; // usado para o streaming de arquivos
 		size_t					_bytesSent; // usado para o streaming de arquivos
+		// incluir a HttpRequest, HttpResponse e Configuration aqui
 
 	public:
 		Client();
@@ -49,7 +50,7 @@ class Client : public Socket {
 		void	setBytesSent(size_t bytes);
 
 		// ### ATRIBUTES ###
-		HttpResponse*	sendResponse;
+		HttpResponse*	_response;
 		HttpRequest*	_request;
 
 		void	resetFileStreaming(); // zerar tudo e settar fd pra -1
