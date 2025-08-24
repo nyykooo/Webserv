@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/17 18:18:24 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/23 13:29:30 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,8 @@ class WebServer
 	
 	bool 								isRequestComplete(const std::string &data);
 	int 								extractContentLength(const std::string& headers);
-	bool								isLargeFileRequest(const HttpRequest* request);
+	// bool								isLargeFileRequest(const HttpRequest* request);
+	bool								isLargeFileRequest(Client *client);
 	std::string							getContentType(const std::string& filePath);
 	void								handleClientInput(Client *client, int i);
 	void								handleClientOutput(Client *client, int i);

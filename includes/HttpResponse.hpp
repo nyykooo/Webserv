@@ -4,6 +4,7 @@
 #include "headers.hpp"
 
 class Block;
+class Client;
 
 class HttpResponse {
 	private:
@@ -16,9 +17,10 @@ class HttpResponse {
 		std::string							_response;
 		std::string							_resBody;
 		std::string							_fileName;
-		Configuration						*_conf;
-		HttpRequest							*_req;
-		LocationBlock						*_loc;
+		Configuration						*_conf; // pensar sobre manter ou colocar dentro do client
+		HttpRequest							*_req; // pensar sobre manter ou colocar dentro do client
+		LocationBlock						*_loc; // pensar sobre manter ou colocar dentro do client
+		Client 								*_client; // se passar na hora de construir o HttpResponse podemos manipular o _status diretamente sem precisar retornar nada especifico
 		Block								*_block;
 		int									_method;
 		std::map<std::string, std::string>	_mimeTypes;
@@ -42,6 +44,7 @@ class HttpResponse {
 		const Configuration&	getConfig(void) const;
 
 		// EXEC METHOD
+		void	startResponse();
 		void	execMethod();
 		void	handleGET();
 		void	handleDELETE();
@@ -58,7 +61,8 @@ class HttpResponse {
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();
-		HttpResponse(HttpRequest *request, Configuration *config);
+		// HttpResponse(HttpRequest *request, Configuration *config);
+		HttpResponse(Client *client);
 		~HttpResponse();
 		HttpResponse(const HttpResponse& other);
 		HttpResponse operator=(const HttpResponse& other);

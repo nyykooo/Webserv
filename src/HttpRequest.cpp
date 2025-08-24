@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/08/10 15:55:03 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/21 19:32:23 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,7 +102,9 @@ void HttpRequest::parse(const std::string &request_text)
 	if (std::getline(stream, request_line) && !request_line.empty())
 	{
 		parse_requestline(request_line);
-		std::cout << "Request line parsed: " << method << " " << path << " " << version << std::endl;
+		std::stringstream ss;
+		ss << "HTTP Request line parsed: " << method << " " << path << " " << version;
+		printLog(ss.str(), WHITE);
 	}
 	
 	parse_headers(stream);

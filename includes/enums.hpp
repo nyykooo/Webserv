@@ -8,7 +8,9 @@ enum	RequestProcessingState
 	PROCESSING, // server está processando a requisição do cliente
 	PROCESSING_LARGE, // server está processando a requisição do cliente, mas a PIZZA a ser preparada eh GRANDE
 	STREAMING, // server está servindo pedaço a pedaço da PIZZA GRANDE
-	COMPLETED // server finalizou o processamento da requisição do cliente
+	COMPLETED, // server finalizou o processamento da requisição do cliente
+	CGI_PROCESSING, // server está processando uma requisição CGI
+	CGI_COMPLETED // server finalizou o processamento da requisição CGI
 };
 
 typedef enum 	e_method_type

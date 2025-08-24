@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/23 17:25:21 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/24 20:28:31 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -303,7 +303,9 @@ int WebServer::receiveData(int client_fd)
 	catch (const std::exception &e)
 	{
 		_partial_requests.erase(client_fd);
-		std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
+		std::stringstream ss;
+		ss << "Error parsing HTTP request: " << e.what();
+		printLog(ss.str(), RED);
 		return -1;
 	}
 	
@@ -324,59 +326,57 @@ int WebServer::receiveData(int client_fd)
 	return (1);
 }
 
-// void WebServer::sendData(int client_fd)
-// {
-	// 	Client *client = findClient(client_fd, _clients_vec);
-	
-	// 	if (client->sendResponse)
-	// 		delete client->sendResponse;
-	
-	// 	client->sendResponse = new HttpResponse(client->_request, client->_request->_config);
-// 	// client->sendResponse->execMethod(client);
-// 	//  envia a resposta ao cliente
-// 	const char *buf = client->sendResponse->getResponse().c_str();
-// 	// std::cout << "buf: " << buf << std::endl;
-// 	size_t size = client->sendResponse->getResponse().size();
-// 	int sent = send(client_fd, buf, size, 0);
-// 	// int sent = send(client_fd, response.c_str(), response.size(), 0);
-// 	if (sent == -1)
-// 	{
-// 		return;
-// 	}
-// 	else
-// 	{
-// 		std::stringstream ss;
-// 		ss << "Dados enviados ao cliente - client_fd: " << client_fd;
-// 		printLog(ss.str(), WHITE);
-// 	}
-// }
+static void sendResponseToClient(Client *client)
+{
+	std::stringstream ss;
+	const char *buf = client->_response->getResponse().c_str(); // HttpResponse poderia ter um metodo para ter um buffer em const char * e outro size_t
+	size_t size = client->_response->getResponse().size();
+	int sent = send(client->getSocketFd(), buf, size, 0);
+	if (sent == -1)
+	{
+		ss << "Erro ao enviar dados ao cliente - client_fd: " << client->getSocketFd();
+		printLog(ss.str(), RED);
+		return;
+	}
+	else
+	{
+		ss << "Dados enviados ao cliente - client_fd: " << client->getSocketFd();
+		printLog(ss.str(), WHITE);
+	}
+}
 
 void WebServer::sendData(int client_fd)
 {
 	Client *client = findClient(client_fd, _clients_vec);
 
-	if (client->sendResponse)
-		delete client->sendResponse;
+	if (client->_response)
+		delete client->_response;
 
-	if (isLargeFileRequest(client->_request)) // verifica se é um arquivo grande
+	client->_response = new HttpResponse(client); // mudar esse construtor para um metodo para evitar multiplas alocacoes de memoria aqui (pode dar problemas)
+	client->_response->startResponse(); // Executa a lógica de resposta do HttpResponse
+	// [NCC] a ideia eh inicializar o httpresponse antes, nao executar a logica dele, para assim poder rodar a isLarge sem duplicar a execucao de logica do HttpResponse
+	if (isLargeFileRequest(client)) // verifica se é um arquivo grande
 	{
 		client->setProcessingState(PROCESSING_LARGE); // Mudamos o estado para PROCESSING_LARGE para ser tratado no próximo ciclo
 		return;
 	}
 
-	client->sendResponse = new HttpResponse(client->_request, client->_request->_config); // mudar esse construtor para um metodo para evitar multiplas alocacoes de memoria aqui (pode dar problemas)
-	
-	const char *buf = client->sendResponse->getResponse().c_str(); // HttpResponse poderia ter um metodo para ter um buffer em const char * e outro size_t
-	size_t size = client->sendResponse->getResponse().size();
-	int sent = send(client_fd, buf, size, 0);
-	if (sent == -1)
-		return;
-	else
-	{
-		std::stringstream ss;
-		ss << "Dados enviados ao cliente - client_fd: " << client_fd;
-		printLog(ss.str(), WHITE);
-	}
+	client->setProcessingState(PROCESSING); // Comportamento atual // Precisa desse set de processing? o case para entrar na sendData ja eh processing
+	// const char *buf = client->_response->getResponse().c_str(); // HttpResponse poderia ter um metodo para ter um buffer em const char * e outro size_t
+	// size_t size = client->_response->getResponse().size();
+	// int sent = send(client_fd, buf, size, 0);
+	// if (sent == -1)
+	// {
+	// 	ss << "Erro ao enviar dados ao cliente - client_fd: " << client_fd;
+	// 	printLog(ss.str(), RED);
+	// 	return;
+	// }
+	// else
+	// {
+	// 	ss << "Dados enviados ao cliente - client_fd: " << client_fd;
+	// 	printLog(ss.str(), WHITE);
+	// }
+	// client->setProcessingState(COMPLETED);
 }
 
 void WebServer::setClientTime(int client_fd)
@@ -637,7 +637,8 @@ void WebServer::handleClientOutput(Client *client, int i)
 	{
 	case PROCESSING:
 		sendData(_events[i].data.fd);
-		client->setProcessingState(COMPLETED);
+		if (client->getProcessingState() == PROCESSING)
+			client->setProcessingState(COMPLETED);
 		break;
 
 	case PROCESSING_LARGE: // Processamento de arquivos grandes
@@ -653,10 +654,17 @@ void WebServer::handleClientOutput(Client *client, int i)
 		break;
 
 	case COMPLETED:
+		sendResponseToClient(client);
 		client->setProcessingState(RECEIVING);
 		_events[i].events = EPOLLIN;
 		epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]);
 		setClientTime(_events[i].data.fd);
+		break;
+
+	case CGI_PROCESSING:
+		client->_response->startResponse();
+		if (client->getProcessingState() == CGI_COMPLETED)
+			client->setProcessingState(COMPLETED);
 		break;
 
 	case RECEIVING: // apenas para testar, pois se o event eh EPOLLOUT, o estado deve ser COMPLETED
@@ -670,18 +678,20 @@ void WebServer::handleClientOutput(Client *client, int i)
 	}
 }
 
-
-bool WebServer::isLargeFileRequest(const HttpRequest *request)
+bool WebServer::isLargeFileRequest(Client *client)
 {
+	const HttpRequest *request = client->_request;
 	// eh soh para GETs!
 	if (request->getMethod() != "GET")
 	{
 		return false;
 	}
 
+	// [NCC]aqui ao inves de usar o construtor da HttpResponse, podemos obter essas informacoes da HttpResponse que ja existe dentro do client
 	// Pulo do gato para obter o fil path correto considerando a logica dos location blocks
-	HttpResponse tempResponse(const_cast<HttpRequest *>(request), request->_config);
-
+	// HttpResponse tempResponse(const_cast<HttpRequest *>(request), request->_config);
+	HttpResponse tempResponse(client);
+	
 	// imitando a handleGet
 	std::string newRoot = removeSlashes(tempResponse.getConfig().getRoot());
 	std::string locPath = removeSlashes(tempResponse.getFullPath());
@@ -746,7 +756,8 @@ std::string WebServer::getContentType(const std::string &filePath)
 bool WebServer::startLargeFileStreaming(Client *client)
 {
 	// Depois encapsular essa logica do file path
-	HttpResponse tempResponse(client->_request, client->_request->_config);
+	// HttpResponse tempResponse(client->_request, client->_request->_config);
+	HttpResponse tempResponse(client);
 	std::string newRoot = removeSlashes(tempResponse.getConfig().getRoot());
 	std::string locPath = removeSlashes(tempResponse.getFullPath());
 	if (!newRoot.empty())

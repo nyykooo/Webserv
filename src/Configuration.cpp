@@ -84,7 +84,7 @@ void	Configuration::setErrorPage(int errorPage, const std::string& errorPagePath
 	rule.errorPath = errorPagePath;
 	rule.newError = newStatus;
 
-	std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
+	// std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
 	this->_errorPage.insert(rule);
 }
 
@@ -219,7 +219,7 @@ static long checkNewStatus(std::string word, const std::string& lastWord, Config
 	if (word[0] == '=') {
 		word = word.substr(1, word.size());
 		status = std::strtol(word.c_str(), &endptr, 10);
-		std::cout << status << std::endl;
+		// std::cout << status << std::endl;
 		if (errno == ERANGE || *endptr || status < 0 || word.empty())
 			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
 		return (status);
