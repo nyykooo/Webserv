@@ -42,12 +42,6 @@ static std::string readFd(int fd)
 // ### CGI ###
 void HttpResponse::forkExecCgi(std::string interpreter)
 {
-	// ordem da funcao
-	// double pipes
-	// fork
-	// dup2 do stdout e stdin do processo filho para os pipes
-	// chdir
-	// execve
 	_fileName = removeSlashes(_fileName);
 	char *args[2];
 	int pipeInput[2];
@@ -882,6 +876,15 @@ int HttpResponse::openFile() {
 	return (configFile);
 }
 
+static std::string cgiHeader(const std::string& status)
+{
+	std::ostringstream header;
+
+    header << "HTTP/1.1 " << status << CRLF;
+	header << "Server: MyServer/1.0" << CRLF;
+	return (header.str());
+}
+
 std::string	HttpResponse::header(const std::string& status) {
 
     std::ostringstream header;
@@ -957,7 +960,7 @@ const std::string HttpResponse::checkStatusCode() {
 	switch (_resStatus) {
 		case 200:
 			if (_client->getProcessingState() == CGI_COMPLETED)
-				return (_response); // nao usa header pois a _response eh toda montada pelo cgi
+				return (cgiHeader("200 OK") + _response); // nao usa header pois a _response eh toda montada pelo cgi
 			return (header("200 OK") + _resBody);
 		case 206:
 			if (_method == DELETE || _method == POST)
