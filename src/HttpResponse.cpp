@@ -417,8 +417,8 @@ void	HttpResponse::openDir(std::string path)
 	for (std::vector<std::string>::const_iterator it = _block->getDefaultFiles().begin(); it != _block->getDefaultFiles().end(); ++it)
 	{
 		std::string newDefault = removeSlashes(*it);
-		std::string filePath = newPath + "/" + newDefault;
-		std::ifstream file(filePath.c_str());
+		_fileName = newPath + "/" + newDefault;
+		std::ifstream file(_fileName.c_str());
 		if (file.is_open())
 		{
 			std::stringstream ss;
@@ -429,7 +429,6 @@ void	HttpResponse::openDir(std::string path)
 			return ;
 		}
 	}
-
 	switch (_block->getAutoIndex())
 	{
 		case false:
@@ -498,8 +497,6 @@ void	HttpResponse::handleGET()
 	}
 	std::string	newRoot = removeSlashes(_conf->getRoot());
 	std::string locPath = removeSlashes(this->getFullPath());
-	if (!newRoot.empty())
-		newRoot = newRoot;
 	_fileName = newRoot + "/" + locPath;
 	checkFile(GET);
 	
@@ -595,18 +592,12 @@ static const std::string& http_error_400_page =
 
 static const std::string& http_error_403_page =
 "<!DOCTYPE html>"
-"<html lang=\"en\">"
+"<html>"
 "<head>"
-"<meta charset=\"UTF-8\">"
-"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-"<title>403</title>"
-"<style>"
-"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-"h1 { color: #333; }"
-"</style>"
+    "<title>403 Forbidden</title>"
 "</head>"
 "<body>"
-"<h1>Forbidden</h1>"
+    "<h1>403 Forbidden</h1>"
 "</body>"
 "</html>";
 
@@ -882,54 +873,54 @@ int HttpResponse::openFile() {
 	return (configFile);
 }
 
-std::string	HttpResponse::header(const std::string& status) {
+std::string	HttpResponse::header(const std::string& status, int requestType) {
 
-    std::ostringstream header;
+    std::ostringstream	header;
+	std::string	fileType;
 
 	// std::cout << RED << "file: " << _fileName << RESET << std::endl;
-    header << "HTTP/1.1 " << status << CRLF;
+	fileType = getMimeType(_fileName);
+	if (requestType == REDIRECT) {
+		_resBody = "<html>";
+		_resBody += "<head><title>";
+		_resBody += status;
+		_resBody += "</title></head>";
+		_resBody += "<body>";
+		_resBody += "<center><h1>";
+		_resBody += status;
+		_resBody += "</h1></center>";
+		_resBody += "<hr><center>MyServer/1.0</center>";
+		_resBody += "</body>";
+		_resBody += "</html>";
+	}
+	if (fileType == "text/html")
+		checkCookies();
+	header << "HTTP/1.1 " << status << CRLF;
 	header << "Server: MyServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
-	header << "Content-Type: " << getMimeType(_fileName) << CRLF;
+	header << "Content-Type: " << fileType << CRLF;
     header << "Content-Length: " << _resBody.size() << CRLF;
+	if (requestType == REDIRECT)
+		header << "Location: " << _block->getNewLocation() << CRLF;
+	header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/" << CRLF;
     header << CRLF;
 	return (header.str());
 }
 
-std::string setHeader(const std::string& str) {	
-	std::ostringstream response;
-	
-	response << "HTTP/1.1" << str << CRLF;
-	response << "Date: " << get_http_date() << CRLF;
-	response << "Server: MyServer/1.0" << CRLF;
-	response << CRLF;
-
-	return (response.str());
-}
-
-const std::string	HttpResponse::setRedirectHeader(const std::string& str) {
-	std::ostringstream response;
-	
-	response << "HTTP/1.1" << str << CRLF;
-	response << "Server: MyServer/1.0" << CRLF;
-	response << "Date: " << get_http_date() << CRLF;
-	response << "Content-Type: " << getMimeType(_fileName) << CRLF;
-	response << "Location: " << _block->getNewLocation() << CRLF;
-	response << CRLF;
-
-	_resBody = "<html>";
-	_resBody += "<head><title>";
-	_resBody += str;
-	_resBody += "</title></head>";
-	_resBody += "<body>";
-	_resBody += "<center><h1>";
-	_resBody += str;
-	_resBody += "</h1></center>";
-	_resBody += "<hr><center>MyServer/1.0</center>";
-	_resBody += "</body>";
-	_resBody += "</html>";
-
-	return (response.str() + _resBody);
+void	HttpResponse::checkCookies() {
+	if (_req->session->getTheme() == "dark") {
+		std::string styleInjection;
+		styleInjection =
+			"<style>"
+				"body { background-color: black; color: white; }"
+				"h1, p { color: lightgray; }"
+			"</style>";
+		// Insert the style before </head>
+		size_t headPos = _resBody.find("</head>");
+		if (headPos != std::string::npos) {
+			_resBody.insert(headPos, styleInjection);
+		}
+	}
 }
 
 const std::string HttpResponse::checkErrorResponse(const std::string& page) {
@@ -938,15 +929,15 @@ const std::string HttpResponse::checkErrorResponse(const std::string& page) {
 	errorPage = openFile();
 	if (errorPage < 0) {
 		_resBody = http_error_404_page;
-		return (header(HTTP_404) + _resBody);
+		return (header(HTTP_404, ERROR) + _resBody);
 	}
 	else if (errorPage == 0)
 		_resBody = page;
 	else
 		_resBody = httpFileContent(errorPage);
 	if (_resStatus == 204 || _resStatus == 304)
-		return (header(_httpStatus));
-	return (header(_httpStatus) + _resBody);
+		return (header(_httpStatus, OK));
+	return (header(_httpStatus, ERROR) + _resBody);
 }
 
 
@@ -958,29 +949,29 @@ const std::string HttpResponse::checkStatusCode() {
 		case 200:
 			if (_client->getProcessingState() == CGI_COMPLETED)
 				return (_response); // nao usa header pois a _response eh toda montada pelo cgi
-			return (header("200 OK") + _resBody);
+			return (header("200 OK", OK) + _resBody);
 		case 206:
 			if (_method == DELETE || _method == POST)
-				return (setHeader("200 OK"));
-			return (header("200 OK") + _resBody);
+				return (header("200 OK", OK));
+			return (header("200 OK", OK) + _resBody);
 		case 201: // [NCC] pelo que entendi o 201 so sera gerado pelo POST, por isso podemos garantir que o CGI atuara sempre
 			return (_response); // nao usa header pois a _response eh toda montada pelo cgi
 		case 202:
 			return ("HTTP/1.1 202 Accepted");
 		case 204:
-			return (setHeader("204 No Content"));
+			return (header("204 No Content", OK));
 		case 301:
-			return (setRedirectHeader("301 Moved Permanently"));
+			return (header("301 Moved Permanently", REDIRECT));
 		case 302:
-			return (setRedirectHeader("302 Found"));
+			return (header("302 Found", REDIRECT));
 		case 303:
-			return (setRedirectHeader("303 See Other"));
+			return (header("303 See Other", REDIRECT));
 		case 304:
-			return (setRedirectHeader("304 Not Modified"));
+			return (header("304 Not Modified", REDIRECT));
 		case 307:
-			return (setRedirectHeader("307 Temporary Redirect"));
+			return (header("307 Temporary Redirect", REDIRECT));
 		case 308:
-			return (setRedirectHeader("308 Permanent Redirect"));
+			return (header("308 Permanent Redirect", REDIRECT));
 		case 400:
 			return (checkErrorResponse(http_error_400_page));
 		case 403:
@@ -1015,7 +1006,6 @@ const std::string HttpResponse::checkStatusCode() {
 	return _resBody;
 }
 
-// HttpResponse::HttpResponse(HttpRequest *request, Configuration *config):_method(-1) {
 HttpResponse::HttpResponse(Client *client):  _resStatus(-1), _method(-1) {
 	_client = client;
 	_conf = client->_request->_config;
@@ -1041,4 +1031,12 @@ const std::string&	HttpResponse::getResponse(void) const {
 
 const Configuration&	HttpResponse::getConfig(void) const {
 	return (*_conf);
+}
+
+const std::string& HttpResponse::getResBody() const {
+	return (_resBody);
+}
+
+const std::string& HttpResponse::getResHeader() const {
+	return (_resHeader);
 }

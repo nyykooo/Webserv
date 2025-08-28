@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/24 20:28:31 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/28 21:44:04 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,6 +128,7 @@ int WebServer::initEpoll(void)
 		return -1;
 	}
 	epoll_flags |= FD_CLOEXEC;
+	epoll_flags |= O_NONBLOCK;
 	if (fcntl(_epoll_fd, F_SETFD, epoll_flags) == -1)
 	{
 		std::cerr << "Erro ao definir flags do _epoll_fd" << std::endl;
@@ -298,7 +299,7 @@ int WebServer::receiveData(int client_fd)
 	HttpRequest *request = NULL;
 	try
 	{
-		request = new HttpRequest(_partial_requests[client_fd]);
+		request = new HttpRequest(_partial_requests[client_fd], &_sessions);
 	}
 	catch (const std::exception &e)
 	{
@@ -325,25 +326,30 @@ int WebServer::receiveData(int client_fd)
 	}
 	return (1);
 }
-
 static void sendResponseToClient(Client *client)
 {
 	std::stringstream ss;
-	const char *buf = client->_response->getResponse().c_str(); // HttpResponse poderia ter um metodo para ter um buffer em const char * e outro size_t
+	const char *buf = client->_response->getResponse().c_str();
 	size_t size = client->_response->getResponse().size();
-	int sent = send(client->getSocketFd(), buf, size, 0);
-	if (sent == -1)
+	size_t totalSent = 0;
+
+	while (totalSent < size)
 	{
-		ss << "Erro ao enviar dados ao cliente - client_fd: " << client->getSocketFd();
-		printLog(ss.str(), RED);
-		return;
+		int sent = send(client->getSocketFd(), buf + totalSent, size - totalSent, 0);
+		if (sent < 0)
+		{
+			std::cout << RED << "errno: " << strerror(errno) << RESET << std::endl;
+			ss << "Erro ao enviar corpo ao cliente - client_fd: " << client->getSocketFd();
+			printLog(ss.str(), RED);
+			return;
+		}
+		totalSent += sent;
 	}
-	else
-	{
-		ss << "Dados enviados ao cliente - client_fd: " << client->getSocketFd();
-		printLog(ss.str(), WHITE);
-	}
+
+	ss << "Dados enviados ao cliente - client_fd: " << client->getSocketFd();
+	printLog(ss.str(), WHITE);
 }
+
 
 void WebServer::sendData(int client_fd)
 {

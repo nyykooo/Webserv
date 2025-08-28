@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/08/21 19:32:23 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/28 22:00:20 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,6 +94,87 @@ void HttpRequest::parseBody(std::istringstream &stream)
 		throw std::invalid_argument("Body too long");
 }
 
+std::string generateRandomSessionId(size_t index) {
+	std::stringstream ss;
+	ss << index;
+	std::string str;
+	ss >> str;
+	return ("session_" + str);
+}
+
+void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
+	std::stringstream ss(cookiesLine);
+	std::string token;
+	while (std::getline(ss, token, ';')) {
+		// Remove spaces
+		size_t start = token.find_first_not_of(" \t");
+		size_t end = token.find_last_not_of(" \t");
+		std::string pair;
+		if (start != std::string::npos)
+			pair = token.substr(start, end - start + 1);
+		// Split by '='
+		size_t eqPos = pair.find('=');
+		if (eqPos != std::string::npos) {
+			std::string key = pair.substr(0, eqPos);
+			std::string value = pair.substr(eqPos + 1);
+			if (key == "session_id" || key == "theme") {
+				_cookies[key] = value;
+			}
+		}
+	}
+	// check if session already exists or create a new one
+	std::map<std::string, std::string>::iterator sidIt = _cookies.find("session_id");
+	std::map<std::string, std::string>::iterator themeIt = _cookies.find("theme");
+
+	if (sidIt != _cookies.end()) {
+		// Look for existing session_id
+		bool found = false;
+		for (size_t i = 0; i < _sessions->size(); ++i) {
+			if ((*_sessions)[i].getSessionId() == sidIt->second) {
+				found = true;
+				session = &((*_sessions)[i]);
+				if (themeIt != _cookies.end())
+					(*_sessions)[i].setTheme(themeIt->second);
+				break;
+			}
+		}
+		if (!found) {
+			SessionData newSession;
+			newSession.setSessionId(generateRandomSessionId(_sessions->size()));
+			if (themeIt != _cookies.end())
+				newSession.setTheme(themeIt->second);
+			_sessions->push_back(newSession);
+			session = &(_sessions->back());
+		}
+	} else if (themeIt != _cookies.end()) {
+		// No session_id, but theme present → create new session with generated ID
+		SessionData newSession;
+		newSession.setSessionId(generateRandomSessionId(_sessions->size()));
+		_cookies["session_id"] = newSession.getSessionId();
+		newSession.setTheme(themeIt->second);
+		_sessions->push_back(newSession);
+		session = &(_sessions->back());
+	}	
+}
+
+void HttpRequest::parseCookies() {
+	std::map<std::string, std::string>::const_iterator it = getHeaders().begin();
+	while (it != getHeaders().end()) {
+		if (it->first == "Cookie")
+			break ;
+		it++;
+	}
+	if (it == getHeaders().end()) {
+		SessionData newSession;
+		newSession.setSessionId(generateRandomSessionId(_sessions->size()));
+		_cookies["session_id"] = newSession.getSessionId();
+		_sessions->push_back(newSession);
+		session = &(_sessions->back());
+		return ;
+	}
+	checkCreatedSessions(it->second);
+}
+
 void HttpRequest::parse(const std::string &request_text)
 {
 	std::istringstream	stream(request_text);
@@ -110,9 +191,10 @@ void HttpRequest::parse(const std::string &request_text)
 	parse_headers(stream);
 	if (stream.peek() != EOF) // a peek retorna o próximo caractere sem removê-lo do stream
 		parseBody(stream);
+	parseCookies();
 }
 
-HttpRequest::HttpRequest(const std::string& request_text)
+HttpRequest::HttpRequest(const std::string& request_text, std::vector<SessionData>* sessions): _sessions(sessions)
 {
 	parse(request_text);
 }
@@ -161,4 +243,12 @@ const std::map<std::string, std::string> &HttpRequest::getHeaders() const
 const std::string& HttpRequest::getBody() const
 {
 	return (body);
+}
+
+const std::map<std::string, std::string>& HttpRequest::getCookies() const {
+	return (_cookies);
+}
+
+void	HttpRequest::setCookies(const std::string& key, const std::string& value) {
+	_cookies[key] = value;
 }

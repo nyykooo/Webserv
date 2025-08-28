@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/23 13:29:30 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/26 17:23:13 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 class Server;
 class Client;
 class Configuration;
+class SessionData;
 
 class WebServer
 {
@@ -31,6 +32,7 @@ class WebServer
 	std::vector<Configuration>							_configurations; // armazena as configurações do servidor
 	struct epoll_event									*_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
 	char 												_buffer[BUFFER_SIZE]; // buffer para leitura de dados
+	std::vector<SessionData>							_sessions;
 	
 	bool 								isRequestComplete(const std::string &data);
 	int 								extractContentLength(const std::string& headers);

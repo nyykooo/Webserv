@@ -26,6 +26,7 @@ class HttpResponse {
 		std::map<std::string, std::string>	_mimeTypes;
 		std::string							_httpStatus;
 		std::map<int, std::string>			_statusTexts;
+		std::string							_clientSession;
 
 		
 	public:
@@ -51,13 +52,13 @@ class HttpResponse {
 		void	openReg(std::string path, int methodType);
 		void	openDir(std::string path);
 		const std::string checkStatusCode();
-		std::string	header(const std::string& status);
+		std::string	header(const std::string& status, int requestType);
 		int		openFile();
 		const std::string httpFileContent(int errorPage);
 		LocationBlock*	checkLocationBlock();
 		void	checkFile(int methodType);
-		const std::string	setRedirectHeader(const std::string& str);
 		const std::string	checkErrorResponse(const std::string& page);
+		void	checkCookies();
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

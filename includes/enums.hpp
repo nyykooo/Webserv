@@ -20,5 +20,10 @@ typedef enum 	e_method_type
 	DELETE,
 }				t_method_type;
 
+typedef enum	e_requestType {
+	OK,
+	REDIRECT,
+	ERROR,
+}				t_requestType;
 
 #endif
