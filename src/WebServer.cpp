@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/28 21:44:04 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/28 22:08:55 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -367,7 +367,7 @@ void WebServer::sendData(int client_fd)
 		return;
 	}
 
-	client->setProcessingState(PROCESSING); // Comportamento atual // Precisa desse set de processing? o case para entrar na sendData ja eh processing
+	// client->setProcessingState(PROCESSING); // Comportamento atual // Precisa desse set de processing? o case para entrar na sendData ja eh processing
 	// const char *buf = client->_response->getResponse().c_str(); // HttpResponse poderia ter um metodo para ter um buffer em const char * e outro size_t
 	// size_t size = client->_response->getResponse().size();
 	// int sent = send(client_fd, buf, size, 0);
@@ -426,9 +426,9 @@ void WebServer::treatExistingClient(int i)
 	Client *client = findClient(_events[i].data.fd, _clients_vec);
 	
 	if (_events[i].events == EPOLLIN)
-	handleClientInput(client, i);
+		handleClientInput(client, i);
 	else if (_events[i].events == EPOLLOUT)
-	handleClientOutput(client, i);
+		handleClientOutput(client, i);
 }
 void WebServer::handleEvents(int event_count)
 {

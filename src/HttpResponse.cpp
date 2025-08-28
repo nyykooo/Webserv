@@ -42,12 +42,6 @@ static std::string readFd(int fd)
 // ### CGI ###
 void HttpResponse::forkExecCgi(std::string interpreter)
 {
-	// ordem da funcao
-	// double pipes
-	// fork
-	// dup2 do stdout e stdin do processo filho para os pipes
-	// chdir
-	// execve
 	_fileName = removeSlashes(_fileName);
 	char *args[2];
 	int pipeInput[2];
@@ -871,6 +865,25 @@ int HttpResponse::openFile() {
 		return (-1);
 	_fileName = (*it).errorPath.c_str();
 	return (configFile);
+}
+
+static std::string cgiHeader(const std::string& status)
+{
+	std::ostringstream header;
+
+    header << "HTTP/1.1 " << status << CRLF;
+	header << "Server: MyServer/1.0" << CRLF;
+	return (header.str());
+}
+
+std::string	HttpResponse::header(const std::string& status, int request) {
+
+    std::ostringstream	header;
+	std::string	fileType;
+
+    header << "HTTP/1.1 " << status << CRLF;
+	header << "Server: MyServer/1.0" << CRLF;
+	return (header.str());
 }
 
 std::string	HttpResponse::header(const std::string& status, int requestType) {
