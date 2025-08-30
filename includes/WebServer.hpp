@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/26 17:23:13 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/31 00:18:35 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ class WebServer
 	
 	bool 								isRequestComplete(const std::string &data);
 	int 								extractContentLength(const std::string& headers);
+	std::string							extractHostHeaderSimple(const std::string &rawRequest);
 	// bool								isLargeFileRequest(const HttpRequest* request);
 	bool								isLargeFileRequest(Client *client);
 	std::string							getContentType(const std::string& filePath);
@@ -85,7 +86,7 @@ class WebServer
 
 		// ### AFTER REQUEST PARSING ###
 		int									getServerFdForClient(int client_fd);
-		Configuration						*findConfigForRequest(const HttpRequest& request, int client_fd);
+		Configuration* 						findConfigForRequestFast(const std::string& rawRequest, int client_fd);
 		bool								startLargeFileStreaming(Client* client);
 		bool								continueLargeFileStreaming(Client* client);
 

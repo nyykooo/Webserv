@@ -52,7 +52,7 @@ class HttpResponse {
 		void	openReg(std::string path, int methodType);
 		void	openDir(std::string path);
 		const std::string checkStatusCode();
-		std::string	header(const std::string& status, int requestType);
+		std::string	header(const std::string& status);
 		int		openFile();
 		const std::string httpFileContent(int errorPage);
 		LocationBlock*	checkLocationBlock();

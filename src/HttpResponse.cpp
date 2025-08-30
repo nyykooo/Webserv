@@ -876,17 +876,17 @@ static std::string cgiHeader(const std::string& status)
 	return (header.str());
 }
 
-std::string	HttpResponse::header(const std::string& status, int request) {
+// std::string	HttpResponse::header(const std::string& status) {
 
-    std::ostringstream	header;
-	std::string	fileType;
+//     std::ostringstream	header;
+// 	std::string	fileType;
 
-    header << "HTTP/1.1 " << status << CRLF;
-	header << "Server: MyServer/1.0" << CRLF;
-	return (header.str());
-}
+//     header << "HTTP/1.1 " << status << CRLF;
+// 	header << "Server: MyServer/1.0" << CRLF;
+// 	return (header.str());
+// }
 
-std::string	HttpResponse::header(const std::string& status, int requestType) {
+std::string	HttpResponse::header(const std::string& status) {
 
     std::ostringstream	header;
 	std::string	fileType;
@@ -1023,6 +1023,15 @@ HttpResponse::HttpResponse(Client *client):  _resStatus(-1), _method(-1) {
 	_client = client;
 	_conf = client->_request->_config;
 	_req = client->_request;
+	if (_req->hasParseError())
+	{
+		_resStatus = _req->getParseStatus();
+		_loc = NULL;
+		_block = _conf;
+		setStatusTexts();
+		setMimeTypes();
+		return;
+	}
 	_loc = checkLocationBlock();
 	setStatusTexts();
 	if (_loc != NULL)

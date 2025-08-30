@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/28 22:08:55 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/31 00:44:26 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -294,12 +294,21 @@ int WebServer::receiveData(int client_fd)
 	_partial_requests[client_fd] += newData;
 
 	if (!isRequestComplete(_partial_requests[client_fd]))
-	return 0; // Aguarda mais dados
-	
+		return 0; // Aguarda mais dados
+
+    Configuration* config = findConfigForRequestFast(_partial_requests[client_fd], client_fd);
+	if (!config)
+	{
+		std::stringstream ss;
+		ss << "Configuração não encontrada para cliente " << client_fd;
+		printLog(ss.str(), RED);
+		_partial_requests.erase(client_fd);
+		return -1;
+	}
 	HttpRequest *request = NULL;
 	try
 	{
-		request = new HttpRequest(_partial_requests[client_fd], &_sessions);
+		request = new HttpRequest(_partial_requests[client_fd], config);
 	}
 	catch (const std::exception &e)
 	{
@@ -309,21 +318,14 @@ int WebServer::receiveData(int client_fd)
 		printLog(ss.str(), RED);
 		return -1;
 	}
-	
+
 	_partial_requests.erase(client_fd);
-	
+
 	Client *client = findClient(client_fd, _clients_vec);
 	if (client->_request != NULL)
-	delete client->_request;
-	
+		delete client->_request;
+
 	client->_request = request;
-	
-	client->_request->_config = findConfigForRequest(*client->_request, client_fd);
-	if (!client->_request->_config)
-	{
-		std::cerr << "Configuração não encontrada para servidor" << std::endl;
-		return -1;
-	}
 	return (1);
 }
 static void sendResponseToClient(Client *client)
@@ -350,7 +352,6 @@ static void sendResponseToClient(Client *client)
 	printLog(ss.str(), WHITE);
 }
 
-
 void WebServer::sendData(int client_fd)
 {
 	Client *client = findClient(client_fd, _clients_vec);
@@ -359,7 +360,7 @@ void WebServer::sendData(int client_fd)
 		delete client->_response;
 
 	client->_response = new HttpResponse(client); // mudar esse construtor para um metodo para evitar multiplas alocacoes de memoria aqui (pode dar problemas)
-	client->_response->startResponse(); // Executa a lógica de resposta do HttpResponse
+	client->_response->startResponse();			  // Executa a lógica de resposta do HttpResponse
 	// [NCC] a ideia eh inicializar o httpresponse antes, nao executar a logica dele, para assim poder rodar a isLarge sem duplicar a execucao de logica do HttpResponse
 	if (isLargeFileRequest(client)) // verifica se é um arquivo grande
 	{
@@ -388,7 +389,7 @@ void WebServer::sendData(int client_fd)
 void WebServer::setClientTime(int client_fd)
 {
 	std::vector<Client *>::iterator it;
-	
+
 	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
 	{
 		if ((*it)->getSocketFd() == client_fd)
@@ -424,7 +425,7 @@ void WebServer::deleteClient(int fd)
 void WebServer::treatExistingClient(int i)
 {
 	Client *client = findClient(_events[i].data.fd, _clients_vec);
-	
+
 	if (_events[i].events == EPOLLIN)
 		handleClientInput(client, i);
 	else if (_events[i].events == EPOLLOUT)
@@ -501,8 +502,6 @@ void WebServer::startServer()
 	}
 }
 
-// ### FIND CONFIG FOR REQUEST ###
-
 static bool checkHostType(const std::string &host)
 {
 	size_t colonPos = host.find_first_of(':');
@@ -510,15 +509,6 @@ static bool checkHostType(const std::string &host)
 		return true;
 	else
 		return false;
-}
-
-static std::string getHostFromRequest(const HttpRequest &request)
-{
-	std::map<std::string, std::string>::const_iterator host_it = request.getHeaders().find("Host");
-	if (host_it == request.getHeaders().end())
-		return NULL; // verificar esse handle
-	else
-		return host_it->second;
 }
 
 static bool checkForServerName(const std::vector<std::string> &server_names, std::string host)
@@ -560,19 +550,12 @@ static Configuration *lookForConfigurations(bool numeric_host, std::string host,
 	return (defaultConfig);
 }
 
-Configuration *WebServer::findConfigForRequest(const HttpRequest &request, int client_fd)
+Configuration* WebServer::findConfigForRequestFast(const std::string& rawRequest, int client_fd)
 {
-	// pega o header host da request
-	std::string host = getHostFromRequest(request);
-
-	// verifica o tipo do host obtido
-	bool numeric_host = checkHostType(host);
-
-	// Pegar o server pelo client_fd
-	std::map<int, std::pair<std::string, std::string> >::const_iterator client_it = _client_to_server_map.find(client_fd);
-
-	// obtem a configuracao baseado nos valores extraidos
-	return (lookForConfigurations(numeric_host, host, client_it, _configurations));
+    std::string host = extractHostHeaderSimple(rawRequest);
+    bool numeric_host = checkHostType(host);
+    std::map<int, std::pair<std::string, std::string> >::const_iterator client_it = _client_to_server_map.find(client_fd);
+    return lookForConfigurations(numeric_host, host, client_it, _configurations);
 }
 
 // ### PRIVATE METHODS ###
@@ -697,7 +680,7 @@ bool WebServer::isLargeFileRequest(Client *client)
 	// Pulo do gato para obter o fil path correto considerando a logica dos location blocks
 	// HttpResponse tempResponse(const_cast<HttpRequest *>(request), request->_config);
 	HttpResponse tempResponse(client);
-	
+
 	// imitando a handleGet
 	std::string newRoot = removeSlashes(tempResponse.getConfig().getRoot());
 	std::string locPath = removeSlashes(tempResponse.getFullPath());
@@ -885,3 +868,41 @@ const char *WebServer::WebServerErrorException::what() const throw()
 {
 	return (_message.c_str());
 }
+
+std::string WebServer::extractHostHeaderSimple(const std::string &rawRequest)
+{
+	size_t header_end = rawRequest.find("\r\n\r\n");
+	if (header_end == std::string::npos)
+	{
+		return "";
+	}
+	std::string headers = rawRequest.substr(0, header_end);
+	std::string headers_lower = toLower(headers);
+	size_t host_pos = headers_lower.find("host:");
+	if (host_pos == std::string::npos)
+	{
+		return "";
+	}
+	size_t pos = host_pos + 5;
+	while (pos < headers_lower.length() && (headers_lower[pos] == ' ' || headers_lower[pos] == '\t'))
+	{
+		pos++;
+	}
+	size_t start = pos;
+	while (pos < headers.length() && headers[pos] != '\r' && headers[pos] != '\n')
+	{
+		pos++;
+	}
+	if (pos == start)
+	{
+		return "";
+	}
+	std::string host = headers.substr(start, pos - start);
+	while (!host.empty() && (host[host.length() - 1] == ' ' || host[host.length() - 1] == '\t'))
+    {
+        host.erase(host.length() - 1);
+    }
+	return host;
+}
+
+
