@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/24 15:03:49 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/31 03:34:54 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,7 @@ class Client : public Socket {
 		// ### ATRIBUTES ###
 		HttpResponse*	_response;
 		HttpRequest*	_request;
+		Server*			_server;
 
 		void	resetFileStreaming(); // zerar tudo e settar fd pra -1
 		bool	isFileStreaming() const; // verifica se está streaming

@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/08/28 22:00:20 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/31 04:41:33 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ void HttpRequest::parse_headers(std::istringstream &stream)
 {
 	std::string header_line;
 	
-	while (std::getline(stream, header_line) && !header_line.empty())
+	while (std::getline(stream, header_line) /* && !header_line.empty() */)
 	{
 		// remove os /r do final de cada linha
 		if (header_line[header_line.size() - 1] == '\r')

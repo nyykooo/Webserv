@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/28 22:08:55 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/31 04:39:02 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -161,10 +161,10 @@ void WebServer::handleNewClient(int server_fd)
 		return;
 	}
 	_clients_vec.push_back(client_socket);
-
+	
 	Server *server = _servers_map.find(server_fd)->second;
 	_client_to_server_map[client_socket->getSocketFd()] = std::make_pair(server->getIp(), server->getPort()); // novidade, possível approach
-
+	client_socket->_server = server;
 	std::stringstream ss;
 	ss << "Novo cliente conectado - client_fd: " << client_socket->getSocketFd();
 	printLog(ss.str(), WHITE);
@@ -311,19 +311,19 @@ int WebServer::receiveData(int client_fd)
 	}
 	
 	_partial_requests.erase(client_fd);
-	
 	Client *client = findClient(client_fd, _clients_vec);
 	if (client->_request != NULL)
 	delete client->_request;
 	
 	client->_request = request;
-	
 	client->_request->_config = findConfigForRequest(*client->_request, client_fd);
+	
 	if (!client->_request->_config)
 	{
 		std::cerr << "Configuração não encontrada para servidor" << std::endl;
 		return -1;
 	}
+	
 	return (1);
 }
 static void sendResponseToClient(Client *client)

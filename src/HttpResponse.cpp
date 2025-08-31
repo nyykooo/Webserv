@@ -539,12 +539,51 @@ void HttpResponse::handleDELETE() {
 		_resStatus = 403;	
 }
 
+void	HttpResponse::setEnv() {
+	// CONTENT_LENGTH
+	// CONTENT_TYPE
+	// PATH_INFO
+	// QUERY_STRING
+	// SCRIPT_NAME
+	// SERVER_NAME
+
+	_serverSoftware = "SERVER_SOFTWARE=WebServer/1.0";
+	_serverProtocol = "SERVER_PROTOCOL=" + this->_req->getVersion();
+	_serverPort = "SERVER_PORT=" + _client->_server->getPort();
+	_requestMethod = "REQUEST_METHOD=" + this->_req->getMethod();
+	_remoteAddress = "REMOTE_ADDR=" + _client->_server->getIp();
+	_gatewayInterface = "GATEWAY_INTERFACE=CGI/1.1";
+/* 	if (this->_req->getBody().size() > 0)
+		_contentLength = "CONTENT_LENGTH=" + this->_req->g */
+	//_serverName = "SERVER_NAME=" + this->_req->getHeaders().find("Host")->second;
+
+	//std::cout << "isto: " << this->_req->getHeaders().find("Content-Type")->second << std::endl;
+/* 	std::cout << "body: " << _req->getBody();
+	if (this->_req->getBody().size() > 0)
+		_contentType = "CONTENT_TYPE=" + this->_req->getHeaders().find("Content-Type")->second;
+	else
+		_contentType = "CONTENT_TYPE="; */ // no caso do body não se vai poder usar o peek, mas sim ler segundo o numero de bytes que existem e são definidos pelo Content-Length
+
+	std::cout << GREEN << _serverSoftware << std::endl;
+	std::cout << _serverProtocol << std::endl;
+	std::cout << _serverPort << std::endl;
+	std::cout << _requestMethod << std::endl;
+	std::cout << _remoteAddress << std::endl;
+	std::cout << _gatewayInterface << std::endl;
+	std::cout << _contentType << std::endl;
+	//std::cout << _serverName << std::endl;
+
+	std::cout << RESET << std::endl;
+
+}
+
 void	HttpResponse::execMethod()
 {
 	bool methodFound = false;
 	std::string root;
 	std::string	method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
+	setEnv(); // testing
 
 	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it) {
 		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
@@ -560,7 +599,7 @@ void	HttpResponse::execMethod()
 		return ;
 	}
 	root = _block->getRoot();
-
+	setEnv();
 	if (method == "GET")
 		handleGET();
 	else if (method == "DELETE")
@@ -867,24 +906,14 @@ int HttpResponse::openFile() {
 	return (configFile);
 }
 
-static std::string cgiHeader(const std::string& status)
+/* static std::string cgiHeader(const std::string& status)
 {
 	std::ostringstream header;
 
     header << "HTTP/1.1 " << status << CRLF;
-	header << "Server: MyServer/1.0" << CRLF;
+	header << "Server: WebServer/1.0" << CRLF;
 	return (header.str());
-}
-
-std::string	HttpResponse::header(const std::string& status, int request) {
-
-    std::ostringstream	header;
-	std::string	fileType;
-
-    header << "HTTP/1.1 " << status << CRLF;
-	header << "Server: MyServer/1.0" << CRLF;
-	return (header.str());
-}
+} */
 
 std::string	HttpResponse::header(const std::string& status, int requestType) {
 
@@ -902,14 +931,14 @@ std::string	HttpResponse::header(const std::string& status, int requestType) {
 		_resBody += "<center><h1>";
 		_resBody += status;
 		_resBody += "</h1></center>";
-		_resBody += "<hr><center>MyServer/1.0</center>";
+		_resBody += "<hr><center>WebServer/1.0</center>";
 		_resBody += "</body>";
 		_resBody += "</html>";
 	}
 	if (fileType == "text/html")
 		checkCookies();
 	header << "HTTP/1.1 " << status << CRLF;
-	header << "Server: MyServer/1.0" << CRLF;
+	header << "Server: WebServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
 	header << "Content-Type: " << fileType << CRLF;
     header << "Content-Length: " << _resBody.size() << CRLF;
