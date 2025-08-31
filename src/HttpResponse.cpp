@@ -1052,6 +1052,15 @@ HttpResponse::HttpResponse(Client *client):  _resStatus(-1), _method(-1) {
 	_client = client;
 	_conf = client->_request->_config;
 	_req = client->_request;
+	if (_req->hasParseError())
+	{
+		_resStatus = _req->getParseStatus();
+		_loc = NULL;
+		_block = _conf;
+		setStatusTexts();
+		setMimeTypes();
+		return;
+	}
 	_loc = checkLocationBlock();
 	setStatusTexts();
 	if (_loc != NULL)
