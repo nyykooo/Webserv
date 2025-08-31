@@ -106,6 +106,14 @@ const std::map<std::string, std::string>&	LocationBlock::getCgiPath(void) const 
 	return (_cgiPath);
 }
 
+void	LocationBlock::setUploadDirectory(const std::string& str) {
+	_uploadDirectory = str;
+}
+
+const std::string&	LocationBlock::getUploadDirectory() const {
+	return (_uploadDirectory);
+}
+
 void	parseRoot(std::string& line, LocationBlock& location) {
 	std::stringstream ss(line);
 	std::string word;
@@ -277,6 +285,18 @@ void	parseCgiPath(const std::string& line, LocationBlock& location) {
 	location.setCgiPath(word, word2);
 }
 
+void	parseUploadDirectory(std::string& line, LocationBlock& location) {
+	std::stringstream			ss(line);
+	std::string					word;
+	std::vector<std::string>	methods;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (!(ss >> word))
+		throw Configuration::WrongConfigFileException("no upload directory defined.");
+	location.setUploadDirectory(word);
+}
+
 void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& location) {
 	std::stringstream	ss(line);
 	std::string			word;
@@ -325,6 +345,8 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 			parseCgiExtension(line, location);
 		else if (word == "cgi_path")
 			parseCgiPath(line, location);
+		else if (word == "upload_dir")
+			parseUploadDirectory(line, location);
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}

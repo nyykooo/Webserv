@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/08/31 15:00:24 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/31 16:23:04 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@ HttpRequest::HttpRequest(const std::string& request_text, Configuration *config,
 {
 	parse(request_text);
 }
+
+HttpRequest::~HttpRequest() {}
 
 HttpRequest::HttpRequest(const HttpRequest &other)
 	: _parseStatus(other._parseStatus),
@@ -48,6 +50,7 @@ void HttpRequest::parse(const std::string &request_text)
 			return;
 	}
 	parse_headers(stream);
+	parseCookies();
 	if (_parseStatus != 200)
 			return;
 
@@ -55,7 +58,6 @@ void HttpRequest::parse(const std::string &request_text)
 	{
 		parseBody(stream);
 	}
-	parseCookies();
 }
 
 void HttpRequest::parse_requestline(const std::string &request_line)
@@ -312,4 +314,24 @@ const std::map<std::string, std::string>& HttpRequest::getCookies() const {
 
 void	HttpRequest::setCookies(const std::string& key, const std::string& value) {
 	_cookies[key] = value;
+}
+
+const std::map<std::string, std::string>&	HttpRequest::getHeaders() const {
+	return (headers);
+}
+
+const std::string&	HttpRequest::getBody() const {
+	return (body);
+}
+
+const std::string& HttpRequest::getMethod() const {
+	return (method);
+}
+
+const std::string& HttpRequest::getPath() const {
+	return (path);
+}
+
+const std::string& HttpRequest::getVersion() const {
+	return (version);
 }

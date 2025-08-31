@@ -564,13 +564,13 @@ void	HttpResponse::setEnv() {
 	else
 		_contentType = "CONTENT_TYPE="; */ // no caso do body não se vai poder usar o peek, mas sim ler segundo o numero de bytes que existem e são definidos pelo Content-Length
 
-	std::cout << GREEN << _serverSoftware << std::endl;
+/* 	std::cout << GREEN << _serverSoftware << std::endl;
 	std::cout << _serverProtocol << std::endl;
 	std::cout << _serverPort << std::endl;
 	std::cout << _requestMethod << std::endl;
 	std::cout << _remoteAddress << std::endl;
 	std::cout << _gatewayInterface << std::endl;
-	std::cout << _contentType << std::endl;
+	std::cout << _contentType << std::endl; */
 	//std::cout << _serverName << std::endl;
 
 	std::cout << RESET << std::endl;

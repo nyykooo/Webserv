@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/08/31 09:21:04 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/31 16:07:20 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,9 +53,7 @@ class HttpRequest
 	public:
 		// Constructor
 		HttpRequest();
-		HttpRequest(const std::string& request_text, Configuration* config);
 		HttpRequest(const std::string& request_text, Configuration* config, std::vector<SessionData>* sessions);
-		HttpRequest(const std::string& request_text);
 		HttpRequest(const HttpRequest& other);
 		HttpRequest& operator=(const HttpRequest& other);
 		~HttpRequest();
