@@ -6,7 +6,7 @@
 /*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/08/30 23:42:36 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/31 09:23:19 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 HttpRequest::HttpRequest() : _parseStatus(200), _config(NULL)
 {}
 
-HttpRequest::HttpRequest(const std::string &request_text, Configuration *config) : _parseStatus(200), _config(config)
+HttpRequest::HttpRequest(const std::string& request_text, Configuration *config, std::vector<SessionData>* sessions): _parseStatus(200), _sessions(sessions), _config(config)
 {
 	parse(request_text);
 }
@@ -55,6 +55,7 @@ void HttpRequest::parse(const std::string &request_text)
 	{
 		parseBody(stream);
 	}
+	parseCookies();
 }
 
 void HttpRequest::parse_requestline(const std::string &request_line)
@@ -222,4 +223,93 @@ int HttpRequest::getParseStatus() const
 const std::string &HttpRequest::getParseError() const
 {
 	return _parseError;
+}
+
+std::string generateRandomSessionId(size_t index) {
+	std::stringstream ss;
+	ss << index;
+	std::string str;
+	ss >> str;
+	return ("session_" + str);
+}
+
+void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
+	std::stringstream ss(cookiesLine);
+	std::string token;
+	while (std::getline(ss, token, ';')) {
+		// Remove spaces
+		size_t start = token.find_first_not_of(" \t");
+		size_t end = token.find_last_not_of(" \t");
+		std::string pair;
+		if (start != std::string::npos)
+			pair = token.substr(start, end - start + 1);
+		// Split by '='
+		size_t eqPos = pair.find('=');
+		if (eqPos != std::string::npos) {
+			std::string key = pair.substr(0, eqPos);
+			std::string value = pair.substr(eqPos + 1);
+			if (key == "session_id" || key == "theme") {
+				_cookies[key] = value;
+			}
+		}
+	}
+	// check if session already exists or create a new one
+	std::map<std::string, std::string>::iterator sidIt = _cookies.find("session_id");
+	std::map<std::string, std::string>::iterator themeIt = _cookies.find("theme");
+
+	if (sidIt != _cookies.end()) {
+		// Look for existing session_id
+		bool found = false;
+		for (size_t i = 0; i < _sessions->size(); ++i) {
+			if ((*_sessions)[i].getSessionId() == sidIt->second) {
+				found = true;
+				session = &((*_sessions)[i]);
+				if (themeIt != _cookies.end())
+					(*_sessions)[i].setTheme(themeIt->second);
+				break;
+			}
+		}
+		if (!found) {
+			SessionData newSession;
+			newSession.setSessionId(generateRandomSessionId(_sessions->size()));
+			if (themeIt != _cookies.end())
+				newSession.setTheme(themeIt->second);
+			_sessions->push_back(newSession);
+			session = &(_sessions->back());
+		}
+	} else if (themeIt != _cookies.end()) {
+		// No session_id, but theme present → create new session with generated ID
+		SessionData newSession;
+		newSession.setSessionId(generateRandomSessionId(_sessions->size()));
+		_cookies["session_id"] = newSession.getSessionId();
+		newSession.setTheme(themeIt->second);
+		_sessions->push_back(newSession);
+		session = &(_sessions->back());
+	}	
+}
+
+void HttpRequest::parseCookies() {
+	std::map<std::string, std::string>::const_iterator it = getHeaders().begin();
+	while (it != getHeaders().end()) {
+		if (it->first == "Cookie")
+			break ;
+		it++;
+	}
+	if (it == getHeaders().end()) {
+		SessionData newSession;
+		newSession.setSessionId(generateRandomSessionId(_sessions->size()));
+		_cookies["session_id"] = newSession.getSessionId();
+		_sessions->push_back(newSession);
+		session = &(_sessions->back());
+		return ;
+	}
+	checkCreatedSessions(it->second);
+}
+
+const std::map<std::string, std::string>& HttpRequest::getCookies() const {
+	return (_cookies);
+}
+
+void	HttpRequest::setCookies(const std::string& key, const std::string& value) {
+	_cookies[key] = value;
 }

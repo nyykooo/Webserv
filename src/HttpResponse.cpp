@@ -886,7 +886,7 @@ static std::string cgiHeader(const std::string& status)
 // 	return (header.str());
 // }
 
-std::string	HttpResponse::header(const std::string& status) {
+std::string	HttpResponse::header(const std::string& status, int requestType) {
 
     std::ostringstream	header;
 	std::string	fileType;

@@ -6,7 +6,7 @@
 /*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/08/30 21:56:10 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/31 09:21:04 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,8 @@ class HttpRequest
 		std::string							version;
 		std::map<std::string, std::string> 	headers;
 		std::string							body;
+		std::vector<SessionData>*			_sessions;
+		std::map<std::string, std::string>	_cookies;
 
 		// Private methods
     	bool isValidContentLengthFormat(const std::string &value);
@@ -45,11 +47,14 @@ class HttpRequest
 		void parse_headers(std::istringstream &stream);
 		void parseBody(std::istringstream &stream);
 		void setParseError(int status, const std::string& error);
+		void parseCookies();
+		void checkCreatedSessions(const std::string& cookiesLine);
 
 	public:
 		// Constructor
 		HttpRequest();
 		HttpRequest(const std::string& request_text, Configuration* config);
+		HttpRequest(const std::string& request_text, Configuration* config, std::vector<SessionData>* sessions);
 		HttpRequest(const std::string& request_text);
 		HttpRequest(const HttpRequest& other);
 		HttpRequest& operator=(const HttpRequest& other);
@@ -65,6 +70,9 @@ class HttpRequest
 		const std::string& getVersion() const;
 		const std::map<std::string, std::string> &getHeaders() const;
 		const std::string& getBody() const;
+		const std::map<std::string, std::string>&	getCookies() const;
+
+		void	setCookies(const std::string& key, const std::string& value);
 
     	bool hasParseError() const;
     	int getParseStatus() const;

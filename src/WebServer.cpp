@@ -6,7 +6,7 @@
 /*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/31 00:44:26 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/08/31 09:21:10 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -308,7 +308,7 @@ int WebServer::receiveData(int client_fd)
 	HttpRequest *request = NULL;
 	try
 	{
-		request = new HttpRequest(_partial_requests[client_fd], config);
+		request = new HttpRequest(_partial_requests[client_fd], config, &_sessions);
 	}
 	catch (const std::exception &e)
 	{
