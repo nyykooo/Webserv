@@ -3,95 +3,226 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/08/28 22:00:20 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/31 09:23:19 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"
 
-HttpRequest::HttpRequest() : method(""), path(""), version(""), headers(), body("")
+HttpRequest::HttpRequest() : _parseStatus(200), _config(NULL)
 {}
 
-static bool ft_isspace(char c)
+HttpRequest::HttpRequest(const std::string& request_text, Configuration *config, std::vector<SessionData>* sessions): _parseStatus(200), _sessions(sessions), _config(config)
 {
-	return (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f');
+	parse(request_text);
 }
 
+HttpRequest::HttpRequest(const HttpRequest &other)
+	: _parseStatus(other._parseStatus),
+	  _parseError(other._parseError),
+	  method(other.method),
+	  path(other.path),
+	  version(other.version),
+	  headers(other.headers),
+	  body(other.body),
+	  _config(other._config)
+{}
 
-void HttpRequest::parse_headers(std::istringstream &stream)
+void HttpRequest::parse(const std::string &request_text)
 {
-	std::string header_line;
-	
-	while (std::getline(stream, header_line) && !header_line.empty())
+	std::istringstream	stream(request_text);
+	std::string			request_line;
+
+	if (std::getline(stream, request_line) && !request_line.empty())
 	{
-		// remove os /r do final de cada linha
-		if (header_line[header_line.size() - 1] == '\r')
-			header_line.erase(header_line.size() - 1);
-
-		if (ft_isspace(header_line[0]))
-		{
-			throw std::invalid_argument("Sintax error. Line folding is forbidden in HTTP headers.");
-		}	
-		size_t colon_pos = header_line.find(':');
-		if (colon_pos != std::string::npos)
-		{
-			std::string header_name = header_line.substr(0, colon_pos);
-			if (header_name.length() > 1024)
-			{
-				throw std::invalid_argument("Header name too long: " + header_name);
-			}
-			std::string header_value = header_line.substr(colon_pos + 1);
-			if (header_value.length() > 8192)
-			{
-				throw std::invalid_argument("Header value too long: " + header_value);
-			}
-			
-			header_name.erase(header_name.find_last_not_of(" \t") + 1);
-			header_value.erase(0, header_value.find_first_not_of(" \t"));
-			//verificar a questão das listas nos headers e da consolidação de valores em listas
-			
-			this->headers[header_name] = header_value;
-			if (headers.size() > 64) // 64 é o tamanho máximo de um header HTTP
-			{
-				throw std::invalid_argument("Too many headers");
-			}
-		}
+		parse_requestline(request_line);
+		if (_parseStatus != 200)
+			return;
 	}
+	else
+	{
+		setParseError(400, "Empty or invalid request line");
+			return;
+	}
+	parse_headers(stream);
+	if (_parseStatus != 200)
+			return;
+
+	if (stream.peek() != EOF)
+	{
+		parseBody(stream);
+	}
+	parseCookies();
 }
 
-
-void HttpRequest::parse_requestline(const std::string& request_line)
+void HttpRequest::parse_requestline(const std::string &request_line)
 {
-	std::istringstream stream(request_line);
-	std::string method, path, version, further;
+	std::istringstream 	stream(request_line);
+	std::string			method, path, version, further;
 
 	stream >> method >> path >> version >> further;
 	if (method.empty() || path.empty() || version.empty() || !further.empty())
 	{
-		throw std::invalid_argument("Invalid HTTP request line");
+		setParseError(400, "Invalid HTTP request line format");
+			return;
 	}
-	else if (method != "GET" && method != "POST" && method != "DELETE") //Avaliar a inclusão do PUT?
+	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
-		throw std::invalid_argument("Unsupported or non-existent HTTP method: " + method);
+		setParseError(405, "Method not allowed: " + method);
+			return;
 	}
-	else if (version != "HTTP/1.1" && version != "HTTP/1.0")// se a version for mais moderna, rodar com o HTTP/1.1? E HTTP/1.0 é possível?
+	if (version != "HTTP/1.1")
 	{
-		throw std::invalid_argument("Unsupported or non-existent HTTP version: " + version);
+		setParseError(505, "HTTP version not supported: " + version);
+			return;
+	}
+	if (path.length() > MAX_URI_LENGTH)
+	{
+		setParseError(414, "URI too long");
+			return;
 	}
 	this->method = method;
 	this->path = path;
 	this->version = version;
 }
 
+void HttpRequest::parse_headers(std::istringstream &stream)
+{
+	std::string header_line;
+
+	while (std::getline(stream, header_line) && !header_line.empty())
+	{
+		if (!header_line.empty() && header_line[header_line.size() - 1] == '\r')
+			header_line.erase(header_line.size() - 1);
+		if (!header_line.empty() && std::isspace(header_line[0]))
+		{
+			setParseError(400, "Line folding is forbidden in HTTP headers");
+				return;
+		}
+		size_t colon_pos = header_line.find(':');
+		if (colon_pos != std::string::npos)
+		{
+			std::string header_name = header_line.substr(0, colon_pos);
+			std::string header_value = header_line.substr(colon_pos + 1);
+			if (header_name.length() > MAX_HEADER_NAME_LENGTH)
+			{
+				setParseError(400, "Header name too long");
+					return;
+			}
+			if (header_value.length() > MAX_HEADER_VALUE_LENGTH)
+			{
+				setParseError(400, "Header value too long");
+					return;
+			}
+			header_name.erase(header_name.find_last_not_of(" \t") + 1);
+			header_value.erase(0, header_value.find_first_not_of(" \t"));
+			headers[header_name] = header_value;
+			if (headers.size() > MAX_HEADERS_COUNT)
+			{
+				setParseError(400, "Too many headers");
+					return;
+			}
+		}
+		else
+		{
+			setParseError(400, "Invalid header format");
+				return;
+		}
+	}
+}
+
 void HttpRequest::parseBody(std::istringstream &stream)
 {
+	if (!_config)
+	{
+		setParseError(500, "Configuration required for request parsing");
+			return;
+	}
+	std::map<std::string, std::string>::const_iterator contentLengthIt = headers.find("Content-Length");
+	if (method == "POST")
+	{
+		if (contentLengthIt == headers.end())
+		{
+			setParseError(411, "Length required: POST requests must include Content-Length header");
+				return;
+		}
+	}
+	if (contentLengthIt != headers.end())
+	{
+		if (!isValidContentLengthFormat(contentLengthIt->second))
+		{
+			setParseError(400, "Invalid Content-Length format");
+				return;
+		}
+		long contentLength = std::atol(contentLengthIt->second.c_str());
+		if (contentLength < 0)
+		{
+			setParseError(400, "Invalid Content-Length: negative value");
+				return;
+		}
+		if (contentLength > _config->getRequestSize())
+		{
+			setParseError(413, "Content-Length exceeds server limit");
+				return;
+		}
+	}
 	std::string body_str((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
 	body = body_str;
-	if (body.length() > 131072)
-		throw std::invalid_argument("Body too long");
+	if (body.length() > static_cast<size_t>(_config->getRequestSize()))
+	{
+		setParseError(413, "Request body too large");
+			return;
+	}
+	if (contentLengthIt != headers.end())
+	{
+		long contentLength = std::atol(contentLengthIt->second.c_str());
+		if (static_cast<long>(body.length()) != contentLength)
+		{
+			setParseError(400, "Body size doesn't match Content-Length header");
+				return;
+		}
+	}
+}
+
+bool HttpRequest::isValidContentLengthFormat(const std::string &value)
+{
+	if (value.empty())
+		return false;
+
+	for (size_t i = 0; i < value.length(); ++i)
+	{
+		if (!std::isdigit(value[i]))
+			return false;
+	}
+	if (value.length() > 19)
+		return false;
+	if (value.length() == 19 && value > "9223372036854775807")
+		return false;
+	return true;
+}
+
+void HttpRequest::setParseError(int status, const std::string &error)
+{
+	_parseStatus = status;
+	_parseError = error;
+}
+
+bool HttpRequest::hasParseError() const
+{
+	return (_parseStatus != 200);
+}
+
+int HttpRequest::getParseStatus() const
+{
+	return _parseStatus;
+}
+
+const std::string &HttpRequest::getParseError() const
+{
+	return _parseError;
 }
 
 std::string generateRandomSessionId(size_t index) {
@@ -173,76 +304,6 @@ void HttpRequest::parseCookies() {
 		return ;
 	}
 	checkCreatedSessions(it->second);
-}
-
-void HttpRequest::parse(const std::string &request_text)
-{
-	std::istringstream	stream(request_text);
-	std::string			request_line;
-
-	if (std::getline(stream, request_line) && !request_line.empty())
-	{
-		parse_requestline(request_line);
-		std::stringstream ss;
-		ss << "HTTP Request line parsed: " << method << " " << path << " " << version;
-		printLog(ss.str(), WHITE);
-	}
-	
-	parse_headers(stream);
-	if (stream.peek() != EOF) // a peek retorna o próximo caractere sem removê-lo do stream
-		parseBody(stream);
-	parseCookies();
-}
-
-HttpRequest::HttpRequest(const std::string& request_text, std::vector<SessionData>* sessions): _sessions(sessions)
-{
-	parse(request_text);
-}
-
-HttpRequest::HttpRequest(const HttpRequest& other) : method(other.method), path(other.path), version(other.version),
-	  headers(other.headers), body(other.body)
-{}
-
-HttpRequest& HttpRequest::operator=(const HttpRequest& other)
-{
-	if (this != &other)
-	{
-		method = other.method;
-		path = other.path;
-		version = other.version;
-		headers = other.headers;
-		body = other.body;
-	}
-	return *this;
-}
-
-HttpRequest::~HttpRequest()
-{}
-
-// GETTERS
-const std::string& HttpRequest::getMethod() const
-{
-	return (method);
-}
-
-const std::string& HttpRequest::getPath() const
-{
-	return (path);
-}
-
-const std::string& HttpRequest::getVersion() const
-{
-	return (version);
-}
-
-const std::map<std::string, std::string> &HttpRequest::getHeaders() const
-{
-	return (headers);
-}
-
-const std::string& HttpRequest::getBody() const
-{
-	return (body);
 }
 
 const std::map<std::string, std::string>& HttpRequest::getCookies() const {
