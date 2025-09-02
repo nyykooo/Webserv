@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/08 13:26:29 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/27 21:16:43 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ int	main(int argc, char** argv)
 		printHL();
 	}
 	catch (const std::exception& e) {
-		printLog(e.what(), RED);
+		printLog(e.what(), RED, std::cout);
 		return (1);
 	}
 }

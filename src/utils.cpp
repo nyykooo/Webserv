@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:13:55 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/19 20:26:41 by discallow        ###   ########.fr       */
+/*   Updated: 2025/08/27 21:16:19 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,10 +74,10 @@ std::string get_http_date()
     return std::string(buf);
 }
 
-void	printLog(std::string message, const char	*color)
+void	printLog(std::string message, const char	*color, std::ostream &stream)
 {
 	std::string time = setTimeStamp();
-	std::cout << "[" + time + "]: " << color << message << RESET << std::endl;
+	stream << "[" + time + "]: " << color << message << RESET << std::endl;
 }
 
 std::string toLower(const std::string &str)

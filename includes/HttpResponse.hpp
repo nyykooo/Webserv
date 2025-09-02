@@ -26,6 +26,8 @@ class HttpResponse {
 		std::map<std::string, std::string>	_mimeTypes;
 		std::string							_httpStatus;
 		std::map<int, std::string>			_statusTexts;
+		std::string							_fullPath;
+		std::string							_scriptName;
 
 		
 	public:

@@ -31,7 +31,7 @@ static std::string readFd(int fd)
         } else {
 			std::stringstream ss;
 			ss << "Erro ao ler ficheiro de saida do CGI fd (" << fd << ")";
-			printLog(ss.str(), RED);
+			printLog(ss.str(), RED, std::cout);
 			return "";
         }
     }
@@ -50,7 +50,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	int childrenStatus;
 
 	args[0] = const_cast<char *>(interpreter.c_str());
-	args[1] = const_cast<char *>(_fileName.c_str());
+	args[1] = const_cast<char *>(_scriptName.c_str());
 	args[2] = NULL; // Terminate the args array with NULL
 
 	pipeInput[0] = _pipeIn;
@@ -83,7 +83,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 
 			std::stringstream ss;
 			ss << "CGI process finished:\n\t-PID: " << _cgiPid << ";\n\t-Status: " << _resStatus;
-			printLog(ss.str(), WHITE);
+			printLog(ss.str(), WHITE, std::cout);
 			close(_pipeIn);
 			close(_pipeOut);
 			_pipeIn = -1; // Reset pipeIn
@@ -102,7 +102,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 
 	std::stringstream ss;
 	ss << "CGI execution: \n\t-interpreter: " << interpreter << ";\n\t-args: " << _fileName; // adicionar variaveis de ambiente depois
-	printLog(ss.str(), WHITE);
+	printLog(ss.str(), WHITE, std::cout);
 
 	pid_t pid = fork();
 	if (pid < 0) {
@@ -112,30 +112,41 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	}
 	if (pid == 0)
 	{
+		std::stringstream ss;
 		// processo filho
 		dup2(pipeInput[0], STDIN_FILENO); // Redirect stdin to pipe input
 		dup2(pipeOutput[1], STDOUT_FILENO); // Redirect stdout to pipe output
-		
-		// mudar de diretorio para o diretorio do CGI
-		// if (chdir(_block->getRoot().c_str()) == -1) {
-		// 	std::stringstream ss;
-		// 	ss << "Chdir error: " << strerror(errno) << std::endl;
-		// 	printLog(ss.str(), RED);
-		// 	exit(1); // Internal Server Error
-		// }
 
+
+        // // Abrir um arquivo para redirecionar o stderr
+        // int debugFd = open("./cgi_debug.log", O_WRONLY | O_CREAT | O_APPEND, 0644);
+        // if (debugFd == -1) {
+        //     std::cerr << "Failed to open debug log file: " << strerror(errno) << std::endl;
+        //     exit(1); // Internal Server Error
+        // }
+        // dup2(debugFd, STDERR_FILENO); // Redirect stderr to the debug file
+        // close(debugFd); // Fechar o descritor original
+
+
+		// mudar de diretorio para o diretorio do CGI
+		if (chdir(_fullPath.c_str()) == -1) {
+			ss << "CGI Chdir error: " << strerror(errno) << std::endl;
+			printLog(ss.str(), RED, std::cerr);
+			exit(1); // Internal Server Error
+		}
 		// Preparar variaveis de ambiente futuramente (pesquisar melhor sobre elas e sobre como o CGI as usa)
 		
 		// Execve interpretador do cgi, passando como arg o path para cgi e as envps
 		execve(interpreter.c_str(), const_cast<char **>(args), NULL);
-		std::cerr << "Execve error: " << strerror(errno) << std::endl;
+		ss << "CGI Execution error: " << strerror(errno);
+		printLog(ss.str(), RED, std::cerr);
 		exit(1); // Internal Server Error
 	} else {
 		// processo pai
 		_cgiPid = pid;
 		std::stringstream ss;
 		ss << "CGI process started:\n\t-PID: " << _cgiPid;
-		printLog(ss.str(), WHITE);
+		printLog(ss.str(), WHITE, std::cout);
 		_client->setProcessingState(CGI_PROCESSING);
 		close(pipeInput[0]); // entender melhor a ordem de fechamento dos fds aqui
 		close(pipeOutput[1]);
@@ -460,7 +471,7 @@ void	HttpResponse::checkFile(int methodType) {
 	{
 		std::stringstream ss;
 		ss << "stat error: " << strerror(errno) << " '" << _fileName << "'";
-		printLog(ss.str(), RED);
+		printLog(ss.str(), RED, std::cout);
 		_resStatus = 404;
 		return ;
 	}
@@ -492,8 +503,15 @@ void	HttpResponse::handleGET()
 	}
 	std::string	newRoot = removeSlashes(_conf->getRoot());
 	std::string locPath = removeSlashes(this->getFullPath());
+
+	// TODO: ESSAS INFORMACOES DEVEM SER EXTRAIDAS ANTES EM OUTRO LOCAL
+	_scriptName = locPath.substr(locPath.find_last_of('/') + 1, locPath.size());
+	_fullPath = newRoot + "/" + locPath.erase(locPath.find_last_of('/'));
+	
+	locPath = removeSlashes(this->getFullPath());
 	if (!newRoot.empty())
 		newRoot = newRoot;
+	locPath = removeSlashes(this->getFullPath());
 	_fileName = newRoot + "/" + locPath;
 	checkFile(GET);
 	

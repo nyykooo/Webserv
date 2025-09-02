@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/08/21 19:32:23 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/27 21:21:06 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,7 +104,7 @@ void HttpRequest::parse(const std::string &request_text)
 		parse_requestline(request_line);
 		std::stringstream ss;
 		ss << "HTTP Request line parsed: " << method << " " << path << " " << version;
-		printLog(ss.str(), WHITE);
+		printLog(ss.str(), WHITE, std::cout);
 	}
 	
 	parse_headers(stream);

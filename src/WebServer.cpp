@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/25 22:49:46 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/27 21:18:22 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(co
 			_servers_map[server->getSocketFd()] = server; // Armazena o servidor no mapa usando o socket fd como chave
 			std::stringstream ss;
 			ss << "Servidor iniciado no Ip/Port: " << server->getIp() << "/" << server->getPort();
-			printLog(ss.str(), WHITE);
+			printLog(ss.str(), WHITE, std::cout);
 		}
 		else
 		{
@@ -166,7 +166,7 @@ void WebServer::handleNewClient(int server_fd)
 
 	std::stringstream ss;
 	ss << "Novo cliente conectado - client_fd: " << client_socket->getSocketFd();
-	printLog(ss.str(), WHITE);
+	printLog(ss.str(), WHITE, std::cout);
 	registerEpollSocket(client_socket);
 }
 
@@ -305,7 +305,7 @@ int WebServer::receiveData(int client_fd)
 		_partial_requests.erase(client_fd);
 		std::stringstream ss;
 		ss << "Error parsing HTTP request: " << e.what();
-		printLog(ss.str(), RED);
+		printLog(ss.str(), RED, std::cout);
 		return -1;
 	}
 	
@@ -335,13 +335,13 @@ static void sendResponseToClient(Client *client)
 	if (sent == -1)
 	{
 		ss << "Erro ao enviar dados ao cliente - client_fd: " << client->getSocketFd();
-		printLog(ss.str(), RED);
+		printLog(ss.str(), RED, std::cout);
 		return;
 	}
 	else
 	{
 		ss << "Dados enviados ao cliente - client_fd: " << client->getSocketFd();
-		printLog(ss.str(), WHITE);
+		printLog(ss.str(), WHITE, std::cout);
 	}
 }
 
@@ -402,7 +402,7 @@ void WebServer::deleteClient(int fd)
 		{
 			std::stringstream ss;
 			ss << "Cliente desconectado - client_fd: " << (*it)->getSocketFd();
-			printLog(ss.str(), RED);
+			printLog(ss.str(), RED, std::cout);
 			close((*it)->getSocketFd());
 			delete *it;					 // Libera a memória do cliente
 			it = _clients_vec.erase(it); // Remove o cliente do vetor
@@ -686,15 +686,10 @@ bool WebServer::isLargeFileRequest(Client *client)
 	{
 		return false;
 	}
-
-	// [NCC]aqui ao inves de usar o construtor da HttpResponse, podemos obter essas informacoes da HttpResponse que ja existe dentro do client
-	// Pulo do gato para obter o fil path correto considerando a logica dos location blocks
-	// HttpResponse tempResponse(const_cast<HttpRequest *>(request), request->_config);
-	HttpResponse tempResponse(client);
 	
 	// imitando a handleGet
-	std::string newRoot = removeSlashes(tempResponse.getConfig().getRoot());
-	std::string locPath = removeSlashes(tempResponse.getFullPath());
+	std::string newRoot = removeSlashes(client->_response->getConfig().getRoot());
+	std::string locPath = removeSlashes(client->_response->getFullPath());
 	if (!newRoot.empty())
 		newRoot = "/" + newRoot;
 	std::string fileName = newRoot + "/" + locPath;
