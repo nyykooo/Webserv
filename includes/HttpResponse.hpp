@@ -82,6 +82,8 @@ class HttpResponse {
 		const std::string	checkErrorResponse(const std::string& page);
 		void	checkCookies();
 		void	setEnv();
+		void	parsePath();
+		const std::string	parseContentLength(const std::map<std::string, std::string>& headers);
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

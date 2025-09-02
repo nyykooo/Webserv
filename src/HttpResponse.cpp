@@ -539,13 +539,50 @@ void HttpResponse::handleDELETE() {
 		_resStatus = 403;	
 }
 
+const std::string	parseHostHeader(const std::string& host) {
+	std::string	str;
+	size_t		pos = host.find(":");
+	if (pos != std::string::npos)
+		str = host.substr(0, pos);
+	else
+		str = host;
+	return (str);
+}
+
+const std::string	parseContentType(const std::map<std::string, std::string>& headers) {
+	std::map<std::string, std::string>::const_iterator it = headers.find("Content-Type");
+	if (it == headers.end())
+		return ("");
+	return (it->second);
+}
+
+void	HttpResponse::parsePath() {
+	std::string	path = this->_req->getPath();
+	size_t index = path.find("?");
+	if (index != std::string::npos) {
+		_queryString = "QUERY_STRING=" + path.substr(index + 1, (path.size() - index));
+		_pathInfo = "PATH_INFO=" + path.substr(0, index);
+	}
+	else {
+		_queryString = "QUERY_STRING=";
+		_pathInfo = "PATH_INFO=" + path.substr(0, path.size());
+	}
+
+}
+
+const std::string	HttpResponse::parseContentLength(const std::map<std::string, std::string>& headers) {
+	std::map<std::string, std::string>::const_iterator it = headers.find("Content-Length");
+	if (it != headers.end())
+		return ("CONTENT_LENGTH=" + it->second);
+	std::stringstream ss;
+	ss << _req->getBody().size();
+	return ("CONTENT_LENGTH=" + ss.str());
+}
+
 void	HttpResponse::setEnv() {
-	// CONTENT_LENGTH
-	// CONTENT_TYPE
-	// PATH_INFO
-	// QUERY_STRING
+	// CONTENT_LENGTH - já está definido, mas antes de colocar nas envs é necessario verificar se é igual a "", porque se for não se coloca nas ENV
+	// CONTENT_TYPE - já está definido, mas antes de colocar nas envs é necessario verificar se é igual a "", porque se for não se coloca nas ENV
 	// SCRIPT_NAME
-	// SERVER_NAME
 
 	_serverSoftware = "SERVER_SOFTWARE=WebServer/1.0";
 	_serverProtocol = "SERVER_PROTOCOL=" + this->_req->getVersion();
@@ -555,23 +592,23 @@ void	HttpResponse::setEnv() {
 	_gatewayInterface = "GATEWAY_INTERFACE=CGI/1.1";
 /* 	if (this->_req->getBody().size() > 0)
 		_contentLength = "CONTENT_LENGTH=" + this->_req->g */
-	//_serverName = "SERVER_NAME=" + this->_req->getHeaders().find("Host")->second;
-
-	//std::cout << "isto: " << this->_req->getHeaders().find("Content-Type")->second << std::endl;
-/* 	std::cout << "body: " << _req->getBody();
-	if (this->_req->getBody().size() > 0)
-		_contentType = "CONTENT_TYPE=" + this->_req->getHeaders().find("Content-Type")->second;
-	else
-		_contentType = "CONTENT_TYPE="; */ // no caso do body não se vai poder usar o peek, mas sim ler segundo o numero de bytes que existem e são definidos pelo Content-Length
-
-/* 	std::cout << GREEN << _serverSoftware << std::endl;
+	_serverName = "SERVER_NAME=" + parseHostHeader(this->_req->getHeaders().find("Host")->second);
+	_contentType = parseContentType(this->_req->getHeaders());
+	if (_contentType != "")
+		_contentType = "CONTENT_TYPE=" + _contentType;
+	parsePath();
+	if (_req->getBody().size() > 0)
+		_contentLength = parseContentLength(this->_req->getHeaders());
+	std::cout << GREEN << _serverSoftware << std::endl;
 	std::cout << _serverProtocol << std::endl;
 	std::cout << _serverPort << std::endl;
 	std::cout << _requestMethod << std::endl;
 	std::cout << _remoteAddress << std::endl;
 	std::cout << _gatewayInterface << std::endl;
-	std::cout << _contentType << std::endl; */
-	//std::cout << _serverName << std::endl;
+	std::cout << _contentType << std::endl;
+	std::cout << _serverName << std::endl;
+	std::cout << _queryString << std::endl;
+	std::cout << _pathInfo << std::endl;
 
 	std::cout << RESET << std::endl;
 

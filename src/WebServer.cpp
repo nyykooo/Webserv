@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/31 15:01:34 by discallow        ###   ########.fr       */
+/*   Updated: 2025/09/02 14:41:06 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -260,7 +260,7 @@ int WebServer::extractContentLength(const std::string &headers_lower)
 	size_t content_length_pos = headers_lower.find("content-length:");
 	if (content_length_pos == std::string::npos)
 		return -1;
-
+	
 	size_t pos = content_length_pos + 15; // strlen("content-length:")
 
 	while (pos < headers_lower.length() && (headers_lower[pos] == ' ' || headers_lower[pos] == '\t'))
@@ -279,7 +279,6 @@ int WebServer::extractContentLength(const std::string &headers_lower)
 	{
 		return -1;
 	}
-
 	std::string length_str = headers_lower.substr(start, pos - start);
 	return std::atoi(length_str.c_str());
 }
@@ -295,6 +294,7 @@ int WebServer::receiveData(int client_fd)
 
 	if (!isRequestComplete(_partial_requests[client_fd]))
 		return 0; // Aguarda mais dados
+	std::cout << "aqui2\n";
 
     Configuration* config = findConfigForRequestFast(_partial_requests[client_fd], client_fd);
 	if (!config)
