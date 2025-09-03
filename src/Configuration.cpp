@@ -3,7 +3,7 @@
 Configuration::Configuration(): Block(), _requestSize(1000000) {
 	_allowedMethods.push_back("GET");
 	_allowedMethods.push_back("POST");
-	//_allowedMethods.push_back("DELETE");
+	_allowedMethods.push_back("DELETE");
 } // we need to put here the default files for all the possible errors
 
 Configuration::~Configuration() {}
@@ -54,11 +54,6 @@ const std::set<std::pair<std::string, std::string> >&	Configuration::getHost(voi
 	return (this->_host);
 }
 
-// void	Configuration::setHost(const std::string& host, const std::string& port) {
-// 	//std::cout << GREEN << host << CYAN << port << std::endl;
-// 	_allHosts.insert(std::pair<std::string, std::string>(host, port));
-// 	this->_host.insert(std::pair<std::string, std::string>(host, port));
-// }
 void	Configuration::setHost(const std::string& host, const std::string& port)
 {
 	_allHosts.insert(std::pair<std::string, std::string>(host, port));
@@ -115,6 +110,14 @@ void	checkCurlyBrackets(std::string line) {
 		Configuration::decrementCurlyBracketsCount();
 	}
 		
+}
+
+void	Configuration::setUploadDirectory(const std::string& str) {
+	_uploadDirectory = str;
+}
+
+const std::string&	Configuration::getUploadDirectory() const {
+	return (_uploadDirectory);
 }
 
 bool	isValidIP(const std::string& host) {
@@ -396,6 +399,18 @@ void	parseAllowedMethods(std::string& line, Configuration& config) {
 	} */
 }
 
+void	parseUploadDirectory(std::string& line, Configuration& config) {
+	std::stringstream			ss(line);
+	std::string					word;
+	std::vector<std::string>	methods;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (!(ss >> word))
+		throw Configuration::WrongConfigFileException("no upload directory defined.");
+	config.setUploadDirectory(word);
+}
+
 void parseServer(std::ifstream& file, Configuration& confserv) {
 	std::string	line;
 
@@ -433,6 +448,8 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 			parseAllowedMethods(line, confserv);
 		else if (word == "return")
 			parseRedirect(line, confserv);
+		else if (word == "upload_dir")
+			parseUploadDirectory(line, confserv);
 		else if (word == "location") {
 			confserv.locations.push_back(LocationBlock(confserv));
 			parseLocationBlock(file, line, confserv.locations.back());

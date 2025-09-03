@@ -1,6 +1,17 @@
 #ifndef HTTPRESPONSE_HPP
 # define HTTPRESPONSE_HPP
-
+	// CONTENT_LENGTH
+	// CONTENT_TYPE
+	// GATEWAY_INTERFACE
+	// PATH_INFO
+	// QUERY_STRING
+	// REMOTE_ADDR
+	// REQUEST_METHOD
+	// SCRIPT_NAME
+	// SERVER_NAME
+	// SERVER_PORT
+	// SERVER_PROTOCOL
+	// SERVER_SOFTWARE
 #include "headers.hpp"
 
 class Block;
@@ -27,8 +38,21 @@ class HttpResponse {
 		std::string							_httpStatus;
 		std::map<int, std::string>			_statusTexts;
 		std::string							_fullPath;
-		std::string							_scriptName;
+		std::string							_scriptNameNico;
 
+		std::string							_clientSession;
+		std::string							_contentLength;
+		std::string							_contentType;
+		std::string							_gatewayInterface;
+		std::string							_pathInfo;
+		std::string							_queryString;
+		std::string							_remoteAddress;
+		std::string							_requestMethod;
+		std::string							_scriptName;
+		std::string							_serverName;
+		std::string							_serverPort;
+		std::string							_serverProtocol;
+		std::string							_serverSoftware;
 		
 	public:
 
@@ -53,13 +77,16 @@ class HttpResponse {
 		void	openReg(std::string path, int methodType);
 		void	openDir(std::string path);
 		const std::string checkStatusCode();
-		std::string	header(const std::string& status);
+		std::string	header(const std::string& status, int requestType);
 		int		openFile();
 		const std::string httpFileContent(int errorPage);
 		LocationBlock*	checkLocationBlock();
 		void	checkFile(int methodType);
-		const std::string	setRedirectHeader(const std::string& str);
 		const std::string	checkErrorResponse(const std::string& page);
+		void	checkCookies();
+		void	setEnv();
+		void	parsePath();
+		const std::string	parseContentLength(const std::map<std::string, std::string>& headers);
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

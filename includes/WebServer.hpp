@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/23 13:29:30 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/08/31 00:18:35 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 class Server;
 class Client;
 class Configuration;
+class SessionData;
 
 class WebServer
 {
@@ -31,9 +32,11 @@ class WebServer
 	std::vector<Configuration>							_configurations; // armazena as configurações do servidor
 	struct epoll_event									*_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
 	char 												_buffer[BUFFER_SIZE]; // buffer para leitura de dados
+	std::vector<SessionData>							_sessions;
 	
 	bool 								isRequestComplete(const std::string &data);
 	int 								extractContentLength(const std::string& headers);
+	std::string							extractHostHeaderSimple(const std::string &rawRequest);
 	// bool								isLargeFileRequest(const HttpRequest* request);
 	bool								isLargeFileRequest(Client *client);
 	std::string							getContentType(const std::string& filePath);
@@ -83,7 +86,7 @@ class WebServer
 
 		// ### AFTER REQUEST PARSING ###
 		int									getServerFdForClient(int client_fd);
-		Configuration						*findConfigForRequest(const HttpRequest& request, int client_fd);
+		Configuration* 						findConfigForRequestFast(const std::string& rawRequest, int client_fd);
 		bool								startLargeFileStreaming(Client* client);
 		bool								continueLargeFileStreaming(Client* client);
 

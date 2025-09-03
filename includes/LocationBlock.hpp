@@ -12,6 +12,7 @@ class LocationBlock : public Block
 		std::map<std::string, std::string>						_cgiPath;
 		static int												_locationCurlyBracketsCount;
 		std::set<ErrorPageRule>									_errorPage;
+		std::string												_uploadDirectory;
 	public:
 
 	// SETTERS
@@ -23,6 +24,7 @@ class LocationBlock : public Block
 	static void		decrementLocationCurlyBracketsCount(void);
 	void			setCgiPath(const std::string& extension, const std::string& path);
 	void			setCgiExtension(const std::string& extension);
+	void			setUploadDirectory(const std::string& str);
 
 	// GETTERS
 
@@ -32,6 +34,7 @@ class LocationBlock : public Block
 	static int									getLocationCurlyBracketsCount(void);
 	const std::vector<std::string>&				getCgiExtension(void) const;
 	const std::map<std::string, std::string>&	getCgiPath(void) const;
+	const std::string&							getUploadDirectory(void) const;
 
 	// ORTHODOX CANONICAL FORM
 

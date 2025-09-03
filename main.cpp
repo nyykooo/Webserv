@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/27 21:16:43 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/09/03 12:55:48 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ int	main(int argc, char** argv)
 		std::cerr << RED << "Wrong input. Usage: ./webserv [configuration_file]" << RESET << std::endl;
 		return (1);
 	}
-	std::vector<Configuration> configVector;
+	std::vector<Configuration>	configVector;
 	try	{
 		setup(configFile, configVector);
 		WebServer webServer(configVector);
