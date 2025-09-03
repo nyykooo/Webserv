@@ -619,18 +619,19 @@ void	HttpResponse::setEnv() {
 	parsePath();
 	if (_req->getBody().size() > 0)
 		_contentLength = parseContentLength(this->_req->getHeaders());
-	std::cout << GREEN << _serverSoftware << std::endl;
-	std::cout << _serverProtocol << std::endl;
-	std::cout << _serverPort << std::endl;
-	std::cout << _requestMethod << std::endl;
-	std::cout << _remoteAddress << std::endl;
-	std::cout << _gatewayInterface << std::endl;
-	std::cout << _contentType << std::endl;
-	std::cout << _serverName << std::endl;
-	std::cout << _queryString << std::endl;
-	std::cout << _pathInfo << std::endl;
-
-	std::cout << RESET << std::endl;
+	std::stringstream ss;
+	ss << "CGI-URI parsed meta-variables:";
+	ss << "\n\t" << _serverSoftware;
+	ss << "\n\t" << _serverProtocol;
+	ss << "\n\t" << _serverPort;
+	ss << "\n\t" << _requestMethod;
+	ss << "\n\t" << _remoteAddress;
+	ss << "\n\t" << _gatewayInterface;
+	ss << "\n\t" << _contentType;
+	ss << "\n\t" << _serverName;
+	ss << "\n\t" << _queryString;
+	ss << "\n\t" << _pathInfo;
+	printLog(ss.str(), GREEN, std::cout);
 
 }
 
