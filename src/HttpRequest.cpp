@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/09/03 12:56:38 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/09/03 13:39:19 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -217,6 +217,7 @@ void HttpRequest::setParseError(int status, const std::string &error)
 
 bool HttpRequest::hasParseError() const
 {
+	std::cout << "parseError: " << _parseStatus << std::endl;
 	return (_parseStatus != 200);
 }
 

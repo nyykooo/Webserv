@@ -1,10 +1,26 @@
 #!/usr/bin/env python3
 import sys
+import os
 
 # Corpo HTML
-html = """<!DOCTYPE html>
-<html><head><title>Python CGI Test</title></head>
-<body><h1>CGI em Python funcionando!</h1></body></html>"""
+rows = ""
+for key, value in sorted(os.environ.items()):
+	rows +=f"<tr><td>{key}</td><td>{value}</td></tr>\n"
+
+html = f"""<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Python CGI Test</title>
+	</head>
+	<body>
+		<h1>CGI em Python funcionando!</h1>
+		<table>
+			<tr><th>Variables</th><th>Value</th></tr>
+			{rows}
+		</table>
+	</body>
+</html>"""
 
 # Calcula o tamanho em bytes
 length = len(html.encode("utf-8"))

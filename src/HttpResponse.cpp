@@ -53,6 +53,14 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	args[1] = const_cast<char *>(_scriptNameNico.c_str());
 	args[2] = NULL; // Terminate the args array with NULL
 
+	char *tempEnvp[5];
+	tempEnvp[0] = const_cast<char *>("REQUEST_METHOD=GET");
+	tempEnvp[1] = const_cast<char *>("QUERY_STRING=");
+	tempEnvp[2] = const_cast<char *>("PATH_INFO=/pages/cgi-bin/teste.py");
+	tempEnvp[3] = const_cast<char *>("SERVER_SOFTWARE=WebServer/1.0");
+	tempEnvp[4] = const_cast<char *>("SERVER_PROTOCOL=HTTP/1.1");
+	tempEnvp[5] = NULL;
+
 	pipeInput[0] = _pipeIn;
 	pipeInput[1] = STDIN_FILENO;
 
@@ -118,14 +126,14 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		dup2(pipeOutput[1], STDOUT_FILENO); // Redirect stdout to pipe output
 
 
-        // // Abrir um arquivo para redirecionar o stderr
-        // int debugFd = open("./cgi_debug.log", O_WRONLY | O_CREAT | O_APPEND, 0644);
-        // if (debugFd == -1) {
-        //     std::cerr << "Failed to open debug log file: " << strerror(errno) << std::endl;
-        //     exit(1); // Internal Server Error
-        // }
-        // dup2(debugFd, STDERR_FILENO); // Redirect stderr to the debug file
-        // close(debugFd); // Fechar o descritor original
+        // Abrir um arquivo para redirecionar o stderr
+        int debugFd = open("./cgi_debug.log", O_WRONLY | O_CREAT | O_APPEND, 0644);
+        if (debugFd == -1) {
+            std::cerr << "Failed to open debug log file: " << strerror(errno) << std::endl;
+            exit(1); // Internal Server Error
+        }
+        dup2(debugFd, STDERR_FILENO); // Redirect stderr to the debug file
+        close(debugFd); // Fechar o descritor original
 
 
 		// mudar de diretorio para o diretorio do CGI
@@ -137,7 +145,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		// Preparar variaveis de ambiente futuramente (pesquisar melhor sobre elas e sobre como o CGI as usa)
 		
 		// Execve interpretador do cgi, passando como arg o path para cgi e as envps
-		execve(interpreter.c_str(), const_cast<char **>(args), NULL);
+		execve(interpreter.c_str(), const_cast<char **>(args), const_cast<char **>(tempEnvp));
 		ss << "CGI Execution error: " << strerror(errno);
 		printLog(ss.str(), RED, std::cerr);
 		exit(1); // Internal Server Error
@@ -643,6 +651,7 @@ void	HttpResponse::execMethod()
 	std::string root;
 	std::string	method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
+	setEnv(); // teste
 
 	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it) {
 		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
@@ -658,6 +667,7 @@ void	HttpResponse::execMethod()
 		return ;
 	}
 	root = _block->getRoot();
+	setEnv();
 	if (method == "GET")
 		handleGET();
 	else if (method == "DELETE")
@@ -1133,7 +1143,6 @@ HttpResponse::HttpResponse(Client *client):  _resStatus(-1), _method(-1) {
 	else
 		_block = _conf;
 	setMimeTypes();
-	setEnv();
 }
 
 // ### SETTERS ###

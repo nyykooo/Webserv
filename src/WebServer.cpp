@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/03 12:59:12 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/09/03 13:34:42 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -294,7 +294,6 @@ int WebServer::receiveData(int client_fd)
 
 	if (!isRequestComplete(_partial_requests[client_fd]))
 		return 0; // Aguarda mais dados
-	std::cout << "aqui2\n";
 
     Configuration* config = findConfigForRequestFast(_partial_requests[client_fd], client_fd);
 	if (!config)
