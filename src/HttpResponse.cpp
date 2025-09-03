@@ -466,14 +466,16 @@ std::string HttpResponse::getFullPath () {
 
 void	HttpResponse::checkFile(int methodType) {
 	struct stat st;
+	std::stringstream ss;
 	if (stat(_fileName.c_str(), &st) == -1)
 	{
-		std::stringstream ss;
 		ss << "stat error: " << strerror(errno) << " '" << _fileName << "'";
 		printLog(ss.str(), RED, std::cout);
 		_resStatus = 404;
 		return ;
 	}
+	ss << "stat sucess - _fileName: " << " '" << _fileName << "'";
+	printLog(ss.str(), GREEN, std::cout);
 	if (lookForCgi() == true)
 		return ; // mudar status do HttpResponse/Client Bruno feature e retorna para nao bloquear o server
 
@@ -641,7 +643,6 @@ void	HttpResponse::execMethod()
 	std::string root;
 	std::string	method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
-	setEnv(); // testing
 
 	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it) {
 		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
@@ -657,7 +658,6 @@ void	HttpResponse::execMethod()
 		return ;
 	}
 	root = _block->getRoot();
-	setEnv();
 	if (method == "GET")
 		handleGET();
 	else if (method == "DELETE")
@@ -972,6 +972,13 @@ int HttpResponse::openFile() {
 	header << "Server: WebServer/1.0" << CRLF;
 	return (header.str());
 } */
+std::string HttpResponse::cgiHeader(const std::string &status)
+{
+    std::ostringstream	header;
+	header << "HTTP/1.1 " << status << CRLF;
+	header << "Server: WebServer/1.0" << CRLF;
+	return (header.str());
+}
 
 std::string	HttpResponse::header(const std::string& status, int requestType) {
 
@@ -1048,7 +1055,7 @@ const std::string HttpResponse::checkStatusCode() {
 	switch (_resStatus) {
 		case 200:
 			if (_client->getProcessingState() == CGI_COMPLETED)
-				return (_response); // nao usa header pois a _response eh toda montada pelo cgi
+				return (cgiHeader("200 OK") + _response); // nao usa header pois a _response eh toda montada pelo cgi
 			return (header("200 OK", OK) + _resBody);
 		case 206:
 			if (_method == DELETE || _method == POST)
@@ -1126,6 +1133,7 @@ HttpResponse::HttpResponse(Client *client):  _resStatus(-1), _method(-1) {
 	else
 		_block = _conf;
 	setMimeTypes();
+	setEnv();
 }
 
 // ### SETTERS ###
