@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: discallow <discallow@student.42.fr>        +#+  +:+       +#+         #
+#    By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/10 19:46:12 by ncampbel          #+#    #+#              #
-#    Updated: 2025/08/26 17:22:13 by discallow        ###   ########.fr        #
+#    Updated: 2025/09/04 15:21:41 by ncampbel         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,30 +23,25 @@ SRC = main.cpp src/Socket.cpp src/HttpRequest.cpp \
 	   src/ErrorPageRule.cpp src/Block.cpp \
 	   src/SessionData.cpp
 
-TIMENAME= timeexec
+OBJ_SRC_DIR = ./obj
 
-TIME = time/main.cpp
-
-TIMEOBJ = $(TIME:.cpp=.o)
-
-OBJ = $(SRC:.cpp=.o)
+OBJ = $(SRC:%.cpp=$(OBJ_SRC_DIR)/%.o)
 
 all: $(NAME)
 
 $(NAME): $(OBJ)
 	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 
+$(OBJ_SRC_DIR)/%.o: %.cpp
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 clean:
-	rm -f $(OBJ) $(TIMEOBJ)
+	rm -rfd $(OBJ_SRC_DIR)
 	
 fclean: clean
-	rm -f $(NAME) $(TIMENAME)
+	rm -f $(NAME)
 
 re: fclean all
-
-time: $(TIMENAME)
-
-$(TIMENAME): $(TIMEOBJ)
-	$(CXX) $(CXXFLAGS) $(TIMEOBJ) -o $(TIMENAME)
 
 .PHONY: all clean fclean re
