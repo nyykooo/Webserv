@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/03 13:34:42 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/09/05 15:48:37 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -359,13 +359,13 @@ void WebServer::sendData(int client_fd)
 		delete client->_response;
 
 	client->_response = new HttpResponse(client); // mudar esse construtor para um metodo para evitar multiplas alocacoes de memoria aqui (pode dar problemas)
-	client->_response->startResponse();			  // Executa a lógica de resposta do HttpResponse
 	// [NCC] a ideia eh inicializar o httpresponse antes, nao executar a logica dele, para assim poder rodar a isLarge sem duplicar a execucao de logica do HttpResponse
 	if (isLargeFileRequest(client)) // verifica se é um arquivo grande
 	{
 		client->setProcessingState(PROCESSING_LARGE); // Mudamos o estado para PROCESSING_LARGE para ser tratado no próximo ciclo
 		return;
 	}
+	client->_response->startResponse();			  // Executa a lógica de resposta do HttpResponse
 
 	// client->setProcessingState(PROCESSING); // Comportamento atual // Precisa desse set de processing? o case para entrar na sendData ja eh processing
 	// const char *buf = client->_response->getResponse().c_str(); // HttpResponse poderia ter um metodo para ter um buffer em const char * e outro size_t
@@ -492,7 +492,7 @@ void WebServer::startServer()
 		try
 		{
 			handleEvents(event_count);
-			lookForTimeouts();
+			// lookForTimeouts();
 		}
 		catch (const std::exception &e)
 		{

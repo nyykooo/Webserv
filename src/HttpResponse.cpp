@@ -515,15 +515,20 @@ void	HttpResponse::handleGET()
 
 	// TODO: ESSAS INFORMACOES DEVEM SER EXTRAIDAS ANTES EM OUTRO LOCAL
 	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1, locPath.size());
-	_fullPath = newRoot + "/" + locPath.erase(locPath.find_last_of('/'));
-	
+	// _fullPath = newRoot + "/" + locPath.erase(locPath.find_last_of('/'));
+	auto pos = locPath.find_last_of('/');
+	if (pos != std::string::npos) {
+		_fullPath = newRoot + "/" + locPath.substr(0, pos);
+	} else {
+		_fullPath = newRoot + "/" + locPath; // se não tem '/', usa a string inteira
+	}
+
 	locPath = removeSlashes(this->getFullPath());
 	if (!newRoot.empty())
 		newRoot = newRoot;
 	locPath = removeSlashes(this->getFullPath());
 	_fileName = newRoot + "/" + locPath;
 	checkFile(GET);
-	
 }
 
 LocationBlock* HttpResponse::checkLocationBlock() {
@@ -651,7 +656,7 @@ void	HttpResponse::execMethod()
 	std::string root;
 	std::string	method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
-	setEnv(); // teste
+	// setEnv(); // teste
 
 	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it) {
 		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
@@ -667,7 +672,8 @@ void	HttpResponse::execMethod()
 		return ;
 	}
 	root = _block->getRoot();
-	setEnv();
+	std::cout << "Root: " << root << std::endl;
+	// setEnv();
 	if (method == "GET")
 		handleGET();
 	else if (method == "DELETE")
