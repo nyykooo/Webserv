@@ -18,7 +18,7 @@ LocationBlock::LocationBlock(const Configuration& other): _exactMatchModifier(fa
 LocationBlock::~LocationBlock() {}
 
 LocationBlock::LocationBlock(const LocationBlock& other): Block(other), _exactMatchModifier(other._exactMatchModifier), _location(other._location),
-	_cgiExtension(other._cgiExtension), _cgiPath(other._cgiPath), _errorPage(other._errorPage) {
+	_cgiPath(other._cgiPath), _errorPage(other._errorPage) {
 	_root = other.getRoot();
 	_allowedMethods = other.getMethods();
 	_autoIndex = other.getAutoIndex();
@@ -37,7 +37,6 @@ LocationBlock& LocationBlock::operator=(const LocationBlock& other) {
 		_redirectStatusCode = other._redirectStatusCode;
 		_defaultFiles = other._defaultFiles;
 		_newLocation = other._newLocation;
-		_cgiExtension = other._cgiExtension;
 		_cgiPath = other._cgiPath;
 		_errorPage = other._errorPage;
 	}
@@ -88,14 +87,6 @@ void	LocationBlock::setErrorPage(int errorPage, const std::string& errorPagePath
 
 const std::set<ErrorPageRule>& LocationBlock::getErrorPage(void) const {
 	return (this->_errorPage);
-}
-
-void	LocationBlock::setCgiExtension(const std::string& extension) {
-	_cgiExtension.push_back(extension);
-}
-
-const std::vector<std::string>&	LocationBlock::getCgiExtension() const {
-	return (_cgiExtension);
 }
 
 void	LocationBlock::setCgiPath(const std::string& extension, const std::string& path) {
@@ -260,20 +251,6 @@ void	parseDefaultFile(const std::string& line, LocationBlock& location) {
 		throw Configuration::WrongConfigFileException("too many arguments when defining index.");	
 }
 
-void	parseCgiExtension(const std::string& line, LocationBlock& location) {
-	std::stringstream ss(line);
-	std::string word;
-
-	checkCurlyBrackets(line);
-	ss >> word;
-	if (ss >> word)
-		location.setCgiExtension(word);
-	else
-		throw Configuration::WrongConfigFileException("no cgi_extension defined.");
-	while (ss >> word)
-		location.setCgiExtension(word);
-}
-
 void	parseCgiPath(const std::string& line, LocationBlock& location) {
 	std::stringstream ss(line);
 	std::string word, word2;
@@ -295,6 +272,19 @@ void	parseUploadDirectory(std::string& line, LocationBlock& location) {
 	if (!(ss >> word))
 		throw Configuration::WrongConfigFileException("no upload directory defined.");
 	location.setUploadDirectory(word);
+}
+
+void	parseCgi(const std::string& line, LocationBlock& location) {
+	std::stringstream ss(line);
+	std::string word, word2, word3;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (!(ss >> word) || !(ss >> word2))
+		throw Configuration::WrongConfigFileException("no cgi_path defined.");
+	if (ss >> word3)
+		throw Configuration::WrongConfigFileException("too many arguments in CGI.");
+	location.setCgiPath(word, word2);
 }
 
 void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& location) {
@@ -341,10 +331,10 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 			parseErrorPage(line, location);
 		else if (word == "index")
 			parseDefaultFile(line, location);
-		else if (word == "cgi_extension")
-			parseCgiExtension(line, location);
 		else if (word == "cgi_path")
 			parseCgiPath(line, location);
+		else if (word == "cgi_allowed")
+			parseCgi(line, location);
 		else if (word == "upload_dir")
 			parseUploadDirectory(line, location);
 		else

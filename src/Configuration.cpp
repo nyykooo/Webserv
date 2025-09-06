@@ -99,6 +99,14 @@ long	Configuration::getRequestSize(void) const {
 	return (this->_requestSize);
 }
 
+void	Configuration::setCgiPath(const std::string& extension, const std::string& path) {
+	_cgiPath[extension] = path;
+}
+
+const std::map<std::string, std::string>&	Configuration::getCgiPath(void) const {
+	return (_cgiPath);
+}
+
 void	checkCurlyBrackets(std::string line) {
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
 	if (line.find('{') != std::string::npos)
@@ -411,6 +419,19 @@ void	parseUploadDirectory(std::string& line, Configuration& config) {
 	config.setUploadDirectory(word);
 }
 
+void	parseCgi(const std::string& line, Configuration& config) {
+	std::stringstream ss(line);
+	std::string word, word2, word3;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	if (!(ss >> word) || !(ss >> word2))
+		throw Configuration::WrongConfigFileException("no cgi_path defined.");
+	if (ss >> word3)
+		throw Configuration::WrongConfigFileException("too many arguments in CGI.");
+	config.setCgiPath(word, word2);
+}
+
 void parseServer(std::ifstream& file, Configuration& confserv) {
 	std::string	line;
 
@@ -448,6 +469,8 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 			parseAllowedMethods(line, confserv);
 		else if (word == "return")
 			parseRedirect(line, confserv);
+		else if (word == "cgi_allowed")
+			parseCgi(line, confserv);
 		else if (word == "upload_dir")
 			parseUploadDirectory(line, confserv);
 		else if (word == "location") {
