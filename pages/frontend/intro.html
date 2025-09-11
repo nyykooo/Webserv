@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="./styles/style.css">
+		<link rel="icon" type="image/png" href="./media/icons/webserve.png">
+		<title>WebServ</title>
+		<div class="main-header-options-struct">
+			<div class="main-header-options">
+				<button onclick="expandMenu()" class="menu-button">
+					<img src="./media/icons/material-symbols--menu-rounded.svg" alt="menu-icon">
+				</button>
+				<!-- Sidebar -->
+				<div class="sidebar" id="sidebar">
+					<a href="home.html" class="sidebar-button">Home</a>
+					<button onclick="expandSubMenu('httpserver-submenu')" class="sidebar-menu-button">Httpserver</button>
+					<a href="intro.html" id="httpserver-submenu" class="httpserver-submenu">Introduction</a>
+					<a href="methods.html" id="httpserver-submenu" class="httpserver-submenu">Methods</a>
+					<a href="creators.html" class="sidebar-button">Creators</a>
+				</div>
+
+				<!-- Overlay -->
+				<div class="overlay" id="overlay" onclick="expandMenu()"></div>
+
+			</div>
+		</div>
+	</head>
+	<body>
+		<script src="./script.js"></script>
+
+		<div class="main-title-struct">
+			<h1 class="main-title">HTTP SERVER</h1>
+		</div>
+
+		<div class="main-text-struct">
+			<p class="main-text">
+				The <strong>Hypertext Transfer Protocol</strong> (HTTP) is an application protocol for distributed,
+				collaborative, hypermedia information systems.
+			</p>
+			<p class="main-text">
+				<strong>HTTP</strong> was developed to support hypertext functionality and the growth of the <strong>World
+				Wide Web</strong>.
+			</p>
+			<p class="main-text">
+				The primary function of a web server is to <strong>store, process, and deliver</strong> web pages to clients.
+				<strong>Client-server communication</strong> occurs through the Hypertext Transfer Protocol (HTTP).
+			</p>
+			<p class="main-text">
+				A <strong>user agent</strong>, commonly a web browser or web crawler, initiates communication by <strong>requesting</strong>
+				a specific resource using <strong>HTTP</strong>, and the <strong>server responds</strong> with the content of that
+				resource or an error message if unable to do so.
+			</p>
+		</div>
+		
+	</body>
+</html>

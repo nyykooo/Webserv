@@ -1,0 +1,170 @@
+
+body {
+	background: #C5E8F0;
+	background: radial-gradient(circle,rgba(197, 232, 240, 1) 0%, rgba(89, 168, 186, 1) 100%);
+	font-family: Arial, sans-serif;
+}
+
+.main-header-options-struct {
+	display: flex;
+}
+
+.main-header-options {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: left;
+}
+
+.main-title-struct {
+	display: flex;
+	margin-top: 5%;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+}
+
+.main-title {
+	text-align: center;
+	font-size: 40px;
+	color: #082C36;
+}
+
+.main-text-struct {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	margin-top: 30px;
+	width: 100vw;
+}
+
+.main-text {
+	text-align: center;
+	margin: 20px auto;
+	font-size: 20px;
+	color: #082C36;
+	width: 40%;
+}
+
+.main-button {
+	display: flex;
+	padding: 10px 20px;
+	font-size: 18px;
+	background-color: #082C36;
+	color: white;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	width: 200px;
+	height: 21px;
+	margin: 5px;
+	text-decoration: none;
+	align-items: center;
+	justify-content: center;
+}
+
+.menu-button {
+	display: flex;
+	width: 50px;
+	height: 40px;
+	margin: 5px;
+	font-size: 18px;
+	background-color: #082C36;
+	color: white;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	align-items: center;
+	justify-content: center;
+}
+
+.sidebar {
+	position: fixed;
+	display: flex;
+	flex-direction: column;
+	align-items: start;
+	top: 0;
+	left: -250px; /* escondida inicialmente */
+	width: 250px;
+	height: 100%;
+	background-color: #9ad7e5;
+	padding-top: 60px;
+	transition: left 0.3s ease; /* animação suave */
+	z-index: 1001; /* mais alto que o overlay */
+}
+
+.sidebar.active {
+	left: 0;
+}
+
+/* Botões dentro da sidebar */
+
+.sidebar-menu-button {
+	color: #082C36;
+	font-weight: bold;
+	font-size: 30px;
+	padding: 10px 20px;
+	margin: 5px;
+	width: 50px;
+	height: 40px;
+	text-decoration: none;
+	background: none;
+	border: none;
+	cursor: pointer;
+}
+
+.sidebar-button {
+	color: #082C36;
+	font-weight: bold;
+	font-size: 30px;
+	padding: 10px 20px;
+	margin: 5px;
+	width: 50px;
+	height: 40px;
+	text-decoration: none;
+}
+
+	/* Overlay escuro ao abrir menu */
+.overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0,0,0,0.6);
+	display: none;
+	z-index: 1000; /* abaixo da sidebar */
+}
+
+.overlay.active {
+	display: block;
+}
+
+.httpserver-submenu {
+	display: none; /* escondido inicialmente */
+	color: #082C36;
+	font-weight: bold;
+	font-size: 18px;
+	padding-top: 5px;
+	padding-left: 50px;
+	margin: 5px 0;
+	text-decoration: none;
+  }
+  
+  .httpserver-submenu.active {
+	display: block; /* aparece quando tem active */
+  }
+
+  .httpserver-submenu.inactive {
+	display: none; /* desaparece quando tem inactive */
+  }
+
+  .code-box {
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    overflow-x: auto; /* Adiciona barra de rolagem horizontal, se necessário */
+    font-family: "Courier New", Courier, monospace;
+  }

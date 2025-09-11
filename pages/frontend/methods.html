@@ -15,8 +15,8 @@
 				<div class="sidebar" id="sidebar">
 					<a href="home.html" class="sidebar-button">Home</a>
 					<button onclick="expandSubMenu('httpserver-submenu')" class="sidebar-menu-button">Httpserver</button>
-					<a href="intro.html" id="httpserver-submenu-intro" class="httpserver-submenu">Introduction</a>
-					<a href="methods.html" id="httpserver-submenu-methods" class="httpserver-submenu">Methods</a>
+					<a href="intro.html" id="httpserver-submenu" class="httpserver-submenu">Introduction</a>
+					<a href="methods.html" id="httpserver-submenu" class="httpserver-submenu">Methods</a>
 					<a href="creators.html" class="sidebar-button">Creators</a>
 				</div>
 
@@ -28,19 +28,36 @@
 	</head>
 	<body>
 		<script src="./script.js"></script>
+
 		<div class="main-title-struct">
-			<img src="./media/icons/webserve.png" alt="webserver-icon">
-			<h1 class="main-title">Welcome to our WebServer!</h1>
-			<img src="./media/icons/webserve.png" alt="webserver-icon">
+			<h1 class="main-title">HTTP METHODS</h1>
 		</div>
+
 		<div class="main-text-struct">
 			<p class="main-text">
-				This is a project about creating a <strong>HTTP 1.1 WebServer</strong> in <strong>C++</strong>.<br>
-				And this home page will guide you through all the functionalities of our <strong>WebServ</strong>.
+				HTTP defines special words called <strong>methods</strong> to describe what the client wants:
+			</p>
+			<p class="main-text">
+				<strong>GET</strong>: <br>
+				The <strong>client</strong> sends a request line like: <br>
+				<div class="code-box">
+					<pre><code>
+						function helloWorld() {
+							console.log("Hello, world!");
+						}
+					</code></pre>
+				</div>
+			</p>
+			<p class="main-text">
+				<strong>POST</strong>: Used to send data to the server.<br>
+				Example: submitting a form, uploading a file, creating a new record in a database.<br>
+				Not idempotent (repeating may cause duplicates).
+			</p>
+			<p class="main-text">
+				<strong>DELETE</strong>: Used to remove data on the server.<br>
+				Example: deleting a user account or removing a file.<br>
+				Idempotent (deleting the same resource twice still results in "gone").
 			</p>
 		</div>
 	</body>
-	<footer>
-	</footer>
-
 </html>
