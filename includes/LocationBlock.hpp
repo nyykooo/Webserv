@@ -8,7 +8,6 @@ class LocationBlock : public Block
 	private:
 		bool													_exactMatchModifier;
 		std::string												_location;
-		std::vector<std::string>								_cgiExtension;
 		std::map<std::string, std::string>						_cgiPath;
 		static int												_locationCurlyBracketsCount;
 		std::set<ErrorPageRule>									_errorPage;
@@ -23,7 +22,6 @@ class LocationBlock : public Block
 	static void		incrementLocationCurlyBracketsCount(void);
 	static void		decrementLocationCurlyBracketsCount(void);
 	void			setCgiPath(const std::string& extension, const std::string& path);
-	void			setCgiExtension(const std::string& extension);
 	void			setUploadDirectory(const std::string& str);
 
 	// GETTERS
@@ -32,7 +30,6 @@ class LocationBlock : public Block
 	const std::string&							getLocation(void) const;
 	const std::set<ErrorPageRule>&				getErrorPage(void) const;
 	static int									getLocationCurlyBracketsCount(void);
-	const std::vector<std::string>&				getCgiExtension(void) const;
 	const std::map<std::string, std::string>&	getCgiPath(void) const;
 	const std::string&							getUploadDirectory(void) const;
 

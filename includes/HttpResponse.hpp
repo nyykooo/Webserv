@@ -53,6 +53,10 @@ class HttpResponse {
 		std::string							_serverPort;
 		std::string							_serverProtocol;
 		std::string							_serverSoftware;
+		std::string							_cgiPath;
+		bool								_cgiRequest;
+		char**								_envp;
+		std::vector<std::string>			_tempEnv;
 		
 	public:
 
@@ -60,6 +64,7 @@ class HttpResponse {
 		void	setResponse(const std::string& response);
 		void	setMimeTypes();
 		void	setStatusTexts();
+		void	setTempEnv(const std::string& str);
 
 		//GETTERS
 		const std::string&		getResponse(void) const;
@@ -87,7 +92,10 @@ class HttpResponse {
 		void	checkCookies();
 		void	setEnv();
 		void	parsePath();
+		void	parseScriptName(const std::string& str);
 		const std::string	parseContentLength(const std::map<std::string, std::string>& headers);
+		bool	checkValidCGI(const std::string& temp);
+		void	buildEnv();
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

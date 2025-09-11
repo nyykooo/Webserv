@@ -165,7 +165,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	}
 }
 
-bool HttpResponse::lookForCgi(void)
+/* bool HttpResponse::lookForCgi(void)
 {
 	std::string fileExtension = removeSlashes(_fileName);
 	size_t pos = fileExtension.find_last_of('.');
@@ -179,7 +179,7 @@ bool HttpResponse::lookForCgi(void)
 		}
 	}
 	return false;
-}
+} */
 
 // ### EXEC METHOD ###
 
@@ -492,8 +492,11 @@ void	HttpResponse::checkFile(int methodType) {
 	}
 	ss << "stat sucess - _fileName: " << " '" << _fileName << "'";
 	printLog(ss.str(), GREEN, std::cout);
-	if (lookForCgi() == true)
-		return ; // mudar status do HttpResponse/Client Bruno feature e retorna para nao bloquear o server
+	if (_cgiRequest == true) {
+		forkExecCgi(_cgiPath);
+		return ; // mudar status do HttpResponse/Client Bruno feature e retorna para nao bloquear o server		
+	}
+
 
 	if (S_ISREG(st.st_mode)) {
 		openReg(_fileName, methodType);	
@@ -599,18 +602,51 @@ const std::string	parseContentType(const std::map<std::string, std::string>& hea
 	return (it->second);
 }
 
+bool	HttpResponse::checkValidCGI(const std::string& temp) {
+	std::map<std::string, std::string>::const_iterator it = _block->getCgiMap().begin();
+	while (it != _block->getCgiMap().end()) {
+		if (temp.size() >= it->first.size() 
+			&& temp.compare(temp.size() - it->first.size(), it->first.size(), it->first) == 0) {
+				_scriptName = "SCRIPT_NAME=" + temp;
+				_cgiRequest = true;
+				_cgiPath = it->second;
+				return (true);
+			}
+		it++;
+	}
+	_scriptName = "SCRIPT_NAME=";
+	return (false);
+}
+
+void	HttpResponse::parseScriptName(const std::string& str) {
+	std::string			path;
+	std::string			temp;
+	std::stringstream	ss(str);
+
+	while (std::getline(ss, path, '/')) {
+		if (path.empty())
+			continue ;
+		temp = temp + "/" + path;
+		if (checkValidCGI(temp) == true)
+			return ;
+	}
+}
+
 void	HttpResponse::parsePath() {
 	std::string	path = this->_req->getPath();
+	std::string	temp;
 	size_t index = path.find("?");
 	if (index != std::string::npos) {
 		_queryString = "QUERY_STRING=" + path.substr(index + 1, (path.size() - index));
-		_pathInfo = "PATH_INFO=" + path.substr(0, index);
+		temp = path.substr(0, index);
+		_pathInfo = "PATH_INFO=" + temp;
 	}
 	else {
 		_queryString = "QUERY_STRING=";
-		_pathInfo = "PATH_INFO=" + path.substr(0, path.size());
+		temp = path.substr(0, path.size());
+		_pathInfo = "PATH_INFO=" + temp;
 	}
-
+	parseScriptName(temp);
 }
 
 const std::string	HttpResponse::parseContentLength(const std::map<std::string, std::string>& headers) {
@@ -620,6 +656,18 @@ const std::string	HttpResponse::parseContentLength(const std::map<std::string, s
 	std::stringstream ss;
 	ss << _req->getBody().size();
 	return ("CONTENT_LENGTH=" + ss.str());
+}
+
+void	HttpResponse::buildEnv() {
+	size_t size;
+
+	size = _tempEnv.size();
+	_envp = new char*[size + 1];
+	for (size_t i = 0; i < size; i++) {
+		_envp[i] = new char[_tempEnv[i].size() + 1];
+		std::strcpy(_envp[i], _tempEnv[i].c_str());
+	}
+	_envp[size] = NULL;
 }
 
 void	HttpResponse::setEnv() {
@@ -633,15 +681,29 @@ void	HttpResponse::setEnv() {
 	_requestMethod = "REQUEST_METHOD=" + this->_req->getMethod();
 	_remoteAddress = "REMOTE_ADDR=" + _client->_server->getIp();
 	_gatewayInterface = "GATEWAY_INTERFACE=CGI/1.1";
+	setTempEnv(_serverSoftware);
+	setTempEnv(_serverProtocol);
+	setTempEnv(_serverPort);
+	setTempEnv(_requestMethod);
+	setTempEnv(_remoteAddress);
+	setTempEnv(_gatewayInterface);
 /* 	if (this->_req->getBody().size() > 0)
 		_contentLength = "CONTENT_LENGTH=" + this->_req->g */
 	_serverName = "SERVER_NAME=" + parseHostHeader(this->_req->getHeaders().find("Host")->second);
+	setTempEnv(_serverName);
 	_contentType = parseContentType(this->_req->getHeaders());
-	if (_contentType != "")
+	if (_contentType != "") {
 		_contentType = "CONTENT_TYPE=" + _contentType;
+		setTempEnv(_contentType);
+	}
 	parsePath();
-	if (_req->getBody().size() > 0)
+	setTempEnv(_pathInfo);
+	setTempEnv(_queryString);
+	setTempEnv(_scriptName);
+	if (_req->getBody().size() > 0) {
 		_contentLength = parseContentLength(this->_req->getHeaders());
+		setTempEnv(_contentLength);
+	}
 	std::stringstream ss;
 	ss << "CGI-URI parsed meta-variables:";
 	ss << "\n\t" << _serverSoftware;
@@ -656,6 +718,7 @@ void	HttpResponse::setEnv() {
 	ss << "\n\t" << _pathInfo;
 	printLog(ss.str(), GREEN, std::cout);
 
+	buildEnv();
 }
 
 void	HttpResponse::execMethod()
@@ -664,7 +727,7 @@ void	HttpResponse::execMethod()
 	std::string root;
 	std::string	method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
-	// setEnv(); // teste
+	setEnv(); // teste
 
 	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it) {
 		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
@@ -680,8 +743,6 @@ void	HttpResponse::execMethod()
 		return ;
 	}
 	root = _block->getRoot();
-	std::cout << "Root: " << root << std::endl;
-	// setEnv();
 	if (method == "GET")
 		handleGET();
 	else if (method == "DELETE")
@@ -1137,7 +1198,7 @@ const std::string HttpResponse::checkStatusCode() {
 	return _resBody;
 }
 
-HttpResponse::HttpResponse(Client *client):  _resStatus(-1), _method(-1) {
+HttpResponse::HttpResponse(Client *client):  _resStatus(-1), _method(-1), _cgiRequest(false) {
 	_client = client;
 	_conf = client->_request->_config;
 	_req = client->_request;
@@ -1179,4 +1240,8 @@ const std::string& HttpResponse::getResBody() const {
 
 const std::string& HttpResponse::getResHeader() const {
 	return (_resHeader);
+}
+
+void	HttpResponse::setTempEnv(const std::string& str) {
+	_tempEnv.push_back(str);
 }
