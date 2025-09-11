@@ -475,6 +475,14 @@ std::string HttpResponse::getFullPath () {
 void	HttpResponse::checkFile(int methodType) {
 	struct stat st;
 	std::stringstream ss;
+
+	
+	// procurar '?' e apagar para fazer o stat REMOVER ESSA SEQUENCIA DE CODIGO POS IMPLEMENTACAO DA QUERY STRING DO DIOGO
+	auto pos = _fileName.find_last_of("?");
+	if (pos != std::string::npos)
+		_fileName = _fileName.substr(0, pos);
+
+
 	if (stat(_fileName.c_str(), &st) == -1)
 	{
 		ss << "stat error: " << strerror(errno) << " '" << _fileName << "'";
