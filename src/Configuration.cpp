@@ -429,7 +429,7 @@ void	parseCgi(const std::string& line, Configuration& config) {
 		throw Configuration::WrongConfigFileException("no cgi_path defined.");
 	if (ss >> word3)
 		throw Configuration::WrongConfigFileException("too many arguments in CGI.");
-	config.setCgiPath(word, word2);
+	config.setCgiMap(word, word2);
 }
 
 void parseServer(std::ifstream& file, Configuration& confserv) {

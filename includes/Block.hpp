@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:26 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/19 19:54:36 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/09/12 16:48:22 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ class Block
 		void setAllowedMethods(const std::string& method);
 		void removeAllowedMethods(void);
 		void setRedirectStatusCode(const int statusCode);
+		void setCgiMap(const std::string& extension, const std::string& path);
 		
 		// GETTERS
 		const std::string& getRoot(void) const;

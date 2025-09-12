@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/16 13:29:55 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/09/12 16:47:42 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,8 @@
 
 Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1)
 {
-	_cgiMap[".php"] = "/usr/bin/php-cgi";
-	_cgiMap[".py"] = "/usr/bin/python3";
+	// _cgiMap[".php"] = "/usr/bin/php-cgi";
+	// _cgiMap[".py"] = "/usr/bin/python3";
 }
 
 Block::Block(const Block& other)
@@ -101,6 +101,9 @@ void	Block::setRedirectStatusCode(int statusCode) {
 	_redirectStatusCode = statusCode;
 }
 
+void Block::setCgiMap(const std::string& extension, const std::string& path) {
+	_cgiMap[extension] = path;
+}
 
 // GETTERS
 

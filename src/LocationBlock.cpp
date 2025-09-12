@@ -259,7 +259,7 @@ void	parseCgiPath(const std::string& line, LocationBlock& location) {
 	ss >> word;
 	if (!(ss >> word) || !(ss >> word2))
 		throw Configuration::WrongConfigFileException("no cgi_path defined.");
-	location.setCgiPath(word, word2);
+	location.setCgiMap(word, word2);
 }
 
 void	parseUploadDirectory(std::string& line, LocationBlock& location) {
@@ -284,7 +284,7 @@ void	parseCgi(const std::string& line, LocationBlock& location) {
 		throw Configuration::WrongConfigFileException("no cgi_path defined.");
 	if (ss >> word3)
 		throw Configuration::WrongConfigFileException("too many arguments in CGI.");
-	location.setCgiPath(word, word2);
+	location.setCgiMap(word, word2);
 }
 
 void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& location) {
