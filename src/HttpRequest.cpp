@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/09/03 13:39:19 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/09/14 22:42:54 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,6 +102,10 @@ void HttpRequest::parse_headers(std::istringstream &stream)
 	{
 		if (!header_line.empty() && header_line[header_line.size() - 1] == '\r')
 			header_line.erase(header_line.size() - 1);
+
+		if (header_line.empty())
+			break;
+			
 		if (!header_line.empty() && std::isspace(header_line[0]))
 		{
 			setParseError(400, "Line folding is forbidden in HTTP headers");
@@ -217,7 +221,6 @@ void HttpRequest::setParseError(int status, const std::string &error)
 
 bool HttpRequest::hasParseError() const
 {
-	std::cout << "parseError: " << _parseStatus << std::endl;
 	return (_parseStatus != 200);
 }
 
