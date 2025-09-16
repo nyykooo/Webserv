@@ -689,7 +689,9 @@ void	HttpResponse::setEnv() {
 	setTempEnv(_gatewayInterface);
 /* 	if (this->_req->getBody().size() > 0)
 		_contentLength = "CONTENT_LENGTH=" + this->_req->g */
-	_serverName = "SERVER_NAME=" + parseHostHeader(this->_req->getHeaders().find("Host")->second);
+	if (this->_req->getHeaders().find("Host") != this->_req->getHeaders().end()) {
+		_serverName = "SERVER_NAME=" + parseHostHeader(this->_req->getHeaders().find("Host")->second);
+	}
 	setTempEnv(_serverName);
 	_contentType = parseContentType(this->_req->getHeaders());
 	if (_contentType != "") {
@@ -727,7 +729,6 @@ void	HttpResponse::execMethod()
 	std::string root;
 	std::string	method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
-	setEnv(); // teste
 
 	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it) {
 		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
@@ -1094,13 +1095,14 @@ std::string	HttpResponse::header(const std::string& status, int requestType) {
     header << "Content-Length: " << _resBody.size() << CRLF;
 	if (requestType == REDIRECT)
 		header << "Location: " << _block->getNewLocation() << CRLF;
-	header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/" << CRLF;
+	if (_req->session)
+		header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/" << CRLF;
     header << CRLF;
 	return (header.str());
 }
 
 void	HttpResponse::checkCookies() {
-	if (_req->session->getTheme() == "dark") {
+	if (_req->session && _req->session->getTheme() == "dark") {
 		std::string styleInjection;
 		styleInjection =
 			"<style>"
@@ -1209,6 +1211,7 @@ HttpResponse::HttpResponse(Client *client):  _resStatus(-1), _method(-1), _cgiRe
 		_block = _conf;
 		setStatusTexts();
 		setMimeTypes();
+		setEnv(); // teste
 		return;
 	}
 	_loc = checkLocationBlock();
@@ -1218,6 +1221,7 @@ HttpResponse::HttpResponse(Client *client):  _resStatus(-1), _method(-1), _cgiRe
 	else
 		_block = _conf;
 	setMimeTypes();
+	setEnv(); // teste
 }
 
 // ### SETTERS ###
