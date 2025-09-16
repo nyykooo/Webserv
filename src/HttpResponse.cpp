@@ -478,7 +478,7 @@ void	HttpResponse::checkFile(int methodType) {
 
 	
 	// procurar '?' e apagar para fazer o stat REMOVER ESSA SEQUENCIA DE CODIGO POS IMPLEMENTACAO DA QUERY STRING DO DIOGO
-	auto pos = _fileName.find_last_of("?");
+	std::size_t pos = _fileName.find_last_of("?");
 	if (pos != std::string::npos)
 		_fileName = _fileName.substr(0, pos);
 
@@ -527,7 +527,7 @@ void	HttpResponse::handleGET()
 	// TODO: ESSAS INFORMACOES DEVEM SER EXTRAIDAS ANTES EM OUTRO LOCAL
 	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1, locPath.size());
 	// _fullPath = newRoot + "/" + locPath.erase(locPath.find_last_of('/'));
-	auto pos = locPath.find_last_of('/');
+	std::size_t pos = locPath.find_last_of('/');
 	if (pos != std::string::npos) {
 		_fullPath = newRoot + "/" + locPath.substr(0, pos);
 	} else {
