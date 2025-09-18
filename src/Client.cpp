@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/31 03:35:06 by discallow        ###   ########.fr       */
+/*   Updated: 2025/09/20 17:18:58 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,9 @@ Client::Client() : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0)
 
 Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0)
 {
+	_uploadFd = -1;
+	_uploadSize = 0;
+	_uploadReceived = 0;
 	_time = std::time(NULL);
 	_response = NULL;
 	_request = NULL;
@@ -165,6 +168,31 @@ const size_t &Client::getBytesSent() const
 	return _bytesSent;
 }
 
+const int &Client::getUploadFd() const
+{
+	return _uploadFd;
+}
+
+const size_t &Client::getUploadSize() const
+{
+	return _uploadSize;
+}
+
+const size_t &Client::getUploadReceived() const
+{
+	return _uploadReceived;
+}
+
+const std::string &Client::getUploadPath() const
+{
+	return _uploadPath;
+}
+
+const std::string &Client::getOriginalHeaders() const
+{
+	return _originalHeaders;
+}
+
 // ### SETTERS ###
 void Client::setTime(std::time_t time)
 {
@@ -186,7 +214,28 @@ void Client::setBytesSent(size_t bytes)
 	_bytesSent = bytes;
 }
 
-// Adicionar método público para reset de streaming
+void Client::setUploadFd(int uploadFd)
+{
+	_uploadFd = uploadFd;
+}
+void Client::setUploadSize(size_t uploadSize)
+{
+	_uploadSize = uploadSize;
+}
+void Client::setUploadReceived(size_t uploadReceived)
+{
+	_uploadReceived = uploadReceived;
+}
+void Client::setUploadPath(std::string uploadPath)
+{
+	_uploadPath = uploadPath;
+}
+
+void Client::setOriginalHeaders(const std::string &headers)
+{
+	_originalHeaders = headers;
+}
+
 void Client::resetFileStreaming()
 {
 	if (_fileFd != -1)
@@ -197,14 +246,10 @@ void Client::resetFileStreaming()
 	_fileSize = 0;
 	_bytesSent = 0;
 }
-
-// Adicionar método para verificar se está streaming
 bool Client::isFileStreaming() const
 {
 	return (_fileFd != -1 && _state == STREAMING);
 }
-
-// Adicionar método para verificar progresso
 double Client::getStreamingProgress() const
 {
 	if (_fileSize == 0)

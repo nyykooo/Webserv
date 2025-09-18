@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   macros.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/30 20:55:39 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/19 20:01:16 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/09/20 18:03:52 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,8 @@
 
 # define MAX_EVENTS 100 // Número máximo de eventos que o epoll pode monitorar
 # define BUFFER_SIZE 4096 // Tamanho do buffer para leitura de dados
-
+# define MAX_ABSOLUTE_REQUEST_SIZE (1024ull * 1024ull * 1024ull) // 1GB
+# define MAX_MEMORY_FILE_SIZE (1024 * 1024) // 1MB
 
 // ### OUTPUT COLORS ###
 # define RED	"\033[31m"

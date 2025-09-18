@@ -5,6 +5,7 @@
 enum	RequestProcessingState
 {
 	RECEIVING, // server está recebendo dados do cliente
+	RECEIVING_LARGE,
 	PROCESSING, // server está processando a requisição do cliente
 	PROCESSING_LARGE, // server está processando a requisição do cliente, mas a PIZZA a ser preparada eh GRANDE
 	STREAMING, // server está servindo pedaço a pedaço da PIZZA GRANDE

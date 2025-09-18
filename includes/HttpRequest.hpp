@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/09/01 04:33:32 by discallow        ###   ########.fr       */
+/*   Updated: 2025/09/20 17:17:42 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,8 @@ class HttpRequest
 		std::string							body;
 		std::vector<SessionData>*			_sessions;
 		std::map<std::string, std::string>	_cookies;
+		std::string 						_uploadPath;
+		size_t 								_uploadSize;
 
 		// Private methods
     	bool isValidContentLengthFormat(const std::string &value);
@@ -58,23 +60,27 @@ class HttpRequest
 		HttpRequest& operator=(const HttpRequest& other);
 		~HttpRequest();
 
-		// utils
+		// public atributes
 		Configuration*	_config;
 		SessionData*	session;
 
 		// getters
-		const std::string& getMethod() const;
-		const std::string& getPath() const;
-		const std::string& getVersion() const;
-		const std::map<std::string, std::string> &getHeaders() const;
-		const std::string& getBody() const;
-		const std::map<std::string, std::string>&	getCookies() const;
+		const std::string 							&getMethod() const;
+		const std::string 							&getPath() const;
+		const std::string 							&getVersion() const;
+		const std::map<std::string, std::string> 	&getHeaders() const;
+		const std::string 							&getBody() const;
+		const std::map<std::string, std::string>	&getCookies() const;
+		const std::string							&getUploadPath() const;
+		size_t 										getUploadSize() const;
+		int 										getParseStatus() const;
+		const std::string 							&getParseError() const;
+		bool 										hasParseError() const;
 
-		void	setCookies(const std::string& key, const std::string& value);
-
-    	bool hasParseError() const;
-    	int getParseStatus() const;
-    	const std::string& getParseError() const;
+		// setters
+		void setUploadPath(const std::string &path);
+		void setUploadSize(size_t size);
+		void setCookies(const std::string& key, const std::string& value);
 };
 
 #endif

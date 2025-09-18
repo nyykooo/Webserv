@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/31 03:34:54 by discallow        ###   ########.fr       */
+/*   Updated: 2025/09/20 17:16:12 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,10 +19,18 @@ class Client : public Socket {
 	private:
 		std::time_t				_time;
 		RequestProcessingState	_state;
-		int						_fileFd; // usado para o streaming de arquivos
-		size_t					_fileSize; // usado para o streaming de arquivos
-		size_t					_bytesSent; // usado para o streaming de arquivos
-		// incluir a HttpRequest, HttpResponse e Configuration aqui
+
+		std::string _originalHeaders;
+
+		// para download
+		int 		_fileFd;
+		size_t 		_fileSize;
+		size_t 		_bytesSent;
+		// para upload
+		int 		_uploadFd;
+		size_t 		_uploadSize;
+		size_t 		_uploadReceived;
+		std::string _uploadPath;
 
 	public:
 		Client();
@@ -38,16 +46,26 @@ class Client : public Socket {
     	void setProcessingState(RequestProcessingState state);
 		
 		// ### GETTERS ###
-		std::time_t	getTime() const;
-		const int& 		getFileFd() const;
-		const size_t& 	getFileSize() const;
-		const size_t& 	getBytesSent() const;
+		std::time_t 		getTime() const;
+		const int	 		&getFileFd() const;
+		const size_t 		&getFileSize() const;
+		const size_t 		&getBytesSent() const;
+		const int 			&getUploadFd() const;
+		const size_t 		&getUploadSize() const;
+		const size_t 		&getUploadReceived() const;
+		const std::string 	&getUploadPath() const;
+		const std::string 	&getOriginalHeaders() const;
 
 		// ### SETTERS ###
 		void	setTime(std::time_t time);
 		void	setFileFd(int fd);
 		void	setFileSize(size_t size);
 		void	setBytesSent(size_t bytes);
+		void 	setUploadFd(int uploadFd);
+		void 	setUploadSize(size_t uploadSize);
+		void 	setUploadReceived(size_t uploadReceived);
+		void 	setUploadPath(std::string uploadPath);
+		void 	setOriginalHeaders(const std::string &headers);
 
 		// ### ATRIBUTES ###
 		HttpResponse*	_response;

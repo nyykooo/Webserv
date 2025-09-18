@@ -6,16 +6,21 @@
 /*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/09/14 22:42:54 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/09/20 17:47:59 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"
 
-HttpRequest::HttpRequest() : _parseStatus(200), _config(NULL)
+HttpRequest::HttpRequest()
+	: _parseStatus(200),
+	  _sessions(NULL),
+	  _uploadSize(0),
+	  _config(NULL),
+	  session(NULL)
 {}
 
-HttpRequest::HttpRequest(const std::string& request_text, Configuration *config, std::vector<SessionData>* sessions): _parseStatus(200), _sessions(sessions), _config(config)
+HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData> *sessions) : _parseStatus(200), _sessions(sessions), _uploadSize(0), _config(config)
 {
 	parse(request_text);
 }
@@ -232,6 +237,25 @@ int HttpRequest::getParseStatus() const
 const std::string &HttpRequest::getParseError() const
 {
 	return _parseError;
+}
+
+const std::string &HttpRequest::getUploadPath() const
+{
+	return _uploadPath;
+}
+
+size_t HttpRequest::getUploadSize() const
+{
+	return _uploadSize;
+}
+
+void HttpRequest::setUploadPath(const std::string &path)
+{
+	_uploadPath = path;
+}
+void HttpRequest::setUploadSize(size_t size)
+{
+	_uploadSize = size;
 }
 
 std::string generateRandomSessionId(size_t index) {

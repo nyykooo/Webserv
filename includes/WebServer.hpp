@@ -6,7 +6,7 @@
 /*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/31 00:18:35 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/09/20 19:36:07 by brunhenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,13 +37,15 @@ class WebServer
 	bool 								isRequestComplete(const std::string &data);
 	int 								extractContentLength(const std::string& headers);
 	std::string							extractHostHeaderSimple(const std::string &rawRequest);
-	// bool								isLargeFileRequest(const HttpRequest* request);
 	bool								isLargeFileRequest(Client *client);
 	std::string							getContentType(const std::string& filePath);
 	void								handleClientInput(Client *client, int i);
 	void								handleClientOutput(Client *client, int i);
 	void								logStreamingError(int client_fd, const std::string& operation, const std::string& details = "");
 	void								logStreamingInfo(int client_fd, const std::string& message);
+	int									startLargePostUpload(Client* client, size_t body_start, int content_length);
+	int									continueLargePostUpload(Client* client, const char* buffer, size_t length);
+	int									finishLargePostUpload(Client* client);
 
 
 	public:
