@@ -8,7 +8,6 @@ class LocationBlock : public Block
 	private:
 		bool													_exactMatchModifier;
 		std::string												_location;
-		std::map<std::string, std::string>						_cgiPath;
 		static int												_locationCurlyBracketsCount;
 		std::set<ErrorPageRule>									_errorPage;
 		std::string												_uploadDirectory;
@@ -21,7 +20,7 @@ class LocationBlock : public Block
 	void			setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
 	static void		incrementLocationCurlyBracketsCount(void);
 	static void		decrementLocationCurlyBracketsCount(void);
-	void			setCgiPath(const std::string& extension, const std::string& path);
+	void			setCgiMap(const std::string& extension, const std::string& path);
 	void			setUploadDirectory(const std::string& str);
 
 	// GETTERS
@@ -30,7 +29,7 @@ class LocationBlock : public Block
 	const std::string&							getLocation(void) const;
 	const std::set<ErrorPageRule>&				getErrorPage(void) const;
 	static int									getLocationCurlyBracketsCount(void);
-	const std::map<std::string, std::string>&	getCgiPath(void) const;
+	const std::map<std::string, std::string>&	getCgiMap(void) const;
 	const std::string&							getUploadDirectory(void) const;
 
 	// ORTHODOX CANONICAL FORM
