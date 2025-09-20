@@ -30,6 +30,7 @@ Configuration&	Configuration::operator=(const Configuration& other) {
 		_redirectStatusCode = other._redirectStatusCode;
 		_newLocation = other._newLocation;
 		_allowedMethods = other._allowedMethods;
+		_cgiMap = other._cgiMap;
 		locations = other.locations;
 	}
 	return (*this);
@@ -99,12 +100,12 @@ long	Configuration::getRequestSize(void) const {
 	return (this->_requestSize);
 }
 
-void	Configuration::setCgiPath(const std::string& extension, const std::string& path) {
-	_cgiPath[extension] = path;
+void	Configuration::setCgiMap(const std::string& extension, const std::string& path) {
+	_cgiMap[extension] = path;
 }
 
-const std::map<std::string, std::string>&	Configuration::getCgiPath(void) const {
-	return (_cgiPath);
+const std::map<std::string, std::string>&	Configuration::getCgiMap(void) const {
+	return (_cgiMap);
 }
 
 void	checkCurlyBrackets(std::string line) {

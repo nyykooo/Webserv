@@ -10,20 +10,20 @@ LocationBlock::LocationBlock(const Configuration& other): _exactMatchModifier(fa
 	_redirectStatusCode = other.getRedirectStatusCode();
 	_defaultFiles = other.getDefaultFiles();
 	_newLocation = other.getNewLocation();
-	/* _cgiExtension = other.get;
-	_cgiPath = other._cgiPath; */
+	_cgiMap = other.getCgiMap();
 	_errorPage = other.getErrorPage();
 }
 
 LocationBlock::~LocationBlock() {}
 
 LocationBlock::LocationBlock(const LocationBlock& other): Block(other), _exactMatchModifier(other._exactMatchModifier), _location(other._location),
-	_cgiPath(other._cgiPath), _errorPage(other._errorPage) {
+	_errorPage(other._errorPage) {
 	_root = other.getRoot();
 	_allowedMethods = other.getMethods();
 	_autoIndex = other.getAutoIndex();
 	_redirectStatusCode = other.getRedirectStatusCode();
 	_defaultFiles = other.getDefaultFiles();
+	_cgiMap = other.getCgiMap();
 	_newLocation = other.getNewLocation();
 }
 
@@ -37,7 +37,7 @@ LocationBlock& LocationBlock::operator=(const LocationBlock& other) {
 		_redirectStatusCode = other._redirectStatusCode;
 		_defaultFiles = other._defaultFiles;
 		_newLocation = other._newLocation;
-		_cgiPath = other._cgiPath;
+		_cgiMap = other._cgiMap;
 		_errorPage = other._errorPage;
 	}
 	return (*this);
@@ -89,12 +89,12 @@ const std::set<ErrorPageRule>& LocationBlock::getErrorPage(void) const {
 	return (this->_errorPage);
 }
 
-void	LocationBlock::setCgiPath(const std::string& extension, const std::string& path) {
-	_cgiPath[extension] = path;
+void	LocationBlock::setCgiMap(const std::string& extension, const std::string& path) {
+	_cgiMap[extension] = path;
 }
 
-const std::map<std::string, std::string>&	LocationBlock::getCgiPath(void) const {
-	return (_cgiPath);
+const std::map<std::string, std::string>&	LocationBlock::getCgiMap(void) const {
+	return (_cgiMap);
 }
 
 void	LocationBlock::setUploadDirectory(const std::string& str) {

@@ -31,7 +31,6 @@ class Configuration : public Block
 		long													_requestSize;
 		static int												_curlyBracketsCount;
 		std::string												_uploadDirectory;
-		std::map<std::string, std::string>						_cgiPath;
 
 	public:
 		std::vector<LocationBlock>			locations;
@@ -44,7 +43,7 @@ class Configuration : public Block
 		static void							incrementCurlyBracketsCount(void);
 		static void							decrementCurlyBracketsCount(void);
 		void								setUploadDirectory(const std::string& str);
-		void								setCgiPath(const std::string& extension, const std::string& path);
+		void								setCgiMap(const std::string& extension, const std::string& path);
 
 		// GETTERS
 		static std::set<std::pair<std::string, std::string> >&	getAllHosts(void);
@@ -54,7 +53,7 @@ class Configuration : public Block
 		long													getRequestSize(void) const;
 		static int												getCurlyBracketsCount(void);
 		const std::string&										getUploadDirectory(void) const;
-		const std::map<std::string, std::string>&				getCgiPath(void) const;
+		const std::map<std::string, std::string>&				getCgiMap(void) const;
 
 		// ORTHODOX CANONICAL FORM 
 		
