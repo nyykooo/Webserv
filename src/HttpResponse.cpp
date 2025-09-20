@@ -48,18 +48,19 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	int pipeOutput[2];
 	int doneProcess;
 	int childrenStatus;
-
+	std::string _script_name = _scriptNameNico.find_last_of('?') != std::string::npos ? _scriptNameNico.substr(0, _scriptNameNico.find_last_of('?')).c_str() : _scriptNameNico.c_str();
+	std::cout << "Script name: " << _script_name << std::endl;
 	args[0] = const_cast<char *>(interpreter.c_str());
-	args[1] = const_cast<char *>(_scriptNameNico.c_str());
+	args[1] = const_cast<char *>(_script_name.c_str());
 	args[2] = NULL; // Terminate the args array with NULL
 
-	char *tempEnvp[5];
-	tempEnvp[0] = const_cast<char *>("REQUEST_METHOD=GET");
-	tempEnvp[1] = const_cast<char *>("QUERY_STRING=");
-	tempEnvp[2] = const_cast<char *>("PATH_INFO=/pages/cgi-bin/teste.py");
-	tempEnvp[3] = const_cast<char *>("SERVER_SOFTWARE=WebServer/1.0");
-	tempEnvp[4] = const_cast<char *>("SERVER_PROTOCOL=HTTP/1.1");
-	tempEnvp[5] = NULL;
+	// char *tempEnvp[5];
+	// tempEnvp[0] = const_cast<char *>("REQUEST_METHOD=GET");
+	// tempEnvp[1] = const_cast<char *>("QUERY_STRING=");
+	// tempEnvp[2] = const_cast<char *>("PATH_INFO=/pages/cgi-bin/teste.py");
+	// tempEnvp[3] = const_cast<char *>("SERVER_SOFTWARE=WebServer/1.0");
+	// tempEnvp[4] = const_cast<char *>("SERVER_PROTOCOL=HTTP/1.1");
+	// tempEnvp[5] = NULL;
 
 	pipeInput[0] = _pipeIn;
 	pipeInput[1] = STDIN_FILENO;
@@ -145,7 +146,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		// Preparar variaveis de ambiente futuramente (pesquisar melhor sobre elas e sobre como o CGI as usa)
 		
 		// Execve interpretador do cgi, passando como arg o path para cgi e as envps
-		execve(interpreter.c_str(), const_cast<char **>(args), const_cast<char **>(tempEnvp));
+		execve(interpreter.c_str(), const_cast<char **>(args), const_cast<char **>(_envp));
 		ss << "CGI Execution error: " << strerror(errno);
 		printLog(ss.str(), RED, std::cerr);
 		exit(1); // Internal Server Error
