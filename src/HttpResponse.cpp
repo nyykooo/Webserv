@@ -606,7 +606,6 @@ const std::string	parseContentType(const std::map<std::string, std::string>& hea
 bool	HttpResponse::checkValidCGI(const std::string& temp) {
 	std::map<std::string, std::string>::const_iterator it = _block->getCgiMap().begin();
 	while (it != _block->getCgiMap().end()) {
-		std::cout << YELLOW << it->first << RESET << std::endl;
 		if (temp.size() >= it->first.size() 
 			&& temp.compare(temp.size() - it->first.size(), it->first.size(), it->first) == 0) {
 				_scriptName = "SCRIPT_NAME=" + temp;

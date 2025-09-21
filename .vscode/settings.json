@@ -58,6 +58,16 @@
 		"text_encoding": "cpp",
 		"cinttypes": "cpp",
 		"variant": "cpp",
-		"set": "cpp"
+		"set": "cpp",
+		"any": "cpp",
+		"condition_variable": "cpp",
+		"csignal": "cpp",
+		"forward_list": "cpp",
+		"list": "cpp",
+		"unordered_set": "cpp",
+		"mutex": "cpp",
+		"semaphore": "cpp",
+		"stop_token": "cpp",
+		"thread": "cpp"
 	}
 }

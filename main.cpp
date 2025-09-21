@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/03 12:55:48 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/09/21 13:42:44 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,10 @@ int	main(int argc, char** argv)
 	const char	*configFile;
 
 	if (argc == 1)
+	{
 		configFile = "default.config";
+		std::cout << YELLOW << "Using default configuration file: " << configFile << RESET << std::endl;
+	}
 	else if (argc == 2)
 		configFile = argv[1];
 	else
@@ -55,7 +58,7 @@ int	main(int argc, char** argv)
 		printHL();
 	}
 	catch (const std::exception& e) {
-		printLog(e.what(), RED, std::cout);
+		printLog(e.what(), RED, std::cerr);
 		return (1);
 	}
 }

@@ -496,7 +496,7 @@ void	setup(const char* file, std::vector<Configuration>& confserv) {
 	std::ifstream	configFile(file);
 	std::string		line;
 	if (!configFile.is_open()) {
-		std::cerr << RED << "Error opening file: " << strerror(errno) << RESET << std::endl;
+		throw Configuration::WrongConfigFileException("Error opening file: " + std::string(strerror(errno)));
 		return ;
 	}
 	while (std::getline(configFile, line)) {
