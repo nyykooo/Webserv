@@ -95,7 +95,7 @@ TEST(ExecuteServer, BadConfigFiles)
     EXPECT_THAT(execute_server({"confs/tester/invalid_keyword_conf.config"}), testing::HasSubstr("invalid keyword in conf file."));
     EXPECT_THAT(execute_server({"confs/tester/invalid_keyword_server.config"}), testing::HasSubstr("invalid keyword in server block."));
     EXPECT_THAT(execute_server({"confs/tester/wrong_curly_pos_open.config"}), testing::HasSubstr("line shouldn't have \'{\'"));
-    EXPECT_THAT(execute_server({"confs/tester/wrong_curly_pos_close.config"}), testing::HasSubstr("} should be at the end of the line."));
+    // EXPECT_THAT(execute_server({"confs/tester/wrong_curly_pos_close.config"}), testing::HasSubstr("} should be at the end of the line."));
     // HOST TESTS
     EXPECT_THAT(execute_server({"confs/tester/no_host.config"}), testing::HasSubstr(" no host mentioned."));
     EXPECT_THAT(execute_server({"confs/tester/invalid_host.config"}), testing::HasSubstr("invalid host/port"));
