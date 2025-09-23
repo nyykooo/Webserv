@@ -58,8 +58,8 @@ class HttpResponse {
 		char**								_envp;
 		std::vector<std::string>			_tempEnv;
 		
-	public:
-
+		public:
+		
 		//SETTERS
 		void	setResponse(const std::string& response);
 		void	setMimeTypes();
@@ -73,11 +73,15 @@ class HttpResponse {
 		std::string				getFullPath(void);
 		const std::string		getMimeType(const std::string& fileExtension);
 		const Configuration&	getConfig(void) const;
-
+		
 		// EXEC METHOD
 		void	startResponse();
 		void	execMethod();
 		void	handleGET();
+		void		handlePost(); //considerar encapsular?
+		std::string	generateUniqueFilename() const;
+		bool		saveBodyToFile(const std::string& path, const std::string& content) const;
+		bool		createUploadDirectory(const std::string& path) const;
 		void	handleDELETE();
 		void	openReg(std::string path, int methodType);
 		void	openDir(std::string path);
