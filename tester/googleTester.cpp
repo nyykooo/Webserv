@@ -20,7 +20,7 @@ std::string execute_server(const std::vector<std::string> &config_file)
 
         close(pipefd[0]); // fecha leitura
         // redirecionar stdout e stderr para o pipe
-        // dup2(pipefd[1], STDOUT_FILENO); // redireciona stdout para o pipe
+        dup2(pipefd[1], STDOUT_FILENO); // redireciona stdout para o pipe
         dup2(pipefd[1], STDERR_FILENO); // redireciona stdcerr para o pipe
         close(pipefd[1]);
 
@@ -33,52 +33,40 @@ std::string execute_server(const std::vector<std::string> &config_file)
         execve(args[0], const_cast<char* const*>(args.data()), environ);
         _exit(1);
     }
+    else if (pid > 0) {
+        // Timeout para o processo filho
+        int status;
+        // Garanta que o processo filho seja coletado
+        int childStatus = 0;
+        while ( childStatus == 0 )
+        {
+            childStatus = waitpid(pid, &status, WNOHANG);
+            usleep(50000);
+            if (childStatus == 0)
+                kill(pid, SIGKILL); // mata o processo filho
+        }
+        // --- Processo pai ---
+        close(pipefd[1]); // fecha escrita
 
-    // --- Processo pai ---
-    close(pipefd[1]); // fecha escrita
+        // ler stderr do filho
+        std::string output;
+        char buffer[256];
+        ssize_t n;
+        while ((n = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
+            output.append(buffer, n);
+        }
+        close(pipefd[0]);
 
-    // ler stderr do filho
-    std::string output;
-    char buffer[256];
-    ssize_t n;
-    while ((n = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-        output.append(buffer, n);
-    }
-    close(pipefd[0]);
 
-    // Timeout para o processo filho
-    int status;
-    // std::this_thread::sleep_for(std::chrono::seconds(5)); // Aguarde 5 segundos (ou ajuste conforme necessário)
-
-    // Verifique se o processo filho ainda está rodando
-    int done = waitpid(pid, &status, WNOHANG);
-    if (done == 0) {
-        std::cout << "Processo filho ainda está rodando. Tentando encerrar manualmente..." << std::endl;
-
-        // Envie um sinal para encerrar o processo filho
-        kill(pid, SIGTERM); // Tente encerrar o processo filho graciosamente
-        std::this_thread::sleep_for(std::chrono::seconds(1)); // Aguarde um pouco para o processo encerrar
-
-        // Verifique novamente se o processo ainda está rodando
-        done = waitpid(pid, &status, WNOHANG);
-        if (done == 0) {
-            std::cout << "Processo filho não respondeu ao SIGTERM. Forçando encerramento..." << std::endl;
-            kill(pid, SIGKILL); // Força o término do processo filho
+        if (WIFEXITED(status)) {
+            return output; // Processo filho terminou normalmente
+        } else if (WIFSIGNALED(status)) {
+            return "Child process terminated by signal: " + std::to_string(WTERMSIG(status));
+        } else {
+            return "Child process terminated abnormally.";
         }
     }
-
-    // Garanta que o processo filho seja coletado
-    waitpid(pid, &status, 0);
-
-    if (WIFEXITED(status)) {
-        return output; // Processo filho terminou normalmente
-    } else if (WIFSIGNALED(status)) {
-        std::cerr << "Processo filho foi terminado por um sinal: " << WTERMSIG(status) << std::endl;
-        return "";
-    } else {
-        std::cerr << "Processo filho não terminou corretamente." << std::endl;
-        return "";
-    }
+    return "";
 }
 
 // first test case will try to execute the server with invalid config files
@@ -95,7 +83,7 @@ TEST(ExecuteServer, BadConfigFiles)
     EXPECT_THAT(execute_server({"confs/tester/invalid_keyword_conf.config"}), testing::HasSubstr("invalid keyword in conf file."));
     EXPECT_THAT(execute_server({"confs/tester/invalid_keyword_server.config"}), testing::HasSubstr("invalid keyword in server block."));
     EXPECT_THAT(execute_server({"confs/tester/wrong_curly_pos_open.config"}), testing::HasSubstr("line shouldn't have \'{\'"));
-    // EXPECT_THAT(execute_server({"confs/tester/wrong_curly_pos_close.config"}), testing::HasSubstr("} should be at the end of the line."));
+    EXPECT_THAT(execute_server({"confs/tester/wrong_curly_pos_close.config"}), testing::HasSubstr("} should be at the end of the line."));
     // HOST TESTS
     EXPECT_THAT(execute_server({"confs/tester/no_host.config"}), testing::HasSubstr(" no host mentioned."));
     EXPECT_THAT(execute_server({"confs/tester/invalid_host.config"}), testing::HasSubstr("invalid host/port"));
