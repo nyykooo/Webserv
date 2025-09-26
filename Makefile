@@ -8,7 +8,7 @@ CXXFLAGS= -Wall -Wextra -Werror -g -std=c++98
 
 CXXTESTERFLAGS = -Wall -Wextra -Werror -g -std=c++17 -pthread
 
-TESTERLINKS = -lgtest -lgmock
+TESTERLINKS = -lgtest -lgmock -lcurl
 
 SRC = main.cpp src/Socket.cpp src/HttpRequest.cpp \
 	   src/WebServer.cpp src/Client.cpp src/Server.cpp \
