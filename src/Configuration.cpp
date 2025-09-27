@@ -492,11 +492,11 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 }
 
 void	setup(const char* file, std::vector<Configuration>& confserv) {
-
+	std::string file1 = file;
 	std::ifstream	configFile(file);
 	std::string		line;
 	if (!configFile.is_open()) {
-		throw Configuration::WrongConfigFileException("Error opening file: " + std::string(strerror(errno)));
+		throw Configuration::WrongConfigFileException("Error opening file: " + file1 + " " + std::string(strerror(errno)));
 		return ;
 	}
 	while (std::getline(configFile, line)) {

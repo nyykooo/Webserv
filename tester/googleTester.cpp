@@ -10,6 +10,8 @@
 // include curl to make client requests to the server
 #include <curl/curl.h> // sudo apt install libcurl4-openssl-dev
 // NO INSTALL: git submodule add https://github.com/curl/curl.git external/curl ESTUDAR MAIS ESSA ABORDAGEM
+#include <string>
+#include <cstdarg>  // Para manipulação de argumentos variádicos
 
 
 // ### OUTPUT COLORS ###
@@ -24,6 +26,7 @@
 # define RESET	"\033[0m"
 
 extern char **environ;
+int server_pid = -1;
 
 std::string execute_server(const std::vector<std::string> &config_file)
 {    
@@ -265,12 +268,11 @@ TEST(BadConfigFile, LocationUploadDirTest)
     EXPECT_THAT(execute_server({"confs/tester/location/no_upload.config"}), testing::HasSubstr("no upload directory defined."));
 }
 
+// ESCREVER TESTE DE PARSING QUE DETECTA ERROS DE BIDING
 
 class ExecuteServerFixture : public ::testing::Test {
 protected:
-    static pid_t _serverPid;
     static int   _pipeFd[2];
-
 
     static void execute_server_fixture(const std::vector<std::string> &config_file)
     {
@@ -283,65 +285,98 @@ protected:
         }
 
         if (pid == 0) {
-            close(_pipeFd[0]); // fecha leitura
-            dup2(_pipeFd[1], STDOUT_FILENO);
-            dup2(_pipeFd[1], STDERR_FILENO);
+            close(_pipeFd[0]); // fecha leitura do pipe
+            dup2(_pipeFd[1], STDOUT_FILENO); // redireciona stdout para o pipe
+            dup2(_pipeFd[1], STDERR_FILENO); // redireciona stderr para o pipe
             close(_pipeFd[1]);
 
+            // Criar arquivos de log para capturar stdout e stderr
+            FILE *logFile = fopen("server_output.log", "w");
+            if (logFile == nullptr) {
+                perror("Erro ao abrir o arquivo de log");
+                _exit(1);
+            }
+            
+            // Redirecionar stdout e stderr para o arquivo de log
+            dup2(fileno(logFile), STDOUT_FILENO); // stdout para o arquivo de log
+            dup2(fileno(logFile), STDERR_FILENO); // stderr para o arquivo de log
+            
             std::vector<const char*> args;
-            args.push_back("/usr/bin/gnome-terminal");
-            args.push_back("-e");
             args.push_back("./Webserv");
             for (size_t i = 0; i < config_file.size(); ++i) {
                 args.push_back(config_file[i].c_str());
             }
             args.push_back(nullptr);
-            const char *terminal = "/usr/bin/gnome-terminal";
-            execve(terminal, const_cast<char* const*>(args.data()), environ);
+            
+            execve(args[0], const_cast<char* const*>(args.data()), environ);
+            
+            // Caso o execve falhe
+            perror("execve falhou");
             _exit(1);
         }
         else if (pid > 0) {
-            _serverPid = pid;
+            server_pid = pid;
         }
+
         return;
     }
 
+
     bool isServerRunning() {
-        if (_serverPid <= 0) {
+       if (server_pid <= 0) {
             return false;
         }
-        int status;
-        pid_t result = waitpid(_serverPid, &status, WNOHANG);
-        if (result == 0)
-            return true; // processo ainda está rodando
-        else {
-            close(_pipeFd[1]);
-            close(_pipeFd[0]);
-            _serverPid = -1; // processo terminou
+
+        if (kill(server_pid, 0) == 0) {
+            return true;
+        } else {
+            server_pid = -1;
             return false;
         }
+
     }
 
     // inicializa a fixture quando o teste suite começar
     static void SetUpTestSuite() {
-        _serverPid = -1;
-        execute_server_fixture({"confs/default.config"});
+        execute_server_fixture({"default.config"});
     }
 
     // limpa a fixture quando o teste suite terminar
     static void TearDownTestSuite() {
-        if (_serverPid > 0) {
+        if (server_pid > 0) {
+            std::cout << WHITE << "[  STATUS  ] Terminating server process " << server_pid << "..." << RESET << std::endl;
             int status;
-            kill(_serverPid, SIGKILL);
-            waitpid(_serverPid, &status, 0);
+
+            pid_t result = waitpid(server_pid, &status, WNOHANG);
+            if (result == 0){
+                kill(server_pid, SIGTERM);
+                waitpid(server_pid, &status, 0);
+            }
             close(_pipeFd[1]);
             close(_pipeFd[0]);
         }
     }
 };
 
-pid_t ExecuteServerFixture::_serverPid = -1;
 int   ExecuteServerFixture::_pipeFd[2] = {-1, -1};
+
+// Função variádica para adicionar múltiplos cabeçalhos
+struct curl_slist* create_headers(int n_headers, ...) {
+    struct curl_slist *headers = NULL;
+    
+    va_list args;
+    va_start(args, n_headers);
+    
+    for (int i = 0; i < n_headers; ++i) {
+        const char *full_header = va_arg(args, const char*);
+        
+        // Adiciona o cabeçalho à lista
+        headers = curl_slist_append(headers, full_header);
+    }
+    
+    va_end(args);
+    return headers;
+}
 
 // // CALLBACK FUNCTION TO CAPTURE CURL RESPONSE HEADERS
 // static size_t HeaderCallback(void* contents, size_t size, size_t nmemb, void* userp) {
@@ -359,6 +394,17 @@ static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* use
     return totalSize;
 }
 
+void check_resStatus(CURL* curl, long expectedStatus) {
+    long response_code;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+    
+    if (response_code == expectedStatus) {
+        std::cout << GREEN << "[       OK ] Response status: " << response_code << RESET << std::endl;
+    } else {
+        std::cout << RED << "[  FAILED  ] Expected status: " << expectedStatus << ", but got: " << response_code << RESET << std::endl;
+    }
+}
+
 TEST_F(ExecuteServerFixture, ServerRunningTest)
 {
     EXPECT_TRUE(isServerRunning());
@@ -367,7 +413,7 @@ TEST_F(ExecuteServerFixture, ServerRunningTest)
 TEST_F(ExecuteServerFixture, ClientSimpleRequestTest)
 {
     if (isServerRunning())
-        std::cout << GREEN << "[  OK      ] Server is running." << RESET << std::endl;
+        std::cout << GREEN << "[       OK ] Server is running." << RESET << std::endl;
     else{
         std::cout << RED << "[  FAILED  ] Server is not running." << RESET << std::endl;
         return;
@@ -377,15 +423,23 @@ TEST_F(ExecuteServerFixture, ClientSimpleRequestTest)
     sleep(1); // Aguarde 1 segundo antes de conectar
     CURL* curl = curl_easy_init();
     if (curl) {
-        std::string response;
-        curl_easy_setopt(curl, CURLOPT_URL, "http://127.0.0.1:8080");
+
+        struct curl_slist* headers = NULL;
+        headers = create_headers(1, "Host: localhost");
+
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        curl_easy_setopt(curl, CURLOPT_URL, "http://127.0.0.1:8080/pages/index.html");
+        
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        
+        std::string response;
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
         CURLcode res = curl_easy_perform(curl);
 
         if (res == CURLE_OK) {
-            std::cout << GREEN << "Resposta:\n" << response << RESET << std::endl;
+            check_resStatus(curl, 200);
         } else {
             std::cerr << RED << "Erro: " << curl_easy_strerror(res) << RESET << std::endl;
         }
