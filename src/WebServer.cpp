@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/20 19:46:17 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/09/27 17:55:02 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -498,6 +498,7 @@ void WebServer::handleEvents(int event_count)
 
 void WebServer::lookForTimeouts()
 {
+	// Verificar se o cgi esta em execucao e matar o processo caso positivo
 	std::vector<Client *>::iterator it = _clients_vec.begin();
 	while (it != _clients_vec.end())
 	{
@@ -529,7 +530,7 @@ void WebServer::startServer()
 		try
 		{
 			handleEvents(event_count);
-			// lookForTimeouts();
+			lookForTimeouts();
 		}
 		catch (const std::exception &e)
 		{
@@ -712,9 +713,13 @@ void WebServer::handleClientOutput(Client *client, int i)
 		break;
 
 	case CGI_PROCESSING:
-		client->_response->startResponse();
+		// client->_response->startResponse();
+		client->_response->checkCgiProcess();
 		if (client->getProcessingState() == CGI_COMPLETED)
+		{
+			client->_response->setResponse(client->_response->checkStatusCode()); // garante que o response esta atualizado
 			client->setProcessingState(COMPLETED);
+		}
 		break;
 
 	case RECEIVING: // apenas para testar, pois se o event eh EPOLLOUT, o estado deve ser COMPLETED

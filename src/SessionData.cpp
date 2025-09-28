@@ -1,5 +1,9 @@
 #include "../includes/headers.hpp"
 
+SessionData::SessionData(): _theme(""), _sessionId("") {}
+
+SessionData::~SessionData() {}
+
 void	SessionData::setSessionId(const std::string& newSession) {
 	_sessionId = newSession;
 }

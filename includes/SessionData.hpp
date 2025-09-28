@@ -6,8 +6,8 @@ class SessionData {
 		std::string							_sessionId;
 
 	public:
-		SessionData() {};
-		~SessionData() {};
+		SessionData();
+		~SessionData();
 
 		void	setSessionId(const std::string& newSession);
 		void	setTheme(const std::string& newTheme);

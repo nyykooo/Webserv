@@ -112,6 +112,7 @@ class HttpResponse {
 		// CGI
 		bool	lookForCgi();
 		void	forkExecCgi(std::string interpreter);
+		void	checkCgiProcess();
 };
 
 #endif

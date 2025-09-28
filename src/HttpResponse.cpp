@@ -48,6 +48,43 @@ static std::string readFd(int fd)
 	return result;
 }
 
+void HttpResponse::checkCgiProcess()
+{
+	int doneProcess;
+	int childrenStatus;
+
+	doneProcess = waitpid(_cgiPid, &childrenStatus, WNOHANG); // permite verificar se o processo filho terminou sem bloquear o servidor
+	if (doneProcess == 0)
+	{
+		// filho ainda esta correndo
+		return;
+	}
+	else if (doneProcess == _cgiPid)
+	{
+		// filho terminou
+		_client->setProcessingState(CGI_COMPLETED);
+		int exitStatus = WEXITSTATUS(childrenStatus);
+		if (exitStatus == 1)
+			_resStatus = 500; // Internal Server Error
+		else if (exitStatus == 0)
+			_resStatus = 200; // OK
+
+		_response = readFd(_pipeOut); // Lê a saída do CGI
+		if (_response == "")
+			_resStatus = 500; // Internal Server Error
+
+		std::stringstream ss;
+		ss << "CGI process finished:\n\t-PID: " << _cgiPid << ";\n\t-Status: " << _resStatus;
+		printLog(ss.str(), WHITE, std::cout);
+		close(_pipeIn);
+		close(_pipeOut);
+		_pipeIn = -1;  // Reset pipeIn
+		_pipeOut = -1; // Reset pipeOut
+		_cgiPid = -1;  // Reset cgiPid
+		return;		   // Retorna para não bloquear o servidor
+	}
+}
+
 // ### CGI ###
 void HttpResponse::forkExecCgi(std::string interpreter)
 {
@@ -55,21 +92,10 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	char *args[2];
 	int pipeInput[2];
 	int pipeOutput[2];
-	int doneProcess;
-	int childrenStatus;
 	std::string _script_name = _scriptNameNico.find_last_of('?') != std::string::npos ? _scriptNameNico.substr(0, _scriptNameNico.find_last_of('?')).c_str() : _scriptNameNico.c_str();
-	std::cout << "Script name: " << _script_name << std::endl;
 	args[0] = const_cast<char *>(interpreter.c_str());
 	args[1] = const_cast<char *>(_script_name.c_str());
 	args[2] = NULL; // Terminate the args array with NULL
-
-	// char *tempEnvp[5];
-	// tempEnvp[0] = const_cast<char *>("REQUEST_METHOD=GET");
-	// tempEnvp[1] = const_cast<char *>("QUERY_STRING=");
-	// tempEnvp[2] = const_cast<char *>("PATH_INFO=/pages/cgi-bin/teste.py");
-	// tempEnvp[3] = const_cast<char *>("SERVER_SOFTWARE=WebServer/1.0");
-	// tempEnvp[4] = const_cast<char *>("SERVER_PROTOCOL=HTTP/1.1");
-	// tempEnvp[5] = NULL;
 
 	pipeInput[0] = _pipeIn;
 	pipeInput[1] = STDIN_FILENO;
@@ -78,38 +104,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	pipeOutput[1] = _pipeOut;
 
 	if (_cgiPid > 0)
-	{
-		doneProcess = waitpid(_cgiPid, &childrenStatus, WNOHANG); // permite verificar se o processo filho terminou sem bloquear o servidor
-		if (doneProcess == 0)
-		{
-			// filho ainda esta correndo
-			return;
-		}
-		else if (doneProcess == _cgiPid)
-		{
-			// filho terminou
-			_client->setProcessingState(CGI_COMPLETED);
-			int exitStatus = WEXITSTATUS(childrenStatus);
-			if (exitStatus == 1)
-				_resStatus = 500; // Internal Server Error
-			else if (exitStatus == 0)
-				_resStatus = 200; // OK
-
-			_response = readFd(_pipeOut); // Lê a saída do CGI
-			if (_response == "")
-				_resStatus = 500; // Internal Server Error
-
-			std::stringstream ss;
-			ss << "CGI process finished:\n\t-PID: " << _cgiPid << ";\n\t-Status: " << _resStatus;
-			printLog(ss.str(), WHITE, std::cout);
-			close(_pipeIn);
-			close(_pipeOut);
-			_pipeIn = -1;  // Reset pipeIn
-			_pipeOut = -1; // Reset pipeOut
-			_cgiPid = -1;  // Reset cgiPid
-			return;		   // Retorna para não bloquear o servidor
-		}
-	}
+		checkCgiProcess();
 
 	// Create pipes for input and output
 	if (pipe(pipeInput) == -1 || pipe(pipeOutput) == -1)
