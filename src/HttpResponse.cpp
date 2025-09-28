@@ -455,15 +455,15 @@ void HttpResponse::openDir(std::string path)
 			return;
 		}
 	}
-	switch (_block->getAutoIndex())
+	if (_block->getAutoIndex())
 	{
-	case false:
-		_resStatus = 403; // mudar para 403
-		return;
-	case true:
+
 		_resBody = createDirIndex(path);
 		_resStatus = 200;
-		break;
+	}
+	else {
+		_resStatus = 403; // mudar para 403
+		return;
 	}
 }
 
@@ -552,10 +552,7 @@ void HttpResponse::handleGET()
 	{
 		_fullPath = newRoot + "/" + locPath; // se não tem '/', usa a string inteira
 	}
-
-	locPath = removeSlashes(this->getFullPath());
-	if (!newRoot.empty())
-		newRoot = newRoot;
+	
 	locPath = removeSlashes(this->getFullPath());
 	_fileName = newRoot + "/" + locPath;
 	checkFile(GET);
