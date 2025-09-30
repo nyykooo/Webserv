@@ -1154,7 +1154,12 @@ std::string HttpResponse::header(const std::string &status, int requestType)
 
 void HttpResponse::checkCookies()
 {
-	if (_req->session && _req->session->getTheme() == "dark")
+	if (!_req->session)
+		return;
+	if (_req->session->getTheme().empty())
+		return;
+
+	if (_req->session->getTheme() == "dark")
 	{
 		std::string styleInjection;
 		styleInjection =

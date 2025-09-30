@@ -9,6 +9,6 @@ Legenda:
 [ ] Write Tests
 [ ] Error Responses em ReceiveData()
 [ ] Naming definition dos files upload em handlePost()
-[ ] Fix segfault: "siege -b -c 255 -t 10S 127.0.0.1:8080/cgi-bin/good.py" Server running: "./Webserver confs/cgi.config"
+[ ] Fix segfault: "siege -b -c 255 -t 10S 127.0.0.1:8080/cgi-bin/good.py" Server running: "./Webserv confs/cgi.config"
 [?] Fix segfault: "siege -b -c 255 -t 10S 127.0.0.1:8080/index.hmtl" Server running: "./Webserv confs/cgi.config"
 [ ] Fix tests in tester/ (ask nico about the installation of the tester)
