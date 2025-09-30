@@ -115,7 +115,7 @@ TEST(BadConfigFiles, InvalidConfigTests)
     EXPECT_THAT(execute_server({"confs/tester/wrong_curly_pos_open.config"}), testing::HasSubstr("line shouldn't have '{'"));
     EXPECT_THAT(execute_server({"confs/tester/wrong_curly_pos_close.config"}), testing::HasSubstr("} should be at the end of the line."));
     EXPECT_THAT(execute_server({"confs/tester/inv_keyword.config"}), testing::HasSubstr(" invalid keyword in server block."));
-    EXPECT_THAT(execute_server({"confs/tester/unclosed_server.config"}), testing::HasSubstr("server block not closed."));
+    EXPECT_THAT(execute_server({"confs/tester/unclosed_server.config"}), testing::HasSubstr("block brackets \"{}\" are misplaced."));
 }
 
 TEST(BadConfigFiles, HostTests)

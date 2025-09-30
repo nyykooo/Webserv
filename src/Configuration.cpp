@@ -113,12 +113,11 @@ void	checkCurlyBrackets(std::string line) {
 	if (line.find('{') != std::string::npos)
 		throw Configuration::WrongConfigFileException("line shouldn't have \'{\'");
 	if (line.find('}') != std::string::npos) {
-		if (line[line.size() - 1] != '}' && line.find('}') != line.rfind('}'))	
+		if (line[line.size() - 1] != '}' || line.find('}') != line.rfind('}'))	
 			throw Configuration::WrongConfigFileException("} should be at the end of the line.");
 		line.erase(line.size() - 1);
 		Configuration::decrementCurlyBracketsCount();
 	}
-		
 }
 
 void	Configuration::setUploadDirectory(const std::string& str) {
@@ -446,13 +445,13 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 		// std::cout << YELLOW << word << RESET << std::endl;
 		if (word.at(0) == '#')
 			continue ;
-		if (Configuration::getCurlyBracketsCount() == 0)
-			break ;
 		if (word == "}") {
 			Configuration::decrementCurlyBracketsCount();
 			break ; // end of a Server block
 		}
-		else if (word == "listen")
+		if (Configuration::getCurlyBracketsCount() <= 0)
+			break ;
+		if (word == "listen")
 			parseHost(line, confserv);
 		else if (word == "server_name")
 			parseServerName(line, confserv);
@@ -484,9 +483,9 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 			std::cout << GRAY<< it->first << " " << it->second << RESET << std::endl;
 		} */
 	}
-	//std::cout << Configuration::getCurlyBracketsCount() << std::endl;
-	if (confserv.getCurlyBracketsCount() > 0)
-		throw Configuration::WrongConfigFileException("server block not closed.");
+	std::cout << Configuration::getCurlyBracketsCount() << std::endl;
+	if (Configuration::getCurlyBracketsCount() != 0)
+		throw Configuration::WrongConfigFileException("block brackets \"{}\" are misplaced.");
 	if (confserv.getHost().empty())
 		confserv.setHost("0.0.0.0", "8080");
 }

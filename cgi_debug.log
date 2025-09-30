@@ -1122,3 +1122,8 @@ Traceback (most recent call last):
   File "/home/nyykooo/Desktop/42lisboa/rank5/Webserv/pages/cgi-bin/good.py", line 48, in <module>
     string = qs["key"]
 KeyError: 'key'
+Traceback (most recent call last):
+  File "/home/discallow/Desktop/42_projects/webserv/pages/cgi-bin/good.py", line 48, in <module>
+    string = qs["key"]
+             ~~^^^^^^^
+KeyError: 'key'

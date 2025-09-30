@@ -292,12 +292,12 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 	std::string			word;
 
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
- 	if (line.find('{') == std::string::npos || line.find('}') != std::string::npos || (line[line.size() - 1] != '{' 
-		&& line.find('{') != line.rfind('{'))) // the last condition checks if there's at least one and only one {
+ 	if (line.find('{') == std::string::npos || line.find('}') != std::string::npos || line[line.size() - 1] != '{' 
+		|| line.find('{') != line.rfind('{')) // the last condition checks if there's at least one and only one {
 			throw Configuration::WrongConfigFileException("invalid sintax in location line.");
 	line.erase(line.size() - 1);
 	ss >> word;
-	if (ss >> word) {
+	if (ss >> word && word != "}" && word != "{") {
 		if (word == "=") {
 			if (!(ss >> word) || word == "{") // check if there's a word after the =
 				throw Configuration::WrongConfigFileException("no literal location defined.");
