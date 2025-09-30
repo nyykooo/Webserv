@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/27 17:55:02 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/09/30 23:23:54 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,10 @@ Client *findClient(int client_fd, std::vector<Client *> &client_vec)
 	for (it = client_vec.begin(); it != client_vec.end(); ++it)
 	{
 		if ((*it)->getSocketFd() == client_fd)
-			break;
+			return (*it);
 	}
-	return (*it);
+	// return (*it);
+	return (NULL);
 }
 
 WebServer::WebServer()
@@ -478,6 +479,9 @@ void WebServer::treatExistingClient(int i)
 {
 	Client *client = findClient(_events[i].data.fd, _clients_vec);
 
+	if (!client)
+		return ;
+
 	if (_events[i].events == EPOLLIN)
 		handleClientInput(client, i);
 	else if (_events[i].events == EPOLLOUT)
@@ -530,7 +534,7 @@ void WebServer::startServer()
 		try
 		{
 			handleEvents(event_count);
-			lookForTimeouts();
+			// lookForTimeouts();
 		}
 		catch (const std::exception &e)
 		{

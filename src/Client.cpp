@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/20 17:18:58 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/09/30 18:28:21 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,7 @@ Client::~Client()
 		delete _response;
 	if (_request)
 		delete _request;
+	Socket::~Socket();
 }
 
 // ### PUBLIC METHODS ###
@@ -129,6 +130,8 @@ Client *Client::initClientSocket(int server_fd)
 
 RequestProcessingState Client::getProcessingState() const
 {
+	std::cout << "Estado do cliente (fd: " << _socket_fd << "): ";
+	std::cout << _state << std::endl;
 	return _state;
 }
 
