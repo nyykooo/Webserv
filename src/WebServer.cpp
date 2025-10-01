@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/30 23:23:54 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/01 22:35:53 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -466,7 +466,10 @@ void WebServer::deleteClient(int fd)
 			close((*it)->getSocketFd());
 			delete *it;					 // Libera a memória do cliente
 			it = _clients_vec.erase(it); // Remove o cliente do vetor
-			epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+			int x;
+			x = epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+			if (x == -1)
+				std::cerr << "ERRO AO REMOVER DA EPOLL" << std::endl;
 
 			_client_to_server_map.erase(fd); // para remover o elemento do mapeamento
 			_partial_requests.erase(fd);	 // para remover o elemento do buffer
@@ -688,6 +691,7 @@ void WebServer::handleClientInput(Client *client, int i)
 
 void WebServer::handleClientOutput(Client *client, int i)
 {
+	std::stringstream ss;
 	switch (client->getProcessingState())
 	{
 	case PROCESSING:
@@ -709,12 +713,19 @@ void WebServer::handleClientOutput(Client *client, int i)
 		break;
 
 	case COMPLETED:
-		sendResponseToClient(client);
-		client->setProcessingState(RECEIVING);
-		_events[i].events = EPOLLIN;
-		epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]);
-		setClientTime(_events[i].data.fd);
-		break;
+			sendResponseToClient(client);
+			_events[i].events = EPOLLIN;
+			if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]) == 0)
+				client->setProcessingState(RECEIVING);
+			else
+			{
+				ss << "Erro ao modificar evento do cliente " << client->getSocketFd() << " para EPOLLIN";
+				printLog(ss.str(), RED, std::cerr);
+				deleteClient(_events[i].data.fd);
+				return ;
+			}
+			client->setTime(std::time(NULL));
+			break;
 
 	case CGI_PROCESSING:
 		// client->_response->startResponse();
