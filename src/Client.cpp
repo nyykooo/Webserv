@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/30 18:28:21 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/02 18:44:35 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,8 +130,6 @@ Client *Client::initClientSocket(int server_fd)
 
 RequestProcessingState Client::getProcessingState() const
 {
-	std::cout << "Estado do cliente (fd: " << _socket_fd << "): ";
-	std::cout << _state << std::endl;
 	return _state;
 }
 

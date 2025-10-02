@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/01 22:35:53 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/02 23:13:59 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -384,6 +384,7 @@ int WebServer::receiveData(int client_fd)
 static void sendResponseToClient(Client *client)
 {
 	std::stringstream ss;
+	client->_response->setResponse(client->_response->checkStatusCode());
 	const char *buf = client->_response->getResponse().c_str();
 	size_t size = client->_response->getResponse().size();
 	size_t totalSent = 0;
@@ -463,13 +464,13 @@ void WebServer::deleteClient(int fd)
 			std::stringstream ss;
 			ss << "Cliente desconectado - client_fd: " << (*it)->getSocketFd();
 			printLog(ss.str(), RED, std::cout);
-			close((*it)->getSocketFd());
-			delete *it;					 // Libera a memória do cliente
-			it = _clients_vec.erase(it); // Remove o cliente do vetor
 			int x;
 			x = epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 			if (x == -1)
 				std::cerr << "ERRO AO REMOVER DA EPOLL" << std::endl;
+			close((*it)->getSocketFd());
+			delete *it;					 // Libera a memória do cliente
+			it = _clients_vec.erase(it); // Remove o cliente do vetor
 
 			_client_to_server_map.erase(fd); // para remover o elemento do mapeamento
 			_partial_requests.erase(fd);	 // para remover o elemento do buffer
@@ -511,7 +512,19 @@ void WebServer::lookForTimeouts()
 	{
 		if ((*it)->checkTimeout())
 		{
+			std::stringstream ss;
+			ss << "Client timeout detected - client_fd: " << (*it)->getSocketFd();
+			printLog(ss.str(), RED, std::cout);
 			int fd = (*it)->getSocketFd();
+			// mata o processo cgi caso exista e esteja em execucao
+			if ((*it)->getProcessingState() == CGI_PROCESSING)
+				(*it)->_response->terminateCgiProcess();
+			else if ((*it)->getProcessingState() == RECEIVING_LARGE)
+				(*it)->_response->setResStatus(408); // Request Timeout
+			else
+				(*it)->_response->setResStatus(503); // Request Timeout
+				// (*it)->_response->terminateLargeUpload();
+			sendResponseToClient(*it); // envia a resposta antes de deletar o cliente
 			deleteClient(fd);
 			it = _clients_vec.begin(); // Reinicia a iteração
 		}
@@ -537,10 +550,11 @@ void WebServer::startServer()
 		try
 		{
 			handleEvents(event_count);
-			// lookForTimeouts();
+			lookForTimeouts();
 		}
 		catch (const std::exception &e)
 		{
+			// std::cerr << "Internal Server Error: " <<  e.what() << '\n';
 			std::cerr << e.what() << '\n';
 		}
 	}
@@ -732,7 +746,7 @@ void WebServer::handleClientOutput(Client *client, int i)
 		client->_response->checkCgiProcess();
 		if (client->getProcessingState() == CGI_COMPLETED)
 		{
-			client->_response->setResponse(client->_response->checkStatusCode()); // garante que o response esta atualizado
+			// client->_response->setResponse(client->_response->checkStatusCode()); // garante que o response esta atualizado
 			client->setProcessingState(COMPLETED);
 		}
 		break;

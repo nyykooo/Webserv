@@ -201,7 +201,6 @@ void HttpResponse::startResponse(void)
 		return;
 	}
 	execMethod();
-	_response = checkStatusCode();
 }
 
 void HttpResponse::openReg(std::string path, int methodType)
@@ -1154,12 +1153,13 @@ std::string HttpResponse::header(const std::string &status, int requestType)
 
 void HttpResponse::checkCookies()
 {
+	std::string theme = _req->session->getTheme();
 	if (!_req->session)
 		return;
-	if (_req->session->getTheme().empty())
+	if (theme.empty())
 		return;
 
-	if (_req->session->getTheme() == "dark")
+	if (theme == "dark")
 	{
 		std::string styleInjection;
 		styleInjection =
@@ -1288,6 +1288,11 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _method(-1), _cgiRe
 }
 
 // ### SETTERS ###
+
+void HttpResponse::setResStatus(int status)
+{
+	_resStatus = status;
+}
 
 void HttpResponse::setResponse(const std::string &response)
 {
@@ -1436,4 +1441,16 @@ bool HttpResponse::createUploadDirectory(const std::string& path) const
 	}
 
 	return true;
+}
+
+void HttpResponse::terminateCgiProcess(void)
+{
+	if (_cgiPid > 0)
+		kill(_cgiPid, SIGKILL);
+	_resStatus = 504; // Gateway Timeout
+}
+
+int HttpResponse::getCgiPid(void) const
+{
+	return (_cgiPid);
 }

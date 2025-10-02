@@ -65,6 +65,7 @@ class HttpResponse {
 		void	setMimeTypes();
 		void	setStatusTexts();
 		void	setTempEnv(const std::string& str);
+		void 	setResStatus(int status);
 
 		//GETTERS
 		const std::string&		getResponse(void) const;
@@ -73,6 +74,7 @@ class HttpResponse {
 		std::string				getFullPath(void);
 		const std::string		getMimeType(const std::string& fileExtension);
 		const Configuration&	getConfig(void) const;
+		int				getCgiPid(void) const;
 		
 		// EXEC METHOD
 		void	startResponse();
@@ -113,6 +115,7 @@ class HttpResponse {
 		bool	lookForCgi();
 		void	forkExecCgi(std::string interpreter);
 		void	checkCgiProcess();
+		void 	terminateCgiProcess(void);
 };
 
 #endif

@@ -83,3 +83,28 @@ sys.stdout.write("\r\n")
 
 # Corpo
 sys.stdout.write(html)
+
+
+"""Content-Type: text/html; charset=utf-8\r\n
+Content-Length: {length}\r\n
+\r\n
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Python CGI Test</title>
+	</head>
+	<body>
+		<textarea id="query_string" name="query_string">
+		</textarea>
+		<button onClick="updateCgiPage()">Update</button>
+		<h1>QUERY STRING! {string}</h1>
+		<p>REQUEST_METHOD: {method}</p>
+		<script>
+			function updateCgiPage() {{
+				let query_string = document.getElementById("query_string").value;
+				window.location.href = "/cgi-bin/dynamic.py?string=" + query_string;
+			}}
+		</script>
+	</body>
+</html>"""
