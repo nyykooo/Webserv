@@ -1127,3 +1127,33 @@ Traceback (most recent call last):
     string = qs["key"]
              ~~^^^^^^^
 KeyError: 'key'
+Traceback (most recent call last):
+  File "/home/discallow/Desktop/42_projects/webserv/pages/cgi-bin/good.py", line 48, in <module>
+    string = qs["key"]
+             ~~^^^^^^^
+KeyError: 'key'
+  File "/home/discallow/Desktop/42_projects/webserv/pages/cgi-bin/teste.py", line 31
+    //sys.stdout.write("\r\n")
+    ^^
+SyntaxError: invalid syntax
+  File "/home/discallow/Desktop/42_projects/webserv/pages/cgi-bin/teste.py", line 31
+    //sys.stdout.write("\r\n")
+    ^^
+SyntaxError: invalid syntax
+  File "/home/discallow/Desktop/42_projects/webserv/pages/cgi-bin/teste.py", line 31
+    //sys.stdout.write("\r\n")
+    ^^
+SyntaxError: invalid syntax
+  File "/home/discallow/Desktop/42_projects/webserv/pages/cgi-bin/teste.py", line 31
+    //sys.stdout.write("\r\n")
+    ^^
+SyntaxError: invalid syntax
+  File "/home/discallow/Desktop/42_projects/webserv/pages/cgi-bin/teste.py", line 31
+    //sys.stdout.write("\r\n")
+    ^^
+SyntaxError: invalid syntax
+Traceback (most recent call last):
+  File "/home/discallow/Desktop/42_projects/webserv/pages/cgi-bin/good.py", line 48, in <module>
+    string = qs["key"]
+             ~~^^^^^^^
+KeyError: 'key'

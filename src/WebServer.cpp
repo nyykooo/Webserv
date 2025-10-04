@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/27 17:55:02 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/04 16:20:32 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -399,7 +399,6 @@ static void sendResponseToClient(Client *client)
 		}
 		totalSent += sent;
 	}
-
 	ss << "Dados enviados ao cliente - client_fd: " << client->getSocketFd();
 	printLog(ss.str(), WHITE, std::cout);
 }

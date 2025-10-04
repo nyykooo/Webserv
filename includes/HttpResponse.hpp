@@ -57,6 +57,15 @@ class HttpResponse {
 		bool								_cgiRequest;
 		char**								_envp;
 		std::vector<std::string>			_tempEnv;
+
+		std::vector<std::string>			_cgiParsedHeaders;
+		std::string							_cgiHeaders;
+		std::string							_cgiBody;
+		std::vector<std::string>			_cgiCookies;
+		std::string							_cgiContentType;
+		std::string							_cgiLocation;
+		std::string							_cgiContentLength;
+		int									_cgiHeadersFound;
 		
 		public:
 		
@@ -65,6 +74,10 @@ class HttpResponse {
 		void	setMimeTypes();
 		void	setStatusTexts();
 		void	setTempEnv(const std::string& str);
+		void	setHttpStatus(int status);
+		void	setCgiCookies(const std::string& cookie);
+		void	setCgiContentType(std::string& type);
+		void	setCgiLocation(const std::string& location);
 
 		//GETTERS
 		const std::string&		getResponse(void) const;
@@ -93,13 +106,17 @@ class HttpResponse {
 		LocationBlock*	checkLocationBlock();
 		void	checkFile(int methodType);
 		const std::string	checkErrorResponse(const std::string& page);
-		void	checkCookies();
+		void	checkCookies(std::string& body);
 		void	setEnv();
 		void	parsePath();
 		void	parseScriptName(const std::string& str);
 		const std::string	parseContentLength(const std::map<std::string, std::string>& headers);
 		bool	checkValidCGI(const std::string& temp);
 		void	buildEnv();
+		void	parseCgiScript();
+		void	parseCgiHeaders();
+		void	parseCgiStatus(const std::string& segment);
+		void	parseContentLength(const std::string& segment);
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

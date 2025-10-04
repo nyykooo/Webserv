@@ -18,6 +18,41 @@ HttpResponse HttpResponse::operator=(const HttpResponse &other)
 
 HttpResponse::~HttpResponse() {}
 
+void	HttpResponse::setHttpStatus(int status) {
+	std::map<int, std::string>::iterator itt = _statusTexts.find(status);
+	if (itt != _statusTexts.end())
+		_httpStatus = itt->second;
+	else
+	{
+		std::ostringstream oss;
+		oss << _resStatus;
+		_httpStatus = oss.str();
+	}
+}
+
+void	HttpResponse::setCgiCookies(const std::string& cookie) {
+	_cgiCookies.push_back(cookie);
+}
+
+void	HttpResponse::setCgiContentType(std::string& type) {
+	//std::cout << RED << "type: " << type << RESET << std::endl;
+	if (_cgiContentType == "") {
+		std::stringstream	ss(type);
+		std::string			str;
+		ss >> str;
+		if (ss >> str)
+			_cgiContentType = str;
+		_cgiParsedHeaders.push_back(type + CRLF);
+	}
+}
+
+void	HttpResponse::setCgiLocation(const std::string& location) {
+	if (_cgiLocation == "") {
+		_cgiLocation = location;
+		_cgiParsedHeaders.push_back(location + CRLF);
+	}
+}
+
 static std::string readFd(int fd)
 {
 	const size_t bufSize = 4096; // usa-se 4KB pois eh um meio termo entre chamadas pequenas e muito longas
@@ -68,7 +103,6 @@ void HttpResponse::checkCgiProcess()
 			_resStatus = 500; // Internal Server Error
 		else if (exitStatus == 0)
 			_resStatus = 200; // OK
-
 		_response = readFd(_pipeOut); // Lê a saída do CGI
 		if (_response == "")
 			_resStatus = 500; // Internal Server Error
@@ -807,15 +841,21 @@ static const std::string &http_error_400_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Bad Request</h1>"
+	"<h1>400 Bad Request</h1>"
 	"</body>"
 	"</html>";
 
 static const std::string &http_error_403_page =
 	"<!DOCTYPE html>"
-	"<html>"
+	"<html lang=\"en\">"
 	"<head>"
-	"<title>403 Forbidden</title>"
+	"<meta charset=\"UTF-8\">"
+	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+	"<title>403</title>"
+	"<style>"
+	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
+	"h1 { color: #333; }"
+	"</style>"
 	"</head>"
 	"<body>"
 	"<h1>403 Forbidden</h1>"
@@ -835,7 +875,7 @@ static const std::string &http_error_404_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Page not found</h1>"
+	"<h1>404 Page not found</h1>"
 	"</body>"
 	"</html>";
 
@@ -852,7 +892,7 @@ static const std::string &http_error_405_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Method Not Allowed</h1>"
+	"<h1>405 Method Not Allowed</h1>"
 	"</body>"
 	"</html>";
 
@@ -869,7 +909,7 @@ static const std::string &http_error_408_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Request Timeout</h1>"
+	"<h1>408 Request Timeout</h1>"
 	"</body>"
 	"</html>";
 
@@ -886,7 +926,7 @@ static const std::string &http_error_409_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Conflict</h1>"
+	"<h1>409 Conflict</h1>"
 	"</body>"
 	"</html>";
 
@@ -903,7 +943,7 @@ static const std::string &http_error_411_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Length Required</h1>"
+	"<h1>411 Length Required</h1>"
 	"</body>"
 	"</html>";
 
@@ -920,7 +960,7 @@ static const std::string &http_error_413_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Payload Too Large</h1>"
+	"<h1>413 Payload Too Large</h1>"
 	"</body>"
 	"</html>";
 
@@ -937,7 +977,7 @@ static const std::string &http_error_414_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>URI Too Long</h1>"
+	"<h1>414 URI Too Long</h1>"
 	"</body>"
 	"</html>";
 
@@ -954,7 +994,7 @@ static const std::string &http_error_500_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Internal Server Error</h1>"
+	"<h1>500 Internal Server Error</h1>"
 	"</body>"
 	"</html>";
 
@@ -971,7 +1011,7 @@ static const std::string &http_error_501_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Not implemented</h1>"
+	"<h1>501 Not implemented</h1>"
 	"</body>"
 	"</html>";
 
@@ -988,7 +1028,7 @@ static const std::string &http_error_502_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Bad Gateway</h1>"
+	"<h1>502 Bad Gateway</h1>"
 	"</body>"
 	"</html>";
 
@@ -1005,7 +1045,7 @@ static const std::string &http_error_503_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Service Unavailable</h1>"
+	"<h1>503 Service Unavailable</h1>"
 	"</body>"
 	"</html>";
 
@@ -1022,7 +1062,7 @@ static const std::string &http_error_504_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Gateway Timeout</h1>"
+	"<h1>504 Gateway Timeout</h1>"
 	"</body>"
 	"</html>";
 
@@ -1039,7 +1079,7 @@ static const std::string &http_error_505_page =
 	"</style>"
 	"</head>"
 	"<body>"
-	"<h1>Version Not Supported</h1>"
+	"<h1>505 Version Not Supported</h1>"
 	"</body>"
 	"</html>";
 
@@ -1062,6 +1102,7 @@ const std::string HttpResponse::httpFileContent(int errorPage)
 	return (result);
 }
 
+
 int HttpResponse::openFile()
 {
 
@@ -1078,15 +1119,7 @@ int HttpResponse::openFile()
 
 		it++;
 	}
-	std::map<int, std::string>::iterator itt = _statusTexts.find(_resStatus);
-	if (itt != _statusTexts.end())
-		_httpStatus = itt->second;
-	else
-	{
-		std::ostringstream oss;
-		oss << _resStatus;
-		_httpStatus = oss.str();
-	}
+	setHttpStatus(_resStatus);
 	if (it == _conf->getErrorPage().end())
 	{
 		_fileName = ".html";
@@ -1099,21 +1132,127 @@ int HttpResponse::openFile()
 	return (configFile);
 }
 
-/* static std::string cgiHeader(const std::string& status)
-{
-	std::ostringstream header;
+void	HttpResponse::parseCgiStatus(const std::string& segment) {
+	std::stringstream	ss(segment);
+	std::string			str;
+	int					num;
+	char				*endptr;
+	
+	ss >> str;
+	if (!(ss >> str)) {
+		_resStatus = 200;
+		return ;
+	}
+	num = std::strtol(str.c_str(), &endptr, 10);
+	if (str.size() != 3 || *endptr || num < 0) {
+		_resStatus = 200;
+		return ;
+	}
+	_resStatus = num;
+}
 
-	header << "HTTP/1.1 " << status << CRLF;
-	header << "Server: WebServer/1.0" << CRLF;
-	return (header.str());
-} */
+void	HttpResponse::parseContentLength(const std::string& segment) {
+	std::stringstream	ss(segment);
+	std::string			str;
+	long				num;
+	char				*endptr;
+
+	ss >> str;
+	if (!(ss >> str))
+		return ;
+	num = std::strtol(str.c_str(), &endptr, 10);
+	errno = 0;
+	if (errno == ERANGE || *endptr || num < 0)
+		return ;
+	std::stringstream ss2;
+	ss2 << num;
+	_cgiContentLength = "Content-Length: " + ss2.str() + CRLF;
+}
+
+void HttpResponse::parseCgiHeaders() {
+	std::string 		segment;
+	std::string			header;
+	std::stringstream	ss(_cgiHeaders);
+
+	while (std::getline(ss, segment)) {
+		std::stringstream	ss2(segment);
+		ss2 >> header;
+		//std::cout << YELLOW << "header: " << header << std::endl << "segment: " << segment << RESET << std::endl;
+		if (header == "Set-Cookie:")
+			setCgiCookies(segment);
+		else if (header == "Content-Type:")
+			setCgiContentType(segment);
+		else if (header == "Status:")
+			parseCgiStatus(segment);
+		else if (header == "Content-Length:")
+			parseContentLength(segment);
+		else if (header == "Location:")
+			setCgiLocation(segment);
+		_cgiHeadersFound++;
+	}
+	if (_cgiBody != "" && _cgiLocation == "" && _cgiContentType == "") {
+		_resStatus = 500;
+		return ;
+	}
+	else if (_cgiLocation != "" && _cgiHeadersFound == 1) {
+		_resStatus = 302;
+		return ;
+	}
+	if (_cgiContentLength == "") {
+		std::stringstream ss2;
+		ss2 << _cgiBody.size();
+		_cgiContentLength = "Content-Length: " + ss2.str() + CRLF;
+	}
+	_cgiParsedHeaders.push_back(_cgiContentLength);
+	if (!_cgiCookies.empty())
+		for (std::vector<std::string>::iterator it = _cgiCookies.begin(); it != _cgiCookies.end(); it++)
+			_cgiParsedHeaders.push_back(*it + CRLF);
+}
+
+void HttpResponse::parseCgiScript() {
+	size_t pos;
+
+	pos  = _response.find("\r\n\r\n");
+	if (pos != std::string::npos) {
+		_cgiHeaders = _response.substr(0, pos);
+		_cgiBody = _response.substr(pos + 4, _response.size());
+	}
+	else
+		_cgiHeaders = _response;
+	parseCgiHeaders();
+}
+
 std::string HttpResponse::cgiHeader(const std::string &status)
 {
+	parseCgiScript();
+	setHttpStatus(_resStatus);
+	std::cout << status << std::endl;
 	std::ostringstream header;
-	header << "HTTP/1.1 " << status << CRLF;
+	header << "HTTP/1.1 " << _httpStatus << CRLF;
 	header << "Server: WebServer/1.0" << CRLF;
-	return (header.str());
+	header << "Date: " << get_http_date() << CRLF;
+	for (size_t i = 0; i < _cgiParsedHeaders.size(); i++)
+		header << _cgiParsedHeaders[i];
+	if (_req->session) {
+		header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/";
+		if (!_req->session->getTheme().empty())
+			header << "; Theme=" << _req->session->getTheme();
+		header << CRLF;
+	}
+	if (_contentType == "text/html")
+		checkCookies(_cgiBody);
+	if (_resStatus == 500) {
+		header << "Content-Length: " << http_error_500_page.size() << CRLF;
+		return (header.str() + CRLF + http_error_500_page);
+	}
+	else if (_resStatus == 204 || _resStatus == 302 || _resStatus == 304) {
+		header << "Content-Length: 0" << CRLF;
+		return (header.str() + CRLF);
+	}
+	return (header.str() + CRLF + _cgiBody);
 }
+
+
 
 std::string HttpResponse::header(const std::string &status, int requestType)
 {
@@ -1138,21 +1277,28 @@ std::string HttpResponse::header(const std::string &status, int requestType)
 		_resBody += "</html>";
 	}
 	if (fileType == "text/html")
-		checkCookies();
+		checkCookies(_resBody);
 	header << "HTTP/1.1 " << status << CRLF;
 	header << "Server: WebServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
 	header << "Content-Type: " << fileType << CRLF;
-	header << "Content-Length: " << _resBody.size() << CRLF;
+	if (_resStatus == 204 || _resStatus == 304)
+		header << "Content-Length: 0" << CRLF;
+	else
+		header << "Content-Length: " << _resBody.size() << CRLF;
 	if (requestType == REDIRECT)
 		header << "Location: " << _block->getNewLocation() << CRLF;
-	if (_req->session)
-		header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/" << CRLF;
+	if (_req->session) {
+		header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/";
+		if (!_req->session->getTheme().empty())
+			header << "; Theme=" << _req->session->getTheme();
+		header << CRLF;
+	}	
 	header << CRLF;
 	return (header.str());
 }
 
-void HttpResponse::checkCookies()
+void HttpResponse::checkCookies(std::string& body)
 {
 	if (_req->session && _req->session->getTheme() == "dark")
 	{
@@ -1163,10 +1309,10 @@ void HttpResponse::checkCookies()
 			"h1, p { color: lightgray; }"
 			"</style>";
 		// Insert the style before </head>
-		size_t headPos = _resBody.find("</head>");
+		size_t headPos = body.find("</head>");
 		if (headPos != std::string::npos)
 		{
-			_resBody.insert(headPos, styleInjection);
+			body.insert(headPos, styleInjection);
 		}
 	}
 }
@@ -1199,7 +1345,7 @@ const std::string HttpResponse::checkStatusCode()
 	{
 	case 200:
 		if (_client->getProcessingState() == CGI_COMPLETED)
-			return (cgiHeader("200 OK") + _response); // nao usa header pois a _response eh toda montada pelo cgi
+			return (cgiHeader("200 OK")); // nao usa header pois a _response eh toda montada pelo cgi
 		return (header("200 OK", OK) + _resBody);
 	case 206:
 		if (_method == DELETE || _method == POST)
@@ -1257,7 +1403,7 @@ const std::string HttpResponse::checkStatusCode()
 	return _resBody;
 }
 
-HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _method(-1), _cgiRequest(false)
+HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0)
 {
 	_client = client;
 	_conf = client->_request->_config;

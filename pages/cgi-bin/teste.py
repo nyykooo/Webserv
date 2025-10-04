@@ -26,6 +26,9 @@ html = f"""<!DOCTYPE html>
 length = len(html.encode("utf-8"))
 
 # Cabeçalhos CGI (sem status line!)
+sys.stdout.write("Status: 400\r\n")
+sys.stdout.write("Set-Cookie: test2\r\n")
+sys.stdout.write("Set-Cookie: test3\r\n")
 sys.stdout.write("Content-Type: text/html\r\n")
 sys.stdout.write(f"Content-Length: {length}\r\n")
 sys.stdout.write("\r\n")
