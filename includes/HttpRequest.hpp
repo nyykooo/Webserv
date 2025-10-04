@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/09/20 17:17:42 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/10/04 19:52:37 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ class HttpRequest
 		std::string							version;
 		std::map<std::string, std::string> 	headers;
 		std::string							body;
-		std::vector<SessionData>*			_sessions;
+		std::vector<SessionData *>*			_sessions;
 		std::map<std::string, std::string>	_cookies;
 		std::string 						_uploadPath;
 		size_t 								_uploadSize;
@@ -55,7 +55,7 @@ class HttpRequest
 	public:
 		// Constructor
 		HttpRequest();
-		HttpRequest(const std::string& request_text, Configuration* config, std::vector<SessionData>* sessions);
+		HttpRequest(const std::string& request_text, Configuration* config, std::vector<SessionData *>* sessions);
 		HttpRequest(const HttpRequest& other);
 		HttpRequest& operator=(const HttpRequest& other);
 		~HttpRequest();

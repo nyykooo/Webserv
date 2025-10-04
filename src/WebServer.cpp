@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/02 23:13:59 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/04 20:01:58 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,7 @@ WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(co
 			throw WebServerErrorException(ss.str());
 		}
 	}
+	_sessions = new std::vector<SessionData *>;
 }
 
 WebServer::WebServer(const WebServer &other) // problemático pois compartilha ponteiros
@@ -105,6 +106,15 @@ WebServer::~WebServer()
 		delete[] _events;
 	if (_epoll_fd != -1)
 		close(_epoll_fd);
+	if (_sessions)
+		delete _sessions;
+	if (_sessions)
+	{
+		for (size_t i = 0; i < _sessions->size(); ++i)
+			delete (*_sessions)[i];
+		_sessions->clear();
+		delete _sessions;
+	}
 }
 
 int WebServer::initEpoll(void)
@@ -361,7 +371,7 @@ int WebServer::receiveData(int client_fd)
 	HttpRequest *request = NULL;
 	try
 	{
-		request = new HttpRequest(_partial_requests[client_fd], config, &_sessions);
+		request = new HttpRequest(_partial_requests[client_fd], config, _sessions);
 	}
 	catch (const std::exception &e)
 	{
@@ -1158,7 +1168,7 @@ int WebServer::finishLargePostUpload(Client *client)
 			}
 		}
 
-		request = new HttpRequest(originalHeaders, config, &_sessions);
+		request = new HttpRequest(originalHeaders, config, _sessions);
 
 		// Adicionar o caminho do arquivo de upload
 		request->setUploadPath(client->getUploadPath());

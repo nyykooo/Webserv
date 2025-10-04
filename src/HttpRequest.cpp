@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/09/20 17:47:59 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/10/04 20:02:25 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ HttpRequest::HttpRequest()
 	  session(NULL)
 {}
 
-HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData> *sessions) : _parseStatus(200), _sessions(sessions), _uploadSize(0), _config(config)
+HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _sessions(sessions), _uploadSize(0), _config(config)
 {
 	parse(request_text);
 }
@@ -294,30 +294,30 @@ void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
 		// Look for existing session_id
 		bool found = false;
 		for (size_t i = 0; i < _sessions->size(); ++i) {
-			if ((*_sessions)[i].getSessionId() == sidIt->second) {
+			if ((*_sessions)[i]->getSessionId() == sidIt->second) {
 				found = true;
-				session = &((*_sessions)[i]);
+				session = ((*_sessions)[i]);
 				if (themeIt != _cookies.end())
-					(*_sessions)[i].setTheme(themeIt->second);
+					(*_sessions)[i]->setTheme(themeIt->second);
 				break;
 			}
 		}
 		if (!found) {
-			SessionData newSession;
-			newSession.setSessionId(generateRandomSessionId(_sessions->size()));
+			SessionData *newSession = new SessionData();
+			newSession->setSessionId(generateRandomSessionId(_sessions->size()));
 			if (themeIt != _cookies.end())
-				newSession.setTheme(themeIt->second);
+				newSession->setTheme(themeIt->second);
 			_sessions->push_back(newSession);
-			session = &(_sessions->back());
+			session = (_sessions->back());
 		}
 	} else if (themeIt != _cookies.end()) {
 		// No session_id, but theme present → create new session with generated ID
-		SessionData newSession;
-		newSession.setSessionId(generateRandomSessionId(_sessions->size()));
-		_cookies["session_id"] = newSession.getSessionId();
-		newSession.setTheme(themeIt->second);
+			SessionData *newSession = new SessionData();
+		newSession->setSessionId(generateRandomSessionId(_sessions->size()));
+		_cookies["session_id"] = newSession->getSessionId();
+		newSession->setTheme(themeIt->second);
 		_sessions->push_back(newSession);
-		session = &(_sessions->back());
+		session = (_sessions->back());
 	}	
 }
 
@@ -329,11 +329,11 @@ void HttpRequest::parseCookies() {
 		it++;
 	}
 	if (it == getHeaders().end()) {
-		SessionData newSession;
-		newSession.setSessionId(generateRandomSessionId(_sessions->size()));
-		_cookies["session_id"] = newSession.getSessionId();
+			SessionData *newSession = new SessionData();
+		newSession->setSessionId(generateRandomSessionId(_sessions->size()));
+		_cookies["session_id"] = newSession->getSessionId();
 		_sessions->push_back(newSession);
-		session = &(_sessions->back());
+		session = (_sessions->back());
 		return ;
 	}
 	checkCreatedSessions(it->second);

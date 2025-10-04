@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/20 19:36:07 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/10/04 19:52:43 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ class WebServer
 	std::vector<Configuration>							_configurations; // armazena as configurações do servidor
 	struct epoll_event									*_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
 	char 												_buffer[BUFFER_SIZE]; // buffer para leitura de dados
-	std::vector<SessionData>							_sessions;
+	std::vector<SessionData *>							*_sessions;
 	
 	bool 								isRequestComplete(const std::string &data);
 	int 								extractContentLength(const std::string& headers);
