@@ -34,7 +34,7 @@ clean:
 	rm -rfd $(OBJ_SRC_DIR)
 	
 fclean: clean
-	rm -f $(NAME) $(TESTERNAME) server_output.log
+	rm -f $(NAME) $(TESTERNAME) server_output.log cgi_output.log
 
 re: fclean all
 

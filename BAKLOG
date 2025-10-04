@@ -12,3 +12,4 @@ Legenda:
 [ ] Fix segfault: "siege -b -c 255 -t 10S 127.0.0.1:8080/cgi-bin/good.py" Server running: "./Webserv confs/cgi.config"
 [?] Fix segfault: "siege -b -c 255 -t 10S 127.0.0.1:8080/index.hmtl" Server running: "./Webserv confs/cgi.config"
 [ ] Fix tests in tester/ (ask nico about the installation of the tester)
+[ ] Implement sessionData timeout management -> lookfortimeouts already exist for clients, update it! and every new request for that sessionId should reset it's timeout!

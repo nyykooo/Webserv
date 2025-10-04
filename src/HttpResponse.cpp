@@ -89,7 +89,7 @@ void HttpResponse::checkCgiProcess()
 void HttpResponse::forkExecCgi(std::string interpreter)
 {
 	_fileName = removeSlashes(_fileName);
-	char *args[2];
+	char *args[3];
 	int pipeInput[2];
 	int pipeOutput[2];
 	std::string _script_name = _scriptNameNico.find_last_of('?') != std::string::npos ? _scriptNameNico.substr(0, _scriptNameNico.find_last_of('?')).c_str() : _scriptNameNico.c_str();
