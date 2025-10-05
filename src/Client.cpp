@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/05 12:13:25 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/05 13:05:10 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,7 +94,8 @@ Client *Client::initClientSocket(int server_fd)
 	}
 
 	// Configura o socket do cliente
-	setEvent(EPOLLIN, _socket_fd);
+	int events = EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR; // Monitorar leitura, fechamento e erros
+	setEvent(events, _socket_fd);
 
 	// Configura o endereço do cliente
 	addrinfo *_res = new addrinfo();						// Aloca memória para addrinfo

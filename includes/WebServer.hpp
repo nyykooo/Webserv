@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/04 19:52:43 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/05 13:22:57 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,7 +84,7 @@ class WebServer
 		void sendData(int client_fd);
 		int receiveData(int client_fd);
 		bool tryConnection(int i);
-		void deleteClient(int fd);
+		void deleteClient(int fd, int event);
 
 		// ### AFTER REQUEST PARSING ###
 		int									getServerFdForClient(int client_fd);
