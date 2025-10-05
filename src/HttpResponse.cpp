@@ -164,6 +164,16 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		std::stringstream ss;
 		// processo filho
 		dup2(pipeInput[0], STDIN_FILENO);	// Redirect stdin to pipe input
+		if (_req->getBody().size() > 0) // Se houver corpo na requisicao, escreve no stdin do CGI
+		{
+			ssize_t bytesWritten = write(pipeInput[1], _req->getBody().c_str(), _req->getBody().size());
+			if (bytesWritten == -1 || static_cast<size_t>(bytesWritten) != _req->getBody().size())
+			{
+				ss << "CGI Write to stdin error: " << strerror(errno) << std::endl;
+				printLog(ss.str(), RED, std::cerr);
+				exit(1); // Internal Server Error
+			}
+		}
 		dup2(pipeOutput[1], STDOUT_FILENO); // Redirect stdout to pipe output
 
 		// Abrir um arquivo para redirecionar o stderr
@@ -1299,6 +1309,8 @@ std::string HttpResponse::header(int requestType)
 		}	
 	}
 	header << CRLF;
+	std::cout << "header: " << header.str() << std::endl;
+	std::cout << "body: " << _resBody << std::endl;
 	return (header.str());
 }
 
@@ -1362,7 +1374,7 @@ const std::string HttpResponse::checkStatusCode()
 			return (header(OK));
 		return (header(OK) + _resBody);
 	case 201:				// [NCC] pelo que entendi o 201 so sera gerado pelo POST, por isso podemos garantir que o CGI atuara sempre
-		return (_response); // nao usa header pois a _response eh toda montada pelo cgi
+		return (header(OK) + _resBody); // nao usa header pois a _response eh toda montada pelo cgi
 	case 202:
 		return ("HTTP/1.1 202 Accepted");
 	case 204:
@@ -1498,6 +1510,7 @@ void HttpResponse::handlePost()
 	{
 		_resStatus = 500; // Internal Server Error
 		_resBody = "Upload directory not accessible or not writable";
+		std::cout << RED << "Failed to create or access upload directory: " << uploadDir << RESET << std::endl;
 		return;
 	}
 
@@ -1512,10 +1525,12 @@ void HttpResponse::handlePost()
 		{
 			_resStatus = 500;
 			_resBody = "Failed to move uploaded file";
+			std::cout << RED << "Failed to move uploaded file from " << tempPath << " to " << finalPath << RESET << std::endl;
 			return;
 		}
 		_resStatus = 201; // Created
 		_resBody = "File uploaded successfully: " + tempFilename;
+		std::cout << GREEN << "File uploaded successfully to " << finalPath << RESET << std::endl;
 		return;
 	}
 	// O mesmo aqui para pequenos files, Arrumar o nome considerando content/type.
@@ -1541,6 +1556,7 @@ void HttpResponse::handlePost()
 	// Sucesso - 201 Created
 	_resStatus = 201;
 	_resBody = "File uploaded successfully: " + filename;
+	std::cout << GREEN << "File uploaded successfully to " << fullPath << RESET << std::endl;
 }
 
 bool HttpResponse::saveBodyToFile(const std::string &path, const std::string &content) const
