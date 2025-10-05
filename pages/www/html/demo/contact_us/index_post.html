@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="style.css">
+    <title></title>
+</head>
+<body>
+    <div class="home_bnt">
+        <a href="/index.html">home</a>
+    </div>
+    <div class="container">
+        <div class="subtitle">
+            <h1>Contact us</h1>
+        </div>
+        <div class="contact_form_wrapper">
+            <form id="contact-form" action="/cgi-bin/contact_handler.py" method="POST" enctype="multipart/form-data">
+                <input placeholder="Name" type="text" id="name" name="name" required>
+                <input placeholder="Email" type="email" id="email" name="email" required>
+                <textarea placeholder="Message" id="message" name="message" rows="5" required></textarea>
+                <button type="submit">Send</button>
+            </form>
+            <div class="message"></div>
+        </div>
+    </div>
+</body>
+</html>

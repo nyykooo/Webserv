@@ -1,0 +1,94 @@
+body {
+    font-family: times new roman;
+    margin: 20px;
+    background: #ffdddd3f;
+}
+
+.home_bnt {
+    text-transform: uppercase;
+    font-size: 20px;
+    padding: 10px;
+    max-width: fit-content;
+}
+
+.container {
+    display: flex; /* Make the container a flex container */
+    flex-flow: column wrap; /*direction "row" and wrap the items.*/
+    align-items: center; /* Center wrapper-form horizontally */
+}
+
+#file_upload_form {
+    display: flex;
+    flex-flow: column;
+    margin-top: 60px;
+    max-width: 400px;
+    align-items: center;
+    width: 90%;
+    border: 2px dotted #551051af;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.subtitle {
+    font-family: times new roman;
+    width: 400px;
+    text-align: center;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    /* text-shadow: 1px 1px 1px black; */
+    font-size: 30px;
+}
+
+#file {
+    display: none;
+}
+
+#uploadBtm {
+    width: 90%;
+    max-width: 300px;
+    margin-bottom: 24px;
+    /* object-fit: none; */
+    cursor: pointer;
+    transition: 0.4s;
+}
+
+#uploadBtm:hover {
+    transform: scale(1.2);
+    opacity: 1.2;
+}
+
+#fileName, #submitBtn, #message {
+    border: none;
+    font-size: 16px;
+    font-style: italic;
+    color: #9027f3;
+    padding: 12px;
+    border-radius: 15px;
+    background-color: #e7e7e7e1;
+    margin-top: -20px;
+}
+
+#message {
+    z-index: 2;
+    position: fixed;
+    display: none;
+    text-transform: uppercase;
+    transition: display 0.4s easy;
+    margin-top: 110px;
+    color: maroon;
+}
+
+#submitBtn {
+    font-size: 20px;
+    padding: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: -26px;
+}
+
+#submitBtn:hover {
+    cursor: pointer;
+    color: #510d91;
+    background-color: #c0c0c0e0;
+    transition: 0.4s;
+}

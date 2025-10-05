@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="style.css">
+    <title>cookie management</title>
+</head>
+<body>
+    <div class="home_bnt">
+        <a href="/index.html">home</a>
+    </div>
+    <div class="container">
+        <div id="message"></div>
+        <div class="subtitle">
+            <h2>cookie management</h2>
+        </div>
+        <!-- <label for="cookie-name">Cookie Name:</label> -->
+        <input placeholder="Cookie Name" type="text" id="cookie-name" required>
+        <br><br>
+        <!-- <label for="cookie-value">Cookie Value:</label> -->
+        <input placeholder="Cookie Value" type="text" id="cookie-value" required>
+        <br><br>
+        <button class="submitBtn" onclick="setCookie()">set cookie</button>
+        <button class="submitBtn" onclick="getCookies()">view cookies</button>
+        <button class="submitBtn" onclick="deleteCookie()">delete cookie</button>
+        <h2 class="subtitle">stored cookies</h2>
+        <pre id="cookie-display">Click "VIEW COOKIES" to see stored values</pre>
+
+    </div>
+
+    <script type="text/javascript" src="index.js"></script>
+</body>
+</html>

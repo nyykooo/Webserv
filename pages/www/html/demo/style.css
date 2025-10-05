@@ -1,0 +1,116 @@
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: times new roman;
+    margin: 0px;
+    min-height: 100vh;
+}
+
+/* Fixed header */
+.header_container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 20px 0;
+    width: 100%;
+    z-index: 1000;
+    align-items: center;
+    background-color: #fdf1f1;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.title, h2, h3 {
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    font-size: 30px;
+}
+
+.logo {
+    height: 100px;
+    width: auto;
+}
+
+/* main content */
+.main_container {
+    width: 100%;
+    /* display: flex; */
+    align-items: center;
+    /* padding: 160px 20px 20px 20px; */
+    /* margin: 0 auto; */
+    margin-top: 190px;
+    flex-grow: 1; /* Pushes footer down */
+}
+
+.subtitle {
+    text-align: center;
+}
+
+.features_container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 3fr)); /* Responsive grid */
+    gap: 30px;
+    max-width: 1080px;
+    text-align: center;
+    margin: 0 auto;
+    min-height: fit-content;
+    padding: 40px;
+    justify-content: center;
+    text-align: center;
+}
+
+.feature_card {
+    background: #f9f9f9;
+    /* padding: 40px 20px; */
+    max-width: 350px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+    padding-bottom: 20px;
+}
+
+.feature_card:hover {
+    transform: scale(1.1);
+}
+
+.subtitle_card {
+    height: 40px;
+    width: auto;
+    padding: 14px;
+    /* margin: 10px; */
+    font-size: 20px;
+}
+
+.description_card {
+    min-height: 50px;
+}
+
+img {
+    height: 200px;
+}
+
+a {
+    margin-right: -60%;
+    height: 50px;
+}
+
+a:hover {
+    color: #8800ff;
+}
+
+.projects_container {
+    margin-top: 20px;
+}
+
+/* footer */
+.footer_container {
+    /* color: white; */
+    text-align: left;
+    padding: 40px;
+    margin: 40px;
+    margin-top: auto; /* Pushes footer to the bottom */
+}

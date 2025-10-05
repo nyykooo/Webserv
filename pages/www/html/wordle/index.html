@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="srcs/styles.css">
+    <title>Wordle</title>
+</head>
+<body>
+    <div class="game-rules-wrapper" id="rules-wrapper">
+        <div class="rules-container">
+            <div class="cross-container" id="cross-container">
+                <div class="line1"></div>
+                <div class="line2"></div>
+            </div>
+            <h2>How To Play</h2>
+            <h3>Guess the Wordle in 6 tries</h3>
+            <div>
+                <ul>
+                    <li>Each guess must be a valid 5-letter word</li>
+                    <li>The color of the tiles will change to show how close your guess was to the word</li>
+                </ul>
+            </div>
+            <div>
+                <p><strong>Examples</strong></p>
+                <div class="example" id="example-correct"> </div>
+                <p>
+                    <strong id="example-let-correct"> </strong>
+                    is in the word and in the correct spot
+                </p>
+                <div class="example" id="example-present"></div>
+                <p>
+                    <strong id="example-let-present"> </strong>
+                    is in the word but in the wrong spot
+                </p>
+                <div class="example" id="example-absent"></div>
+                <p>
+                    <strong id="example-let-absent"> </strong>
+                    is not in the word in any spot
+                </p>
+            </div>
+        </div>
+    </div>
+    <div id="win" class="win">
+        <h2>Congratulations!</h2>
+        <div id="description"></div>
+        <div class="cross-container" id="cross-win">
+            <div class="line1"></div>
+            <div class="line2"></div>
+        </div>
+        <div class="share-container">
+            <button class="share-btn">Share <span class="share">➤</span></button>
+        </div>
+        <div class="play-again-container">
+            <button class="play-again">Play again!</button>
+        </div>
+    </div>
+    <div id="lose" class="lose">
+        <p>You lost!</p>
+        <p>The word was: <br><button id="btn-dictionary"><span id="cur-word"></span></button></span></p>
+        <p>Better luck next time!</p>
+        <div class="share-container">
+            <button class="share-btn">Share <span class="share">➤</span></button>
+        </div>
+        <div class="play-again-container">
+            <button class="play-again">Play again!</button>
+        </div>
+        <div class="cross-container" id="cross-lose">
+            <div class="line1"></div>
+            <div class="line2"></div>
+        </div>
+    </div>
+    <div class="game-section">
+        <div class="header-module">
+            <button id="theme-toggle" class="theme-toggle theme-name">🔆</button>
+            <button id="game-rules-icon" class="game-rules-icon">?</button>
+            <button id="play-icon" class="play-icon">play</button>
+            <h1 class="welcome-title">wordle</h1>
+            <hr class="styled-hr">
+        </div>
+        <div id="info-msg-container">
+            <button id="info-msg"></button>
+        </div>
+        <div class="grid-container"><div class="grid" id="grid"></div></div>
+        <div class="keyboard" id="keyboard">
+            <div class="keyboard-row">
+                <button class="key default q">q</button>
+                <button class="key default w">w</button>
+                <button class="key default e">e</button>
+                <button class="key default r">r</button>
+                <button class="key default t">t</button>
+                <button class="key default y">y</button>
+                <button class="key default u">u</button>
+                <button class="key default i">i</button>
+                <button class="key default o">o</button>
+                <button class="key default p">p</button>
+            </div>
+            <div class="keyboard-row keyboard-row-narrow">
+                <button class="key default a">a</button>
+                <button class="key default s">s</button>
+                <button class="key default d">d</button>
+                <button class="key default f">f</button>
+                <button class="key default g">g</button>
+                <button class="key default h">h</button>
+                <button class="key default j">j</button>
+                <button class="key default k">k</button>
+                <button class="key default l">l</button>
+            </div>
+            <div class="keyboard-row">
+                <button id="delete" class="key">delete</button>
+                <button class="key default z">z</button>
+                <button class="key default x">x</button>
+                <button class="key default c">c</button>
+                <button class="key default v">v</button>
+                <button class="key default b">b</button>
+                <button class="key default n">n</button>
+                <button class="key default m">m</button>
+                <button id="enter" class="key">enter</button>
+            </div>
+        </div>
+
+    </div>
+</body>
+    <script src="srcs/words.js">
+    </script>
+    <script src="srcs/index.js">
+    </script>
+</html>

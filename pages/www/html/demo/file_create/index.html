@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="style.css">
+    <title>Create File</title>
+</head>
+<body>
+    <div class="home_bnt">
+        <a href="/index.html">home</a>
+    </div>
+    <div class="container">
+        <div id="message"></div>
+        <div class="subtitle">
+            <h2>create file</h2>
+        </div>
+        <form id="file-form" class="file_create_form" method="post" enctype="multipart/form-data">
+            <input placeholder="File Name" type="text" id="fileName" name="file_name" required>
+            <textarea placeholder="Input" id="fileBody" name="file_body" rows="5" required></textarea>
+            <button type="submit" id="submitBtn">create</button>
+        </form>
+    </div>
+
+    <script type="text/javascript" src="index.js"></script>
+</body>
+</html>

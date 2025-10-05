@@ -1,0 +1,66 @@
+body {
+    font-family: times new roman;
+    margin: 20px;
+}
+
+.container {
+    display: flex; /* Make the container a flex container */
+    flex-flow: column wrap; /*direction "row" and wrap the items.*/
+    align-items: center; /* Center wrapper-form horizontally */
+}
+
+.home_bnt {
+    text-transform: uppercase;
+    font-size: 20px;
+    padding: 10px;
+    max-width: fit-content;
+}
+
+.home_bnt:hover {
+    cursor: pointer;
+}
+
+.subtitle {
+    color: #313239;
+    text-align: center;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    /* margin-bottom: 50px; */
+}
+
+button, input {
+    font-family: inherit;
+    width: 40%;
+    min-width: fit-content;
+    height: 60px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 1px solid #313239;
+    border-radius: 3px;
+    letter-spacing: 1px;
+}
+
+.submitBtn, #message {
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 16px;
+    color: #313239;
+    border-bottom: none;
+}
+
+#message {
+    display: block;
+    text-align: center;
+    z-index: 2;
+    position: fixed;
+    transition: display 0.4s easy;
+    margin-top: 90px;
+}
+
+.submitBtn:hover {
+    cursor: pointer;
+    background-color: #e7e7e7e1;
+}
+

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="../../images/favicon.ico" type="image/x-icon">
+    <title>42-webserv</title>
+    <style>
+        body { font-family: times new roman; text-align: center; margin: 50px; font-size: 25px;}
+        .container { display: grid; gap: 20px; }
+        input { padding: 8px; margin: 10px; }
+        button { padding: 10px 15px; cursor: pointer; border: none; font-weight: 700;}
+        button:hover { background-color: #c7c7c7; }
+        .home_bnt { text-transform: uppercase; font-size: 20px; padding: 10px; max-width: fit-content; }
+        .home_bnt:hover { cursor: pointer; }
+        .subtitle { color: #313239; text-align: center; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 50px; }
+    </style>
+    
+</head>
+<body>
+    <div class="home_bnt">
+        <a href="/index.html">home</a>
+    </div>
+    <h3 class="subtitle">Session Management</h3>
+    <div class="container">
+        <div id="login-section">
+            <input type="text" id="username" placeholder="Enter username">
+            <button onclick="login()">Login</button>
+        </div>
+        <div id="logout-section">
+            <button  onclick="logout()" >Logout</button>
+        </div>
+    
+        <div id="status-section">
+            <p id="session-message"></p>
+            <button onclick="checkSession()">Check Session</button>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            let username = document.getElementById("username").value;
+            if (!username) {
+                alert("Please enter a username");
+                return;
+            }
+
+            let response = await fetch("/cgi-bin/session.py", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `action=login&username=${encodeURIComponent(username)}`
+            });
+            let data = await response.json();
+            alert(data.message);
+            document.getElementById("logout-section").style.display = "block";
+            document.getElementById("login-section").style.display = "none";
+            checkSession();
+        }
+
+        async function checkSession() {
+            let response = await fetch("/cgi-bin/session.py?action=status");
+            let data = await response.json();
+            document.getElementById("session-message").innerText = data.message;
+            if (data.status == 'active') {
+                document.getElementById("logout-section").style.display = "block";
+                document.getElementById("login-section").style.display = "none";
+            } else {
+                document.getElementById("login-section").style.display = "block";
+                document.getElementById("logout-section").style.display = "none";
+            }
+        }
+
+        async function logout() {
+            let response = await fetch("/cgi-bin/session.py?action=logout");
+            let data = await response.json();
+            alert(data.message);
+            document.getElementById("login-section").style.display = "block";
+            document.getElementById("logout-section").style.display = "none";
+        }
+
+        // Check session on page load
+        window.onload = checkSession;
+    </script>
+</body>
+</html>

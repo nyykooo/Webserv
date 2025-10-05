@@ -1,0 +1,61 @@
+body {
+    font-family: Georgia, sans-serif;
+    margin: 20px;
+}
+
+.home_bnt {
+    text-transform: uppercase;
+    font-size: 20px;
+    padding: 10px;
+    max-width: fit-content;
+}
+
+.container {
+    margin-top: 160px;
+    display: flex; /* Make the container a flex container */
+    flex-flow: column wrap; /*direction "row" and wrap the items.*/
+    align-items: center; /* Center wrapper-form horizontally */
+}
+
+.contact_form_wrapper {
+    max-width: 500px;
+}
+
+.subtitle {
+    width: 500px;
+}
+
+input, textarea, button {
+    width: 100%;
+    max-width: 500px;
+    height: 70px;
+    padding: 20px 16px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 1px solid #313239;
+    border-radius: 3px;
+}
+
+.message {
+    display: block;
+    width: 100%;
+}
+
+input[type="text"], input[type="email"] {
+    width: 49%;
+}
+
+button {
+    margin-top: 36px;
+    width: 200px;
+    background-color: #bc3997;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 25px;
+    padding: 0;
+}
+button:hover {
+    background-color: #ad3384;
+}

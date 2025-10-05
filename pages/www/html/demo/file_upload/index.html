@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="style.css">
+    <title>Upload File</title>
+</head>
+<body>
+    <div class="home_bnt">
+        <a href="/index.html">home</a>
+    </div>
+    <div class="container">
+        <div class="subtitle">
+            <h2>Upload File</h2>
+        </div>
+        <div id="message"></div>
+        <form id="file_upload_form" action="/file_upload.py"  method="POST" enctype="multipart/form-data">
+            <!-- <span id="fileName">No File Selected</span> -->
+            <label id="fileName" for="file">No File Selected</label>
+            <!-- hidden file input -->
+            <input type="file" id="file" name="file">
+            <!-- custom button -->
+            <img src="../images/upload_icon.png" id="uploadBtm" alt="Upload Icon">
+            <!-- submit button -->
+            <input type="submit" id="submitBtn" name="submit">
+        </form>
+    </div>
+
+    <script type="text/javascript" src="index.js"></script>
+    <!-- https://www.youtube.com/watch?v=tFaIFb3CI6U -->
+</body>
+</html>
