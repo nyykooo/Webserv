@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL) {}
+HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1) {}
 
 HttpResponse::HttpResponse(const HttpResponse &other)
 {
@@ -1114,11 +1114,7 @@ const std::string HttpResponse::httpFileContent(int errorPage)
 
 int HttpResponse::openFile()
 {
-	if (_conf == NULL)
-	{
-		_fileName = ".html";
-		return (0);
-	}
+
 	std::set<ErrorPageRule>::const_iterator it = _conf->getErrorPage().begin();
 
 	while (it != _conf->getErrorPage().end())
@@ -1263,14 +1259,12 @@ std::string HttpResponse::cgiHeader()
 	return (header.str() + CRLF + _cgiBody);
 }
 
-
-
 std::string HttpResponse::header(int requestType)
 {
 	std::ostringstream header;
 	std::string fileType;
 
-	// std::cout << RED << "file: " << _fileName << RESET << std::endl;
+	//std::cout << RED << "file: " << _fileName << RESET << std::endl;
 	fileType = getMimeType(_fileName);
 	setHttpStatus(_resStatus);
 	if (requestType == REDIRECT)
@@ -1287,7 +1281,7 @@ std::string HttpResponse::header(int requestType)
 		_resBody += "</body>";
 		_resBody += "</html>";
 	}
-	if (fileType == "text/html")
+	if (fileType == "text/html" && _req->getParseStatus() == 200)
 		checkCookies(_resBody);
 	header << "HTTP/1.1 " << _httpStatus << CRLF;
 	header << "Server: WebServer/1.0" << CRLF;
@@ -1299,15 +1293,12 @@ std::string HttpResponse::header(int requestType)
 		header << "Content-Length: " << _resBody.size() << CRLF;
 	if (requestType == REDIRECT)
 		header << "Location: " << _block->getNewLocation() << CRLF;
-	if (_req != NULL)
-	{
-		if (_req->session) {
-			header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/";
-			if (!_req->session->getTheme().empty())
-				header << "; Theme=" << _req->session->getTheme();
-			header << CRLF;
-		}	
-	}
+	if (_req->getParseStatus() == 200 && _req->session) {
+		header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/";
+		if (!_req->session->getTheme().empty())
+			header << "; Theme=" << _req->session->getTheme();
+		header << CRLF;
+	}	
 	header << CRLF;
 	std::cout << "header: " << header.str() << std::endl;
 	std::cout << "body: " << _resBody << std::endl;
@@ -1316,9 +1307,10 @@ std::string HttpResponse::header(int requestType)
 
 void HttpResponse::checkCookies(std::string& body)
 {
-	if (_req->session == NULL)
+	if (!_req->session)
 		return;
 	std::string theme = _req->session->getTheme();
+
 	if (theme.empty())
 		return;
 
@@ -1361,6 +1353,7 @@ const std::string HttpResponse::checkErrorResponse(const std::string &page)
 const std::string HttpResponse::checkStatusCode()
 {
 	std::string fileContent;
+
 
 	// esta função so valida caso o error_page esteja definido no .config file. tem de ser ajustada para caso não exista.
 	switch (_resStatus)

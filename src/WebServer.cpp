@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/05 13:25:34 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/05 16:52:03 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -300,6 +300,7 @@ int WebServer::receiveData(int client_fd)
 
 	_buffer[bytes] = '\0';
 	std::string newData(_buffer);
+	//std::cout << CYAN << newData << RESET << std::endl;
 
 	// Proteção contra DOS
 	if (_partial_requests[client_fd].size() + newData.size() > MAX_ABSOLUTE_REQUEST_SIZE)
