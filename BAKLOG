@@ -4,7 +4,6 @@ Legenda:
 "x" done/fixed
 
 [ ] Handle memory with htop and siege together
-[ ] Fix SegFault Ctrl + C -> Ctrl + C no curl quebra o server
 [ ] Frontend 
 [ ] Write Tests
 [ ] Error Responses em ReceiveData()
@@ -16,4 +15,6 @@ Legenda:
 [ ] Build all the status headers with the setHttpStatus function
 [ ] Re-test cookies in firefox and check errors
 [ ] Implement sessionData timeout management -> lookfortimeouts already exist for clients, update it! and every new request for that sessionId should reset it's timeout!
-[ ] Fix sefault: "telnet with 2 breaklines"
+[ ] COOKIES: Fix sefault: "telnet with 2 breaklines" (enter 2 vezes pra replicar)
+[ ] COOKIES: Fix SegFault Ctrl + C -> Ctrl + C no curl quebra o server
+[ ] COOKIES: Fix Segfault "curl -I 127.0.0.1 8080"
