@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/04 20:02:25 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/05 00:54:08 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -325,7 +325,7 @@ void HttpRequest::parseCookies() {
 	std::map<std::string, std::string>::const_iterator it = getHeaders().begin();
 	while (it != getHeaders().end()) {
 		if (it->first == "Cookie")
-			break ;
+			checkCreatedSessions(it->second);
 		it++;
 	}
 	if (it == getHeaders().end()) {
@@ -336,7 +336,6 @@ void HttpRequest::parseCookies() {
 		session = (_sessions->back());
 		return ;
 	}
-	checkCreatedSessions(it->second);
 }
 
 const std::map<std::string, std::string>& HttpRequest::getCookies() const {
