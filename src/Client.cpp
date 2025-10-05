@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/02 18:44:35 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/05 13:05:10 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,8 @@ Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _b
 	_uploadSize = 0;
 	_uploadReceived = 0;
 	_time = std::time(NULL);
-	_response = NULL;
-	_request = NULL;
+	_request = new HttpRequest();
+	_response = new HttpResponse();
 	initClientSocket(server_fd);
 }
 
@@ -94,7 +94,8 @@ Client *Client::initClientSocket(int server_fd)
 	}
 
 	// Configura o socket do cliente
-	setEvent(EPOLLIN, _socket_fd);
+	int events = EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR; // Monitorar leitura, fechamento e erros
+	setEvent(events, _socket_fd);
 
 	// Configura o endereço do cliente
 	addrinfo *_res = new addrinfo();						// Aloca memória para addrinfo

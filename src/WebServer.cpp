@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/05 00:53:52 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/05 13:25:34 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -463,7 +463,7 @@ void WebServer::setClientTime(int client_fd)
 	}
 }
 
-void WebServer::deleteClient(int fd)
+void WebServer::deleteClient(int fd, int event)
 {
 	std::vector<Client *>::iterator it;
 	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
@@ -473,10 +473,13 @@ void WebServer::deleteClient(int fd)
 			std::stringstream ss;
 			ss << "Cliente desconectado - client_fd: " << (*it)->getSocketFd();
 			printLog(ss.str(), RED, std::cout);
-			int x;
-			x = epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
-			if (x == -1)
-				std::cerr << "ERRO AO REMOVER DA EPOLL" << std::endl;
+			if (event == 0)
+			{
+				int x;
+				x = epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+				if (x == -1)
+					std::cerr << "ERRO AO REMOVER DA EPOLL" << std::endl;	
+			}
 			close((*it)->getSocketFd());
 			delete *it;					 // Libera a memória do cliente
 			it = _clients_vec.erase(it); // Remove o cliente do vetor
@@ -487,6 +490,31 @@ void WebServer::deleteClient(int fd)
 		}
 	}
 }
+
+// void WebServer::deleteClient(int fd)
+// {
+// 	std::vector<Client *>::iterator it;
+// 	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
+// 	{
+// 		if ((*it)->getSocketFd() == fd)
+// 		{
+// 			std::stringstream ss;
+// 			ss << "Cliente desconectado - client_fd: " << (*it)->getSocketFd();
+// 			printLog(ss.str(), RED, std::cout);
+// 			int x;
+// 			x = epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+// 			if (x == -1)
+// 				std::cerr << "ERRO AO REMOVER DA EPOLL" << std::endl;
+// 			close((*it)->getSocketFd());
+// 			delete *it;					 // Libera a memória do cliente
+// 			it = _clients_vec.erase(it); // Remove o cliente do vetor
+
+// 			_client_to_server_map.erase(fd); // para remover o elemento do mapeamento
+// 			_partial_requests.erase(fd);	 // para remover o elemento do buffer
+// 			return;
+// 		}
+// 	}
+// }
 
 void WebServer::treatExistingClient(int i)
 {
@@ -499,6 +527,13 @@ void WebServer::treatExistingClient(int i)
 		handleClientInput(client, i);
 	else if (_events[i].events == EPOLLOUT)
 		handleClientOutput(client, i);
+	else if (_events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
+		// Cliente desconectou ou houve erro
+		std::stringstream ss;
+		ss << "Conexão fechada ou erro na conexão com o cliente - client_fd: " << client->getSocketFd();
+		printLog(ss.str(), RED, std::cout);
+		deleteClient(_events[i].data.fd, 1);
+	}
 }
 void WebServer::handleEvents(int event_count)
 {
@@ -534,7 +569,7 @@ void WebServer::lookForTimeouts()
 				(*it)->_response->setResStatus(503); // Request Timeout
 				// (*it)->_response->terminateLargeUpload();
 			sendResponseToClient(*it); // envia a resposta antes de deletar o cliente
-			deleteClient(fd);
+			deleteClient(fd, 0);
 			it = _clients_vec.begin(); // Reinicia a iteração
 		}
 		else
@@ -660,7 +695,7 @@ void WebServer::handleClientInput(Client *client, int i)
 		int data = receiveData(_events[i].data.fd);
 		if (data == -1)
 		{
-			deleteClient(_events[i].data.fd);
+			deleteClient(_events[i].data.fd, 0);
 			return;
 		}
 		else if (data == 0)
@@ -686,7 +721,7 @@ void WebServer::handleClientInput(Client *client, int i)
 				close(client->getUploadFd());
 				std::remove(client->getUploadPath().c_str());
 			}
-			deleteClient(client->getSocketFd());
+			deleteClient(client->getSocketFd(), 0);
 			return;
 		}
 
@@ -698,7 +733,7 @@ void WebServer::handleClientInput(Client *client, int i)
 			epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, client->getSocketFd(), &_events[i]);
 		}
 		else if (result == -1)
-			deleteClient(client->getSocketFd());
+			deleteClient(client->getSocketFd(), 0);
 
 		setClientTime(client->getSocketFd());
 	}
@@ -744,7 +779,7 @@ void WebServer::handleClientOutput(Client *client, int i)
 			{
 				ss << "Erro ao modificar evento do cliente " << client->getSocketFd() << " para EPOLLIN";
 				printLog(ss.str(), RED, std::cerr);
-				deleteClient(_events[i].data.fd);
+				deleteClient(_events[i].data.fd, 0);
 				return ;
 			}
 			client->setTime(std::time(NULL));
