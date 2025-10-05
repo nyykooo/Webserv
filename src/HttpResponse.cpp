@@ -1118,7 +1118,6 @@ int HttpResponse::openFile()
 
 		it++;
 	}
-	setHttpStatus(_resStatus);
 	if (it == _conf->getErrorPage().end())
 	{
 		_fileName = ".html";
@@ -1221,11 +1220,10 @@ void HttpResponse::parseCgiScript() {
 	parseCgiHeaders();
 }
 
-std::string HttpResponse::cgiHeader(const std::string &status)
+std::string HttpResponse::cgiHeader()
 {
 	parseCgiScript();
 	setHttpStatus(_resStatus);
-	std::cout << status << std::endl;
 	std::ostringstream header;
 	header << "HTTP/1.1 " << _httpStatus << CRLF;
 	header << "Server: WebServer/1.0" << CRLF;
@@ -1253,23 +1251,23 @@ std::string HttpResponse::cgiHeader(const std::string &status)
 
 
 
-std::string HttpResponse::header(const std::string &status, int requestType)
+std::string HttpResponse::header(int requestType)
 {
-
 	std::ostringstream header;
 	std::string fileType;
 
 	// std::cout << RED << "file: " << _fileName << RESET << std::endl;
 	fileType = getMimeType(_fileName);
+	setHttpStatus(_resStatus);
 	if (requestType == REDIRECT)
 	{
 		_resBody = "<html>";
 		_resBody += "<head><title>";
-		_resBody += status;
+		_resBody += _httpStatus;
 		_resBody += "</title></head>";
 		_resBody += "<body>";
 		_resBody += "<center><h1>";
-		_resBody += status;
+		_resBody += _httpStatus;
 		_resBody += "</h1></center>";
 		_resBody += "<hr><center>WebServer/1.0</center>";
 		_resBody += "</body>";
@@ -1277,7 +1275,7 @@ std::string HttpResponse::header(const std::string &status, int requestType)
 	}
 	if (fileType == "text/html")
 		checkCookies(_resBody);
-	header << "HTTP/1.1 " << status << CRLF;
+	header << "HTTP/1.1 " << _httpStatus << CRLF;
 	header << "Server: WebServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
 	header << "Content-Type: " << fileType << CRLF;
@@ -1330,15 +1328,15 @@ const std::string HttpResponse::checkErrorResponse(const std::string &page)
 	if (errorPage < 0)
 	{
 		_resBody = http_error_404_page;
-		return (header(HTTP_404, ERROR) + _resBody);
+		return (header(ERROR) + _resBody);
 	}
 	else if (errorPage == 0)
 		_resBody = page;
 	else
 		_resBody = httpFileContent(errorPage);
 	if (_resStatus == 204 || _resStatus == 304)
-		return (header(_httpStatus, OK));
-	return (header(_httpStatus, ERROR) + _resBody);
+		return (header(OK));
+	return (header(ERROR) + _resBody);
 }
 
 const std::string HttpResponse::checkStatusCode()
@@ -1349,31 +1347,31 @@ const std::string HttpResponse::checkStatusCode()
 	switch (_resStatus)
 	{
 	case 200:
-		if (_client->getProcessingState() == CGI_COMPLETED)
-			return (cgiHeader("200 OK")); // nao usa header pois a _response eh toda montada pelo cgi
-		return (header("200 OK", OK) + _resBody);
+		if (_cgiRequest)
+			return (cgiHeader()); // nao usa header pois a _response eh toda montada pelo cgi
+		return (header(OK) + _resBody);
 	case 206:
 		if (_method == DELETE || _method == POST)
-			return (header("200 OK", OK));
-		return (header("200 OK", OK) + _resBody);
+			return (header(OK));
+		return (header(OK) + _resBody);
 	case 201:				// [NCC] pelo que entendi o 201 so sera gerado pelo POST, por isso podemos garantir que o CGI atuara sempre
 		return (_response); // nao usa header pois a _response eh toda montada pelo cgi
 	case 202:
 		return ("HTTP/1.1 202 Accepted");
 	case 204:
-		return (header("204 No Content", OK));
+		return (header( OK));
 	case 301:
-		return (header("301 Moved Permanently", REDIRECT));
+		return (header(REDIRECT));
 	case 302:
-		return (header("302 Found", REDIRECT));
+		return (header(REDIRECT));
 	case 303:
-		return (header("303 See Other", REDIRECT));
+		return (header(REDIRECT));
 	case 304:
-		return (header("304 Not Modified", REDIRECT));
+		return (header(REDIRECT));
 	case 307:
-		return (header("307 Temporary Redirect", REDIRECT));
+		return (header(REDIRECT));
 	case 308:
-		return (header("308 Permanent Redirect", REDIRECT));
+		return (header(REDIRECT));
 	case 400:
 		return (checkErrorResponse(http_error_400_page));
 	case 403:
