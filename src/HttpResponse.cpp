@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1) {}
+HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL) {}
 
 HttpResponse::HttpResponse(const HttpResponse &other)
 {
@@ -1104,7 +1104,11 @@ const std::string HttpResponse::httpFileContent(int errorPage)
 
 int HttpResponse::openFile()
 {
-
+	if (_conf == NULL)
+	{
+		_fileName = ".html";
+		return (0);
+	}
 	std::set<ErrorPageRule>::const_iterator it = _conf->getErrorPage().begin();
 
 	while (it != _conf->getErrorPage().end())
@@ -1287,21 +1291,24 @@ std::string HttpResponse::header(const std::string &status, int requestType)
 		header << "Content-Length: " << _resBody.size() << CRLF;
 	if (requestType == REDIRECT)
 		header << "Location: " << _block->getNewLocation() << CRLF;
-	if (_req->session) {
-		header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/";
-		if (!_req->session->getTheme().empty())
-			header << "; Theme=" << _req->session->getTheme();
-		header << CRLF;
-	}	
+	if (_req != NULL)
+	{
+		if (_req->session) {
+			header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/";
+			if (!_req->session->getTheme().empty())
+				header << "; Theme=" << _req->session->getTheme();
+			header << CRLF;
+		}	
+	}
 	header << CRLF;
 	return (header.str());
 }
 
 void HttpResponse::checkCookies(std::string& body)
 {
-	std::string theme = _req->session->getTheme();
-	if (!_req->session)
+	if (_req->session == NULL)
 		return;
+	std::string theme = _req->session->getTheme();
 	if (theme.empty())
 		return;
 

@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/02 18:44:35 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/05 12:13:25 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,8 @@ Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _b
 	_uploadSize = 0;
 	_uploadReceived = 0;
 	_time = std::time(NULL);
-	_response = NULL;
-	_request = NULL;
+	_request = new HttpRequest();
+	_response = new HttpResponse();
 	initClientSocket(server_fd);
 }
 
