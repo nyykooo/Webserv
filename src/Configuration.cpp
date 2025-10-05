@@ -483,7 +483,7 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 			std::cout << GRAY<< it->first << " " << it->second << RESET << std::endl;
 		} */
 	}
-	std::cout << Configuration::getCurlyBracketsCount() << std::endl;
+	//std::cout << Configuration::getCurlyBracketsCount() << std::endl;
 	if (Configuration::getCurlyBracketsCount() != 0)
 		throw Configuration::WrongConfigFileException("block brackets \"{}\" are misplaced.");
 	if (confserv.getHost().empty())

@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/05 00:54:08 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/05 16:20:05 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,10 +58,9 @@ void HttpRequest::parse(const std::string &request_text)
 			return;
 	}
 	parse_headers(stream);
-	parseCookies();
 	if (_parseStatus != 200)
 			return;
-
+	parseCookies();
 	if (stream.peek() != EOF)
 	{
 		parseBody(stream);
@@ -296,9 +295,9 @@ void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
 		for (size_t i = 0; i < _sessions->size(); ++i) {
 			if ((*_sessions)[i]->getSessionId() == sidIt->second) {
 				found = true;
-				session = ((*_sessions)[i]);
 				if (themeIt != _cookies.end())
 					(*_sessions)[i]->setTheme(themeIt->second);
+				session = ((*_sessions)[i]);
 				break;
 			}
 		}
@@ -312,7 +311,7 @@ void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
 		}
 	} else if (themeIt != _cookies.end()) {
 		// No session_id, but theme present → create new session with generated ID
-			SessionData *newSession = new SessionData();
+		SessionData *newSession = new SessionData();
 		newSession->setSessionId(generateRandomSessionId(_sessions->size()));
 		_cookies["session_id"] = newSession->getSessionId();
 		newSession->setTheme(themeIt->second);
@@ -324,12 +323,14 @@ void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
 void HttpRequest::parseCookies() {
 	std::map<std::string, std::string>::const_iterator it = getHeaders().begin();
 	while (it != getHeaders().end()) {
-		if (it->first == "Cookie")
+		if (it->first == "Cookie") {
 			checkCreatedSessions(it->second);
+			break ;
+		}
 		it++;
 	}
 	if (it == getHeaders().end()) {
-			SessionData *newSession = new SessionData();
+		SessionData *newSession = new SessionData();
 		newSession->setSessionId(generateRandomSessionId(_sessions->size()));
 		_cookies["session_id"] = newSession->getSessionId();
 		_sessions->push_back(newSession);

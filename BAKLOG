@@ -12,9 +12,9 @@ Legenda:
 [?] Fix segfault: "siege -b -c 255 -t 10S 127.0.0.1:8080/index.hmtl" Server running: "./Webserv confs/cgi.config"
 [ ] Fix tests in tester/ (ask nico about the installation of the tester)
 [x] Parse the possibility of receiving multiple Cookie headers in the request
-[ ] Build all the status headers with the setHttpStatus function
-[ ] Re-test cookies in firefox and check errors
+[x] Build all the status headers with the setHttpStatus function
+[x] Re-test cookies in firefox and check errors
 [ ] Implement sessionData timeout management -> lookfortimeouts already exist for clients, update it! and every new request for that sessionId should reset it's timeout!
-[ ] COOKIES: Fix sefault: "telnet with 2 breaklines" (enter 2 vezes pra replicar)
+[x] COOKIES: Fix sefault: "telnet with 2 breaklines" (enter 2 vezes pra replicar)
 [ ] COOKIES: Fix SegFault Ctrl + C -> Ctrl + C no curl quebra o server
-[ ] COOKIES: Fix Segfault "curl -I 127.0.0.1 8080"
+[x] COOKIES: Fix Segfault "curl -I 127.0.0.1:8080"
