@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/05 16:20:05 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/06 20:36:38 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -297,6 +297,7 @@ void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
 				found = true;
 				if (themeIt != _cookies.end())
 					(*_sessions)[i]->setTheme(themeIt->second);
+				(*_sessions)[i]->setTime(std::time(NULL));
 				session = ((*_sessions)[i]);
 				break;
 			}

@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/30 20:55:39 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/27 17:25:42 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/06 21:25:23 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,5 +38,8 @@
 # define HTTP_404 "404 Not Found"
 # define HTTP_405 "405 Method Not Allowed"
 # define HTTP_413 "413 Request Entity Too Large"
+
+# define CLIENT_TIMEOUT 10 // 10 seconds
+# define SESSION_TIMEOUT 10 // 5 minutes
 
 #endif

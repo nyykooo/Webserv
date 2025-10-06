@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/05 13:05:10 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/06 20:48:07 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,7 +143,7 @@ bool Client::checkTimeout() const
 {
 	std::time_t curr_time = std::time(NULL);
 	// Verifica se o tempo decorrido desde a última atividade é maior que o timeout
-	if (curr_time - _time > 10)
+	if (curr_time - _time > CLIENT_TIMEOUT)
 		return true;
 	else
 		return false;

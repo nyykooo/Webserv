@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:19 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/05 16:52:03 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/06 21:31:06 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -576,6 +576,22 @@ void WebServer::lookForTimeouts()
 		else
 		{
 			++it;
+		}
+	}
+	std::vector<SessionData *>::iterator sit = _sessions->begin();
+	while (sit != _sessions->end())
+	{
+		if ((*sit)->checkTimeout())
+		{
+			std::stringstream ss;
+			ss << "Session timeout reached - sessionId " << (*sit)->getSessionId();
+			printLog(ss.str(), RED, std::cout);
+			delete (*sit);
+        	sit = _sessions->erase(sit);
+		}
+		else
+		{
+			++sit;
 		}
 	}
 }

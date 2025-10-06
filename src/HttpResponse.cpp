@@ -1300,8 +1300,6 @@ std::string HttpResponse::header(int requestType)
 		header << CRLF;
 	}	
 	header << CRLF;
-	std::cout << "header: " << header.str() << std::endl;
-	std::cout << "body: " << _resBody << std::endl;
 	return (header.str());
 }
 
