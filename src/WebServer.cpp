@@ -831,18 +831,16 @@ bool WebServer::isLargeFileRequest(Client *client)
 	{
 		return false;
 	}
-
 	// imitando a handleGet
 	std::string newRoot = removeSlashes(client->_response->getConfig().getRoot());
 	std::string locPath = removeSlashes(client->_response->getFullPath());
-	if (!newRoot.empty())
-		newRoot = "/" + newRoot;
 	std::string fileName = newRoot + "/" + locPath;
 
 	struct stat st;
 	if (stat(fileName.c_str(), &st) == -1)
 	{
 		// Arquivo não existe - não é large file
+		std::cout << RED << "stat error: " << errno << RESET << std::endl;
 		return false;
 	}
 
@@ -896,12 +894,8 @@ std::string WebServer::getContentType(const std::string &filePath)
 bool WebServer::startLargeFileStreaming(Client *client)
 {
 	// Depois encapsular essa logica do file path
-	// HttpResponse tempResponse(client->_request, client->_request->_config);
-	HttpResponse tempResponse(client);
-	std::string newRoot = removeSlashes(tempResponse.getConfig().getRoot());
-	std::string locPath = removeSlashes(tempResponse.getFullPath());
-	if (!newRoot.empty())
-		newRoot = "/" + newRoot;
+	std::string newRoot = removeSlashes(client->_response->getConfig().getRoot());
+	std::string locPath = removeSlashes(client->_response->getFullPath());
 	std::string fileName = newRoot + "/" + locPath;
 
 	struct stat st;
