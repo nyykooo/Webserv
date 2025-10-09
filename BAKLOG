@@ -14,9 +14,9 @@ Legenda:
 [x] Parse the possibility of receiving multiple Cookie headers in the request
 [x] Build all the status headers with the setHttpStatus function
 [x] Re-test cookies in firefox and check errors
-[ ] Implement sessionData timeout management -> lookfortimeouts already exist for clients, update it! and every new request for that sessionId should reset it's timeout!
+[x] Implement sessionData timeout management -> lookfortimeouts already exist for clients, update it! and every new request for that sessionId should reset it's timeout!
 [x] COOKIES: Fix sefault: "telnet with 2 breaklines" (enter 2 vezes pra replicar)
-[ ] COOKIES: Fix SegFault Ctrl + C -> Ctrl + C no curl quebra o server
+[x] COOKIES: Fix SegFault Ctrl + C -> Ctrl + C no curl quebra o server
 [x] COOKIES: Fix Segfault "curl -I 127.0.0.1:8080"
 [ ] GET/POST of large files incompleted by client timeout disconnection
 [ ] Implement CGI logic for POST method

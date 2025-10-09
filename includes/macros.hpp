@@ -40,6 +40,6 @@
 # define HTTP_413 "413 Request Entity Too Large"
 
 # define CLIENT_TIMEOUT 10 // 10 seconds
-# define SESSION_TIMEOUT 10 // 5 minutes
+# define SESSION_TIMEOUT 300 // 5 minutes
 
 #endif
