@@ -120,14 +120,6 @@ void	checkCurlyBrackets(std::string line) {
 	}
 }
 
-void	Configuration::setUploadDirectory(const std::string& str) {
-	_uploadDirectory = str;
-}
-
-const std::string&	Configuration::getUploadDirectory() const {
-	return (_uploadDirectory);
-}
-
 bool	isValidIP(const std::string& host) {
 	int					dotNum = 0;
 	std::stringstream 	ss(host);
@@ -417,6 +409,8 @@ void	parseUploadDirectory(std::string& line, Configuration& config) {
 	if (!(ss >> word))
 		throw Configuration::WrongConfigFileException("no upload directory defined.");
 	config.setUploadDirectory(word);
+	if (ss >> word)
+		throw Configuration::WrongConfigFileException("too many arguments in upload_dir.");
 }
 
 void	parseCgi(const std::string& line, Configuration& config) {

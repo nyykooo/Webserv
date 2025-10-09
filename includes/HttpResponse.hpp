@@ -39,6 +39,7 @@ class HttpResponse {
 		std::map<int, std::string>			_statusTexts;
 		std::string							_fullPath;
 		std::string							_scriptNameNico;
+		std::string							_newRoot;
 
 		std::string							_clientSession;
 		std::string							_contentLength;
@@ -93,7 +94,7 @@ class HttpResponse {
 		void	startResponse();
 		void	execMethod();
 		void	handleGET();
-		void		handlePost(); //considerar encapsular?
+		void		handlePOST(); //considerar encapsular?
 		std::string	generateUniqueFilename() const;
 		bool		saveBodyToFile(const std::string& path, const std::string& content) const;
 		bool		createUploadDirectory(const std::string& path) const;
@@ -119,6 +120,9 @@ class HttpResponse {
 		void	parseCgiHeaders();
 		void	parseCgiStatus(const std::string& segment);
 		void	parseContentLength(const std::string& segment);
+		void	buildFullPath();
+		void	extractFileName();
+		void	cleanUploadDir();
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

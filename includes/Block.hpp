@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Block.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:26 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/12 16:48:22 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/09 00:25:48 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,13 +18,14 @@
 class Block
 {
 	protected:
-		std::string					_root; // block
-		bool						_autoIndex; // block
-		std::string					_newLocation; // block
-		std::vector<std::string>	_defaultFiles; // block
-		std::vector<std::string>	_allowedMethods; // block
-		int							_redirectStatusCode; // block
-		std::map<std::string, std::string> _cgiMap; // block
+		std::string							_root; // block
+		bool								_autoIndex; // block
+		std::string							_newLocation; // block
+		std::vector<std::string>			_defaultFiles; // block
+		std::vector<std::string>			_allowedMethods; // block
+		int									_redirectStatusCode; // block
+		std::map<std::string, std::string>	_cgiMap; // block
+		std::string							_uploadDirectory;
 		
 	public:
 		// ORTHODOX CANONICAL FORM
@@ -34,24 +35,26 @@ class Block
 		Block &operator=(const Block &other);
 
 		// SETTERS
-		void setRoot(const std::string& root);
-		void setAutoIndex(const std::string& value);
-		void setNewLocation(const std::string& newLocation);
-		void setDefaultFiles(const std::string& index);
-		void setAllowedMethods(const std::string& method);
-		void removeAllowedMethods(void);
-		void setRedirectStatusCode(const int statusCode);
-		void setCgiMap(const std::string& extension, const std::string& path);
+		void	setRoot(const std::string& root);
+		void	setAutoIndex(const std::string& value);
+		void	setNewLocation(const std::string& newLocation);
+		void	setDefaultFiles(const std::string& index);
+		void	setAllowedMethods(const std::string& method);
+		void	removeAllowedMethods(void);
+		void	setRedirectStatusCode(const int statusCode);
+		void	setCgiMap(const std::string& extension, const std::string& path);
+		void	setUploadDirectory(const std::string& str);
 		
 		// GETTERS
-		const std::string& getRoot(void) const;
-		bool getAutoIndex(void) const;
-		const std::string& getNewLocation(void) const;
-		const std::vector<std::string>& getDefaultFiles(void) const;
-		const std::vector<std::string>& getMethods(void) const;
-		const std::string& getStatusCode(void) const;
-		int getRedirectStatusCode(void) const;
-		const std::map<std::string, std::string>& getCgiMap(void) const;
+		const std::string&							getRoot(void) const;
+		bool										getAutoIndex(void) const;
+		const std::string&							getNewLocation(void) const;
+		const std::vector<std::string>&				getDefaultFiles(void) const;
+		const std::vector<std::string>&				getMethods(void) const;
+		const std::string&							getStatusCode(void) const;
+		int											getRedirectStatusCode(void) const;
+		const std::map<std::string, std::string>&	getCgiMap(void) const;
+		const std::string&							getUploadDirectory(void) const;
 };
 
 

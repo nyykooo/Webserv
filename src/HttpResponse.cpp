@@ -554,51 +554,18 @@ void HttpResponse::checkFile(int methodType)
 		forkExecCgi(_cgiPath);
 		return; // mudar status do HttpResponse/Client Bruno feature e retorna para nao bloquear o server
 	}
-
-	if (S_ISREG(st.st_mode))
-	{
+	if (methodType == GET && S_ISREG(st.st_mode))
 		openReg(_fileName, methodType);
-	}
 	else if (S_ISDIR(st.st_mode))
 	{
-		std::cout << "Diretório encontrado: " << _fileName << std::endl;
+		//std::cout << "Diretório encontrado: " << _fileName << std::endl;
 		if (methodType == GET)
 			openDir(_fileName);
 		else if (methodType == DELETE)
 			_resStatus = 409;
 	}
-	else if (S_ISLNK(st.st_mode))
-		std::cout << "Link simbólico\n";
-	else
-		std::cout << "Outro tipo de arquivo\n";
-}
-
-void HttpResponse::handleGET()
-{
-	if (!(_block->getNewLocation().empty()))
-	{
-		_resStatus = _block->getRedirectStatusCode();
-		return;
-	}
-	std::string newRoot = removeSlashes(_conf->getRoot());
-	std::string locPath = removeSlashes(this->getFullPath());
-
-	// TODO: ESSAS INFORMACOES DEVEM SER EXTRAIDAS ANTES EM OUTRO LOCAL
-	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1, locPath.size());
-	// _fullPath = newRoot + "/" + locPath.erase(locPath.find_last_of('/'));
-	std::size_t pos = locPath.find_last_of('/');
-	if (pos != std::string::npos)
-	{
-		_fullPath = newRoot + "/" + locPath.substr(0, pos);
-	}
-	else
-	{
-		_fullPath = newRoot + "/" + locPath; // se não tem '/', usa a string inteira
-	}
-	
-	locPath = removeSlashes(this->getFullPath());
-	_fileName = newRoot + "/" + locPath;
-	checkFile(GET);
+/* 	else if (S_ISLNK(st.st_mode))
+		std::cout << "Link simbólico\n"; */
 }
 
 LocationBlock *HttpResponse::checkLocationBlock()
@@ -628,20 +595,9 @@ LocationBlock *HttpResponse::checkLocationBlock()
 
 void HttpResponse::handleDELETE()
 {
-	if (!(_block->getNewLocation().empty()))
-	{
-		_resStatus = _block->getRedirectStatusCode();
-		return;
-	}
-	std::string newRoot = removeSlashes(_conf->getRoot());
-	std::string locPath = removeSlashes(this->getFullPath());
-	if (!newRoot.empty())
-		newRoot = "/" + newRoot;
-	_fileName = newRoot + "/" + locPath;
 	checkFile(DELETE);
 	if (_resStatus != 200)
 		return;
-	// std::cout << _fileName << std::endl;
 	int removed = std::remove(_fileName.c_str());
 	if (removed == 0)
 		_resStatus = 204;
@@ -804,6 +760,23 @@ void HttpResponse::setEnv()
 	buildEnv();
 }
 
+void	HttpResponse::buildFullPath() {
+	_newRoot = removeSlashes(_block->getRoot());
+	std::string locPath = removeSlashes(this->getFullPath());
+	//std::cout << "before: " << _newRoot << std::endl;
+
+	// TODO: ESSAS INFORMACOES DEVEM SER EXTRAIDAS ANTES EM OUTRO LOCAL
+	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1, locPath.size());
+	std::size_t pos = locPath.find_last_of('/');
+	if (pos != std::string::npos)
+		_fullPath = _newRoot + "/" + locPath.substr(0, pos);
+	else
+		_fullPath = _newRoot + "/" + locPath; // se não tem '/', usa a string inteira
+	locPath = removeSlashes(this->getFullPath());
+	//std::cout << RED << "result: " << _fullPath << RESET << std::endl;
+	_fileName = _newRoot + "/" + locPath;
+}
+
 void HttpResponse::execMethod()
 {
 	bool methodFound = false;
@@ -829,12 +802,18 @@ void HttpResponse::execMethod()
 		return;
 	}
 	root = _block->getRoot();
+	buildFullPath();
+	if (!(_block->getNewLocation().empty()))
+	{
+		_resStatus = _block->getRedirectStatusCode();
+		return;
+	}
 	if (method == "GET")
-		handleGET();
+		checkFile(GET);
 	else if (method == "DELETE")
 		handleDELETE();
 	else if (method == "POST")
-    	handlePost();
+    	handlePOST();
 }
 
 static const std::string &http_error_400_page =
@@ -987,6 +966,23 @@ static const std::string &http_error_414_page =
 	"</head>"
 	"<body>"
 	"<h1>414 URI Too Long</h1>"
+	"</body>"
+	"</html>";
+
+static const std::string &http_error_415_page =
+	"<!DOCTYPE html>"
+	"<html lang=\"en\">"
+	"<head>"
+	"<meta charset=\"UTF-8\">"
+	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+	"<title>415</title>"
+	"<style>"
+	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
+	"h1 { color: #333; }"
+	"</style>"
+	"</head>"
+	"<body>"
+	"<h1>415 Unsupported Media Type</h1>"
 	"</body>"
 	"</html>";
 
@@ -1478,34 +1474,74 @@ void HttpResponse::setTempEnv(const std::string &str)
 	_tempEnv.push_back(str);
 }
 
-void HttpResponse::handlePost()
+void	HttpResponse::extractFileName() {
+	size_t pos;
+	std::string	str;
+
+	str = _req->getBody();
+
+	pos = str.find("filename=\"");
+	if (pos != std::string::npos) {
+		pos += 10; // skip 'filename="'
+		size_t end = str.find("\"", pos);
+		_fileName = str.substr(pos, end - pos);
+	}
+}
+
+void	HttpResponse::cleanUploadDir() {
+	std::string	str = _block->getUploadDirectory();
+	std::string	clean;
+
+	for (size_t i = 0; i < str.size(); i++) {
+		if (str[i] != '.' && str[i] != '/')
+			clean += str[i];
+		//std::cout << clean << std::endl;
+	}
+	size_t	end = clean.find_last_not_of('/');
+	if (end != std::string::npos)
+		clean.erase(end + 1);
+	_block->setUploadDirectory(clean);
+}
+
+void HttpResponse::handlePOST()
 {
+	checkFile(POST);
+	if (_cgiRequest)
+		return;
 	// O header content-type é necessário para o POST
 	std::string contentType = parseContentType(_req->getHeaders());
-	if (contentType.empty())
+	if (!_req->getBody().empty() && contentType.empty())
 	{
 		_resStatus = 415; // Unsupported Media Type
-		_resBody = "Content-Type header is required for POST";
+		_resBody = http_error_415_page;
 		return;
 	}
-
 	// Ver se upload dir existe no config.
-	std::string uploadDir = _conf->getUploadDirectory();
-	if (uploadDir.empty())
+	std::string uploadDir = _block->getUploadDirectory();
+	//td::cout << "uploadDir: " << uploadDir << " " << _block->getRoot() << std::endl;
+	if (uploadDir == "")
 	{
-		uploadDir = "/tmp/webserv_uploads";
-		printLog("Upload directory not configured, using default: " + uploadDir, YELLOW, std::cout);
+		_resStatus = 405;
+		_resBody = http_error_405_page;
+		return ;
+/* 		uploadDir = "/tmp/webserv_uploads";
+		printLog("Upload directory not configured, using default: " + uploadDir, YELLOW, std::cout); */
 	}
-
-	if (!createUploadDirectory(uploadDir) || access(uploadDir.c_str(), W_OK) != 0)
+	cleanUploadDir();
+	//std::cout << "_newRoot = " << _newRoot << std::endl;
+	if (_block->getUploadDirectory() == "")
+		uploadDir = _newRoot + "/" + _block->getUploadDirectory();
+	else
+		uploadDir = _newRoot + "/" + _block->getUploadDirectory() + "/";
+	//std::cout << "uploadDir: " << uploadDir << std::endl;
+	if (/* !createUploadDirectory(uploadDir) ||  */access(uploadDir.c_str(), W_OK) != 0)
 	{
 		_resStatus = 500; // Internal Server Error
-		_resBody = "Upload directory not accessible or not writable";
-		std::cout << RED << "Failed to create or access upload directory: " << uploadDir << RESET << std::endl;
-		return;
+		_resBody = http_error_500_page;
+		//std::cout << RED << "Failed to access upload directory: " << uploadDir << RESET << std::endl;
+		return ;
 	}
-
-	if (!_req->getUploadPath().empty())
+	/* if (!_req->getUploadPath().empty())
 	{
 		// Upload grande - o arquivo já está no disco (temporário)
 		// Arrumar o nome considerando content/type.
@@ -1529,25 +1565,29 @@ void HttpResponse::handlePost()
 	std::stringstream ss;
 	ss << "upload_" << now << ".bin"; // Extensão genérica temporária
 	std::string filename = ss.str();
-	std::string fullPath = uploadDir + "/" + filename;
+	std::string fullPath = uploadDir + "/" + filename; */
 	// Salvar o body no arquivo
 	std::string body = _req->getBody();
-	if (body.empty())
+	//std::cout << RED << body << RESET << std::endl;
+/* 	if (body.empty())
 	{
 		_resStatus = 400; // Bad Request
 		_resBody = "Empty body in POST request";
 		return;
-	}
-	if (!saveBodyToFile(fullPath, body))
+	} */
+	extractFileName();
+	_fileName = uploadDir + _fileName;
+	//std::cout << GRAY << _fileName << RESET << std::endl;
+	if (!saveBodyToFile(_fileName, body))
 	{
 		_resStatus = 500; // Internal Server Error
-		_resBody = "Failed to save uploaded file";
+		_resBody = http_error_500_page;
 		return;
 	}
 	// Sucesso - 201 Created
 	_resStatus = 201;
-	_resBody = "File uploaded successfully: " + filename;
-	std::cout << GREEN << "File uploaded successfully to " << fullPath << RESET << std::endl;
+	//_resBody = "File uploaded successfully: " + filename;
+	//std::cout << GREEN << "File uploaded successfully to " << fullPath << RESET << std::endl;
 }
 
 bool HttpResponse::saveBodyToFile(const std::string &path, const std::string &content) const

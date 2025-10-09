@@ -97,14 +97,6 @@ const std::map<std::string, std::string>&	LocationBlock::getCgiMap(void) const {
 	return (_cgiMap);
 }
 
-void	LocationBlock::setUploadDirectory(const std::string& str) {
-	_uploadDirectory = str;
-}
-
-const std::string&	LocationBlock::getUploadDirectory() const {
-	return (_uploadDirectory);
-}
-
 void	parseRoot(std::string& line, LocationBlock& location) {
 	std::stringstream ss(line);
 	std::string word;
@@ -272,6 +264,8 @@ void	parseUploadDirectory(std::string& line, LocationBlock& location) {
 	if (!(ss >> word))
 		throw Configuration::WrongConfigFileException("no upload directory defined.");
 	location.setUploadDirectory(word);
+	if (ss >> word)
+		throw Configuration::WrongConfigFileException("too many arguments in upload_dir.");
 }
 
 void	parseCgi(const std::string& line, LocationBlock& location) {

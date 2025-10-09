@@ -30,7 +30,7 @@ class Configuration : public Block
 		std::set<ErrorPageRule>									_errorPage;
 		long													_requestSize;
 		static int												_curlyBracketsCount;
-		std::string												_uploadDirectory;
+		
 
 	public:
 		std::vector<LocationBlock>			locations;
@@ -42,7 +42,6 @@ class Configuration : public Block
 		void								setRequestSize(long reqSize);
 		static void							incrementCurlyBracketsCount(void);
 		static void							decrementCurlyBracketsCount(void);
-		void								setUploadDirectory(const std::string& str);
 		void								setCgiMap(const std::string& extension, const std::string& path);
 
 		// GETTERS
@@ -52,7 +51,6 @@ class Configuration : public Block
 		const std::set<ErrorPageRule>&							getErrorPage(void) const;
 		long													getRequestSize(void) const;
 		static int												getCurlyBracketsCount(void);
-		const std::string&										getUploadDirectory(void) const;
 		const std::map<std::string, std::string>&				getCgiMap(void) const;
 
 		// ORTHODOX CANONICAL FORM 

@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/19 05:45:23 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/09 07:15:00 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ Block::Block(const Block& other)
 	_allowedMethods = other._allowedMethods;
 	_redirectStatusCode = other._redirectStatusCode;
 	_cgiMap = other._cgiMap;
+	_uploadDirectory = other._uploadDirectory;
 }
 
 Block::~Block()
@@ -44,6 +45,7 @@ Block &Block::operator=(const Block &other)
 		_allowedMethods = other._allowedMethods;
 		_redirectStatusCode = other._redirectStatusCode;
 		_cgiMap = other._cgiMap;
+		_uploadDirectory = other._uploadDirectory;
 	}
 	return *this;
 }
@@ -138,4 +140,12 @@ int Block::getRedirectStatusCode(void) const {
 
 const std::map<std::string, std::string>& Block::getCgiMap(void) const {
 	return (_cgiMap);
+}
+
+void	Block::setUploadDirectory(const std::string& str) {
+	_uploadDirectory = str;
+}
+
+const std::string&	Block::getUploadDirectory() const {
+	return (_uploadDirectory);
 }
