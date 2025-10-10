@@ -8,7 +8,7 @@ Configuration::Configuration(): Block(), _requestSize(1000000) {
 
 Configuration::~Configuration() {}
 
-Configuration::Configuration(const Configuration& other): Block(other), _host(other._host), _serverName(other._serverName), _errorPage(other._errorPage),
+Configuration::Configuration(const Configuration& other): Block(other), _host(other._host), _serverName(other._serverName),
 	_requestSize(other._requestSize), locations(other.locations) {
 	// _root(other._root), _defaultFiles(other._defaultFiles),_redirectStatusCode(other._redirectStatusCode),  _autoIndex(other._autoIndex),_newLocation(other._newLocation), _allowedMethods(other._allowedMethods),
 	_root = other.getRoot();
@@ -22,7 +22,6 @@ Configuration&	Configuration::operator=(const Configuration& other) {
 	if (this != &other) {
 		_host = other._host;
 		_serverName = other._serverName;
-		_errorPage = other._errorPage;
 		_root = other._root;
 		_defaultFiles = other._defaultFiles;
 		_autoIndex = other._autoIndex;
@@ -71,21 +70,6 @@ const std::vector<std::string>&	Configuration::getServerName(void) const {
 
 void	Configuration::setServerName(const std::string& serverName) {
 	this->_serverName.push_back(serverName);
-}
-
-void	Configuration::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
-
-	ErrorPageRule rule;
-	rule.error = errorPage;
-	rule.errorPath = errorPagePath;
-	rule.newError = newStatus;
-
-	// std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
-	this->_errorPage.insert(rule);
-}
-
-const std::set<ErrorPageRule>& Configuration::getErrorPage(void) const {
-	return (this->_errorPage);
 }
 
 const char* Configuration::WrongConfigFileException::what() const throw() {

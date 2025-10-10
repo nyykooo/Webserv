@@ -19,6 +19,6 @@ Legenda:
 [x] COOKIES: Fix SegFault Ctrl + C -> Ctrl + C no curl quebra o server
 [x] COOKIES: Fix Segfault "curl -I 127.0.0.1:8080"
 [ ] GET/POST of large files incompleted by client timeout disconnection
-[ ] Implement CGI logic for POST method
-[ ] Create static functions for each error
-[ ] Check if all _conf in HttpResponse should be replaced by _block
+[x] Implement CGI logic for POST method
+[x] Create static functions for each error
+[x] Check if all _conf in HttpResponse should be replaced by _block

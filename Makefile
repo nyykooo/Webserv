@@ -15,12 +15,13 @@ CYAN = \033[1;36m
 UNDERLINED_PURPLE = \033[4;35m
 RESET = \033[0m
 
-SRC = main.cpp src/Socket.cpp src/HttpRequest.cpp \
+SRC = src/main.cpp src/Socket.cpp src/HttpRequest.cpp \
 	   src/WebServer.cpp src/Client.cpp src/Server.cpp \
 	   src/LocationBlock.cpp src/Configuration.cpp \
 	   src/utils.cpp  src/HttpResponse.cpp \
 	   src/ErrorPageRule.cpp src/Block.cpp \
-	   src/SessionData.cpp
+	   src/SessionData.cpp \
+	   src/ErrorPages.cpp \
 
 OBJ_DIR = obj
 
@@ -29,6 +30,7 @@ OBJ = $(patsubst src/%.cpp, $(OBJ_DIR)/%.o, $(SRC))
 all: $(NAME)
 
 $(NAME): $(OBJ)
+		@$(CXX) $(CXXFLAGS) $^ -o $@
 		@echo "$(PURPLE)$(NAME) compiled successfully.$(RESET)"
 
 $(OBJ): | $(OBJ_DIR)
@@ -40,10 +42,6 @@ $(OBJ_DIR)/%.o: src/%.cpp
 		@mkdir -p $(@D)
 		@echo "$(PURPLE)Compiling $(UNDERLINED_PURPLE)$<$(RESET)"
 		@$(CXX) $(CXXFLAGS) -c $< -o $@
-
-#$(OBJ_SRC_DIR)/%.o: %.cpp
-#	mkdir -p $(dir $@)
-#	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 		@echo "$(PURPLE)Cleaning up...$(RESET)"

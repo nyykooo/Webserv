@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:26 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/09 00:25:48 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/10 15:16:18 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 # define BLOCK_HPP
 
 # include "headers.hpp"
+
+class  ErrorPageRule;
 
 class Block
 {
@@ -26,6 +28,7 @@ class Block
 		int									_redirectStatusCode; // block
 		std::map<std::string, std::string>	_cgiMap; // block
 		std::string							_uploadDirectory;
+		std::set<ErrorPageRule>				_errorPage;
 		
 	public:
 		// ORTHODOX CANONICAL FORM
@@ -44,6 +47,7 @@ class Block
 		void	setRedirectStatusCode(const int statusCode);
 		void	setCgiMap(const std::string& extension, const std::string& path);
 		void	setUploadDirectory(const std::string& str);
+		void	setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
 		
 		// GETTERS
 		const std::string&							getRoot(void) const;
@@ -55,6 +59,7 @@ class Block
 		int											getRedirectStatusCode(void) const;
 		const std::map<std::string, std::string>&	getCgiMap(void) const;
 		const std::string&							getUploadDirectory(void) const;
+		const std::set<ErrorPageRule>&				getErrorPage(void) const;
 };
 
 

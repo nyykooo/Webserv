@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/09 07:15:00 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/10 15:18:39 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ Block::Block(const Block& other)
 	_redirectStatusCode = other._redirectStatusCode;
 	_cgiMap = other._cgiMap;
 	_uploadDirectory = other._uploadDirectory;
+	_errorPage = other._errorPage;
 }
 
 Block::~Block()
@@ -46,6 +47,7 @@ Block &Block::operator=(const Block &other)
 		_redirectStatusCode = other._redirectStatusCode;
 		_cgiMap = other._cgiMap;
 		_uploadDirectory = other._uploadDirectory;
+		_errorPage = other._errorPage;
 	}
 	return *this;
 }
@@ -148,4 +150,19 @@ void	Block::setUploadDirectory(const std::string& str) {
 
 const std::string&	Block::getUploadDirectory() const {
 	return (_uploadDirectory);
+}
+
+void	Block::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
+
+	ErrorPageRule rule;
+	rule.error = errorPage;
+	rule.errorPath = errorPagePath;
+	rule.newError = newStatus;
+
+	// std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
+	this->_errorPage.insert(rule);
+}
+
+const std::set<ErrorPageRule>& Block::getErrorPage(void) const {
+	return (this->_errorPage);
 }

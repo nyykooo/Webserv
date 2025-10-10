@@ -1,7 +1,6 @@
 #include "headers.hpp"
 
 class WebServer;
-class  ErrorPageRule;
 
 class LocationBlock : public Block 
 {
@@ -9,7 +8,6 @@ class LocationBlock : public Block
 		bool													_exactMatchModifier;
 		std::string												_location;
 		static int												_locationCurlyBracketsCount;
-		std::set<ErrorPageRule>									_errorPage;
 		std::string												_uploadDirectory;
 	public:
 
@@ -17,7 +15,6 @@ class LocationBlock : public Block
 
 	void			setExactMatchModifier(bool value);
 	void			setLocation(const std::string& location);
-	void			setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
 	static void		incrementLocationCurlyBracketsCount(void);
 	static void		decrementLocationCurlyBracketsCount(void);
 	void			setCgiMap(const std::string& extension, const std::string& path);
@@ -26,7 +23,6 @@ class LocationBlock : public Block
 
 	bool										getExactMatchModifier(void) const;
 	const std::string&							getLocation(void) const;
-	const std::set<ErrorPageRule>&				getErrorPage(void) const;
 	static int									getLocationCurlyBracketsCount(void);
 	const std::map<std::string, std::string>&	getCgiMap(void) const;
 

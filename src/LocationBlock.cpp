@@ -11,13 +11,11 @@ LocationBlock::LocationBlock(const Configuration& other): _exactMatchModifier(fa
 	_defaultFiles = other.getDefaultFiles();
 	_newLocation = other.getNewLocation();
 	_cgiMap = other.getCgiMap();
-	_errorPage = other.getErrorPage();
 }
 
 LocationBlock::~LocationBlock() {}
 
-LocationBlock::LocationBlock(const LocationBlock& other): Block(other), _exactMatchModifier(other._exactMatchModifier), _location(other._location),
-	_errorPage(other._errorPage) {
+LocationBlock::LocationBlock(const LocationBlock& other): Block(other), _exactMatchModifier(other._exactMatchModifier), _location(other._location) {
 	_root = other.getRoot();
 	_allowedMethods = other.getMethods();
 	_autoIndex = other.getAutoIndex();
@@ -38,7 +36,6 @@ LocationBlock& LocationBlock::operator=(const LocationBlock& other) {
 		_defaultFiles = other._defaultFiles;
 		_newLocation = other._newLocation;
 		_cgiMap = other._cgiMap;
-		_errorPage = other._errorPage;
 	}
 	return (*this);
 }
@@ -72,21 +69,6 @@ void	LocationBlock::incrementLocationCurlyBracketsCount(void) {
 
 void	LocationBlock::decrementLocationCurlyBracketsCount(void) {
 	_locationCurlyBracketsCount--;
-}
-
-void	LocationBlock::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
-
-	ErrorPageRule rule;
-	rule.error = errorPage;
-	rule.errorPath = errorPagePath;
-	rule.newError = newStatus;
-
-	//std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
-	this->_errorPage.insert(rule);
-}
-
-const std::set<ErrorPageRule>& LocationBlock::getErrorPage(void) const {
-	return (this->_errorPage);
 }
 
 void	LocationBlock::setCgiMap(const std::string& extension, const std::string& path) {

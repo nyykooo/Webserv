@@ -816,278 +816,6 @@ void HttpResponse::execMethod()
     	handlePOST();
 }
 
-static const std::string &http_error_400_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>400</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>400 Bad Request</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_403_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>403</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>403 Forbidden</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_404_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>404</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>404 Page not found</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_405_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>405</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>405 Method Not Allowed</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_408_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>408</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>408 Request Timeout</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_409_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>409</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>409 Conflict</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_411_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>411</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>411 Length Required</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_413_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>413</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>413 Payload Too Large</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_414_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>414</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>414 URI Too Long</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_415_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>415</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>415 Unsupported Media Type</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_500_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>500</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>500 Internal Server Error</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_501_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>501</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>501 Not implemented</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_502_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>502</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>502 Bad Gateway</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_503_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>503</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>503 Service Unavailable</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_504_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>504</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>504 Gateway Timeout</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_505_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>505</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>505 Version Not Supported</h1>"
-	"</body>"
-	"</html>";
-
 const std::string HttpResponse::httpFileContent(int errorPage)
 {
 
@@ -1110,14 +838,11 @@ const std::string HttpResponse::httpFileContent(int errorPage)
 
 int HttpResponse::openFile()
 {
-	if (_conf == NULL)
-	{
-		_fileName = ".html";
+	if (_block->getErrorPage().empty())
 		return (0);
-	}
-	std::set<ErrorPageRule>::const_iterator it = _conf->getErrorPage().begin();
+	std::set<ErrorPageRule>::const_iterator it = _block->getErrorPage().begin();
 
-	while (it != _conf->getErrorPage().end())
+	while (it != _block->getErrorPage().end())
 	{
 		if ((*it).error == _resStatus)
 		{
@@ -1128,7 +853,7 @@ int HttpResponse::openFile()
 
 		it++;
 	}
-	if (it == _conf->getErrorPage().end())
+	if (it == _block->getErrorPage().end())
 	{
 		_fileName = ".html";
 		return (0);
@@ -1401,6 +1126,8 @@ const std::string HttpResponse::checkStatusCode()
 		return (checkErrorResponse(http_error_413_page));
 	case 414:
 		return (checkErrorResponse(http_error_414_page));
+	case 415:
+		return (checkErrorResponse(http_error_415_page));
 	case 500:
 		return (checkErrorResponse(http_error_500_page));
 	case 501:
