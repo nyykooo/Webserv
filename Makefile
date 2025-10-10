@@ -10,6 +10,11 @@ CXXTESTERFLAGS = -Wall -Wextra -Werror -g -std=c++17 -pthread
 
 TESTERLINKS = -lgtest -lgmock -lcurl
 
+PURPLE = \033[1;35m
+CYAN = \033[1;36m
+UNDERLINED_PURPLE = \033[4;35m
+RESET = \033[0m
+
 SRC = main.cpp src/Socket.cpp src/HttpRequest.cpp \
 	   src/WebServer.cpp src/Client.cpp src/Server.cpp \
 	   src/LocationBlock.cpp src/Configuration.cpp \
@@ -17,24 +22,41 @@ SRC = main.cpp src/Socket.cpp src/HttpRequest.cpp \
 	   src/ErrorPageRule.cpp src/Block.cpp \
 	   src/SessionData.cpp
 
-OBJ_SRC_DIR = ./obj
+OBJ_DIR = obj
 
-OBJ = $(SRC:%.cpp=$(OBJ_SRC_DIR)/%.o)
+OBJ = $(patsubst src/%.cpp, $(OBJ_DIR)/%.o, $(SRC))
 
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+		@echo "$(PURPLE)$(NAME) compiled successfully.$(RESET)"
 
-$(OBJ_SRC_DIR)/%.o: %.cpp
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(OBJ): | $(OBJ_DIR)
+
+$(OBJ_DIR):
+		@mkdir -p $(OBJ_DIR)
+
+$(OBJ_DIR)/%.o: src/%.cpp
+		@mkdir -p $(@D)
+		@echo "$(PURPLE)Compiling $(UNDERLINED_PURPLE)$<$(RESET)"
+		@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+#$(OBJ_SRC_DIR)/%.o: %.cpp
+#	mkdir -p $(dir $@)
+#	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -rfd $(OBJ_SRC_DIR)
-	
+		@echo "$(PURPLE)Cleaning up...$(RESET)"
+		@rm -f $(OBJ)
+		@if [ -d "$(OBJ_DIR)" ]; then rm -rf $(OBJ_DIR); fi
+		@echo "$(PURPLE)Clean complete!$(RESET)"
+
 fclean: clean
-	rm -f $(NAME) $(TESTERNAME) server_output.log cgi_debug.log
+		@echo "$(PURPLE)Removing  \033[9m$(NAME)$(RESET)"
+		@rm -f $(NAME)
+		@echo "$(PURPLE)Removing  \033[9m$(TESTERNAME)$(RESET)"
+		@rm -f $(TESTERNAME) server_output.log cgi_debug.log
+		@echo "$(PURPLE)Removing complete!$(RESET)"
 
 re: fclean all
 
