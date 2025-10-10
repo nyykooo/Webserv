@@ -41,6 +41,7 @@ class HttpRequest
 		std::map<std::string, std::string>	_cookies;
 		std::string 						_uploadPath;
 		size_t 								_uploadSize;
+		bool								_chunked;
 
 		// Private methods
     	bool isValidContentLengthFormat(const std::string &value);
@@ -76,11 +77,13 @@ class HttpRequest
 		int 										getParseStatus() const;
 		const std::string 							&getParseError() const;
 		bool 										hasParseError() const;
+		bool										getChunked() const;
 
 		// setters
 		void setUploadPath(const std::string &path);
 		void setUploadSize(size_t size);
 		void setCookies(const std::string& key, const std::string& value);
+		void setChunked(bool stat);
 };
 
 #endif

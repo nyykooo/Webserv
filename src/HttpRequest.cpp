@@ -17,11 +17,11 @@ HttpRequest::HttpRequest()
 	  _sessions(NULL),
 	  _uploadSize(0),
 	  _config(NULL),
-	  session(NULL)
+	  session(NULL),
+	  _chunked(false)
 {}
 
-HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _sessions(sessions), _uploadSize(0), _config(config)
-{
+HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _sessions(sessions), _uploadSize(0), _config(config), _chunked(false) {
 	parse(request_text);
 }
 
@@ -366,4 +366,11 @@ const std::string& HttpRequest::getPath() const {
 
 const std::string& HttpRequest::getVersion() const {
 	return (version);
+}
+bool HttpRequest::getChunked() const {
+	return _chunked;
+}
+
+void HttpRequest::setChunked(bool stat){
+	_chunked = stat;
 }

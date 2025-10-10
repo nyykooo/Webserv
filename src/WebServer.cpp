@@ -290,65 +290,17 @@ int WebServer::receiveData(int client_fd)
 	std::string newData(_buffer);
 	//std::cout << CYAN << newData << RESET << std::endl;
 
+	// APROFUNDAR ANALISE SOBRE O DOS E MAX_ABSOLUTE_REQUEST_SIZE
 	// Proteção contra DOS
-	if (_partial_requests[client_fd].size() + newData.size() > MAX_ABSOLUTE_REQUEST_SIZE)
-	{
-		// Criar um erro 413 "Request entity too large"
-		_partial_requests.erase(client_fd);
-		return -1;
-	}
+	// if (_partial_requests[client_fd].size() + newData.size() > MAX_ABSOLUTE_REQUEST_SIZE)
+	// {
+	// 	// Criar um erro 413 "Request entity too large"
+	// 	_partial_requests.erase(client_fd);
+	// 	return -1;
+	// }
 
-	_partial_requests[client_fd] += newData;
 
-	// VALIDATION
-	size_t header_end = _partial_requests[client_fd].find("\r\n\r\n");
-	if (header_end != std::string::npos)
-	{
-		// is post?
-		bool isPost = _partial_requests[client_fd].rfind("POST ", 0) == 0;
-
-		if (isPost)
-		{
-			std::string headers = _partial_requests[client_fd].substr(0, header_end);
-			std::string headers_lower = toLower(headers);
-			Configuration *config = findConfigForRequestFast(_partial_requests[client_fd], client_fd);
-
-			// Content-Length é obrigatório para POST
-			if (headers_lower.find("content-length:") == std::string::npos)
-			{
-				// Criar um 411 Lenght is required
-				_partial_requests.erase(client_fd);
-				return -1;
-			}
-
-			// Verificar limites de Content-Length
-			int cl = extractContentLength(headers_lower);
-
-			// Validar contra limite da configuração
-			if (config && cl > config->getRequestSize())
-			{
-				// Criar um 413 Content-Length exceeds server limit
-				_partial_requests.erase(client_fd);
-				return -1;
-			}
-
-			if (cl > MAX_MEMORY_FILE_SIZE)
-			{
-				Client *client = findClient(client_fd, _clients_vec);
-				if (!client)
-				{
-					_partial_requests.erase(client_fd);
-					return -1;
-				}
-				return startLargePostUpload(client, header_end + 4, cl);
-			}
-		}
-	}
-
-	if (!isRequestComplete(_partial_requests[client_fd]))
-		return 0; // Aguarda mais dados
-
-	Configuration *config = findConfigForRequestFast(_partial_requests[client_fd], client_fd);
+	Configuration *config = findConfigForRequestFast(newData, client_fd);
 	if (!config)
 	{
 		std::stringstream ss;
@@ -357,10 +309,33 @@ int WebServer::receiveData(int client_fd)
 		_partial_requests.erase(client_fd);
 		return -1;
 	}
-	HttpRequest *request = NULL;
 	try
 	{
-		request = new HttpRequest(_partial_requests[client_fd], config, _sessions);
+		// encontra o client
+		Client *client = findClient(client_fd, _clients_vec);
+		// verifica se o client tem req
+		if (client->_request != NULL)
+		{
+			// verifica se sua req tem chunked == false
+			if (!client->_request->getChunked())
+			{
+				delete client->_request;
+				HttpRequest *request  = new HttpRequest(newData, config, _sessions);
+				client->_request = request;
+			}
+			// se existir faz append do novo chunk na request
+			else if (client->_request->getChunked())
+				client->_request->appendChunk(newData);
+
+			// verificar se o chunk eh o ultimo (pensar isso melhor com o Diogo)
+			if (!isRequestComplete(newData))
+			{
+				client->_request->setChunked(true);
+				return 0; // Aguarda mais dados
+			}
+			else
+				client->_request->setChunked(false);
+		}
 	}
 	catch (const std::exception &e)
 	{
@@ -371,13 +346,6 @@ int WebServer::receiveData(int client_fd)
 		return -1;
 	}
 
-	_partial_requests.erase(client_fd);
-
-	Client *client = findClient(client_fd, _clients_vec);
-	if (client->_request != NULL)
-		delete client->_request;
-
-	client->_request = request;
 	return (1);
 }
 static void sendResponseToClient(Client *client)
@@ -716,32 +684,32 @@ void WebServer::handleClientInput(Client *client, int i)
 			setClientTime(_events[i].data.fd);
 		}
 	}
-	else if (client->getProcessingState() == RECEIVING_LARGE)
-	{
-		ssize_t bytes = recv(client->getSocketFd(), _buffer, BUFFER_SIZE - 1, 0);
-		if (bytes <= 0)
-		{
-			if (client->getUploadFd() != -1)
-			{
-				close(client->getUploadFd());
-				std::remove(client->getUploadPath().c_str());
-			}
-			deleteClient(client->getSocketFd(), 0);
-			return;
-		}
+	// else if (client->getProcessingState() == RECEIVING_LARGE)
+	// {
+	// 	ssize_t bytes = recv(client->getSocketFd(), _buffer, BUFFER_SIZE - 1, 0);
+	// 	if (bytes <= 0)
+	// 	{
+	// 		if (client->getUploadFd() != -1)
+	// 		{
+	// 			close(client->getUploadFd());
+	// 			std::remove(client->getUploadPath().c_str());
+	// 		}
+	// 		deleteClient(client->getSocketFd(), 0);
+	// 		return;
+	// 	}
 
-		int result = continueLargePostUpload(client, _buffer, bytes);
-		if (result == 1)
-		{
-			client->setProcessingState(PROCESSING);
-			_events[i].events = EPOLLOUT;
-			epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, client->getSocketFd(), &_events[i]);
-		}
-		else if (result == -1)
-			deleteClient(client->getSocketFd(), 0);
+	// 	int result = continueLargePostUpload(client, _buffer, bytes);
+	// 	if (result == 1)
+	// 	{
+	// 		client->setProcessingState(PROCESSING);
+	// 		_events[i].events = EPOLLOUT;
+	// 		epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, client->getSocketFd(), &_events[i]);
+	// 	}
+	// 	else if (result == -1)
+	// 		deleteClient(client->getSocketFd(), 0);
 
-		setClientTime(client->getSocketFd());
-	}
+	// 	setClientTime(client->getSocketFd());
+	// }
 	else
 	{ // se o mano client esta com EPOLLIN siginidca que ele da pronto pra ser lido. E o status do processamento da req no server eh RECEIVING.
 		std::cerr << "AVISO: Cliente " << client->getSocketFd()
@@ -1038,82 +1006,82 @@ std::string WebServer::extractHostHeaderSimple(const std::string &rawRequest)
 	return host;
 }
 
-int WebServer::startLargePostUpload(Client *client, size_t body_start, int content_length)
-{
-	Configuration *config = findConfigForRequestFast(_partial_requests[client->getSocketFd()], client->getSocketFd());
-	if (!config)
-	{
-		_partial_requests.erase(client->getSocketFd());
-		return -1;
-	}
+// int WebServer::startLargePostUpload(Client *client, size_t body_start, int content_length)
+// {
+	// Configuration *config = findConfigForRequestFast(_partial_requests[client->getSocketFd()], client->getSocketFd());
+	// if (!config)
+	// {
+	// 	_partial_requests.erase(client->getSocketFd());
+	// 	return -1;
+	// }
 
-	std::string uploadDir = config->getUploadDirectory();
-	if (uploadDir.empty())
-		uploadDir = "/tmp/webserv_uploads";
+	// std::string uploadDir = config->getUploadDirectory();
+	// if (uploadDir.empty())
+	// 	uploadDir = "/tmp/webserv_uploads";
 
-	struct stat st;
-	if (stat(uploadDir.c_str(), &st) == -1)
-	{
-		if (mkdir(uploadDir.c_str(), 0755) == -1)
-		{
-			_partial_requests.erase(client->getSocketFd());
-			return -1;
-		}
-	}
-	else if (!S_ISDIR(st.st_mode))
-	{
-		_partial_requests.erase(client->getSocketFd());
-		return -1;
-	}
+	// struct stat st;
+	// if (stat(uploadDir.c_str(), &st) == -1)
+	// {
+	// 	if (mkdir(uploadDir.c_str(), 0755) == -1)
+	// 	{
+	// 		_partial_requests.erase(client->getSocketFd());
+	// 		return -1;
+	// 	}
+	// }
+	// else if (!S_ISDIR(st.st_mode))
+	// {
+	// 	_partial_requests.erase(client->getSocketFd());
+	// 	return -1;
+	// }
 
-	std::ostringstream tempname;
-	tempname << uploadDir << "/upload_" << time(NULL) << "_" << rand() % 10000 << ".tmp";
-	std::string tempPath = tempname.str();
+	// std::ostringstream tempname;
+	// tempname << uploadDir << "/upload_" << time(NULL) << "_" << rand() % 10000 << ".tmp";
+	// std::string tempPath = tempname.str();
 
-	int uploadFd = open(tempPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (uploadFd == -1)
-	{
-		_partial_requests.erase(client->getSocketFd());
-		return -1;
-	}
+	// int uploadFd = open(tempPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	// if (uploadFd == -1)
+	// {
+	// 	_partial_requests.erase(client->getSocketFd());
+	// 	return -1;
+	// }
 
-	std::string originalHeaders = _partial_requests[client->getSocketFd()].substr(0, body_start);
-	client->setOriginalHeaders(originalHeaders);
-	client->setUploadFd(uploadFd);
-	client->setUploadSize(content_length);
-	client->setUploadReceived(0);
-	client->setUploadPath(tempPath);
-	client->setProcessingState(RECEIVING_LARGE);
+	// std::string originalHeaders = _partial_requests[client->getSocketFd()].substr(0, body_start);
+	// client->setOriginalHeaders(originalHeaders);
+	// // client->setUploadFd(uploadFd);
+	// client->setUploadSize(content_length);
+	// client->setUploadReceived(0);
+	// // client->setUploadPath(tempPath);
+	// client->setProcessingState(RECEIVING_LARGE);
 
-	std::string &data = _partial_requests[client->getSocketFd()];
-	size_t body_length = data.length() - body_start;
+	// std::string &data = _partial_requests[client->getSocketFd()];
+	// size_t body_length = data.length() - body_start;
 
-	if (body_length > 0)
-	{
-		const char *body_data = data.c_str() + body_start;
-		ssize_t bytes_written = write(uploadFd, body_data, body_length);
+	// if (body_length > 0)
+	// {
+	// 	const char *body_data = data.c_str() + body_start;
+	// 	ssize_t bytes_written = write(uploadFd, body_data, body_length);
 
-		if (bytes_written > 0)
-		{
-			client->setUploadReceived(client->getUploadReceived() + bytes_written);
-		}
-	}
+	// 	if (bytes_written > 0)
+	// 	{
+	// 		client->setUploadReceived(client->getUploadReceived() + bytes_written);
+	// 	}
+	// }
 
-	_partial_requests.erase(client->getSocketFd());
+	// _partial_requests.erase(client->getSocketFd());
 
-	if (client->getUploadReceived() >= client->getUploadSize())
-	{
-		return finishLargePostUpload(client);
-	}
+	// if (client->getUploadReceived() >= client->getUploadSize())
+	// {
+	// 	return finishLargePostUpload(client);
+	// }
 
-	std::stringstream ss;
-	ss << "Iniciando upload grande: " << tempPath
-	   << " (" << client->getUploadReceived() << "/"
-	   << client->getUploadSize() << " bytes)";
-	printLog(ss.str(), WHITE, std::cout);
+	// std::stringstream ss;
+	// ss << "Iniciando upload grande: " << tempPath
+	//    << " (" << client->getUploadReceived() << "/"
+	//    << client->getUploadSize() << " bytes)";
+	// printLog(ss.str(), WHITE, std::cout);
 
-	return 0; // Continuar recebendo
-}
+	// return 0; // Continuar recebendo
+// }
 
 int WebServer::continueLargePostUpload(Client *client, const char *buffer, size_t length)
 {
