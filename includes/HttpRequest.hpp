@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/10/04 19:52:37 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/11 05:00:10 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,11 +37,11 @@ class HttpRequest
 		std::string							version;
 		std::map<std::string, std::string> 	headers;
 		std::string							body;
-		std::vector<SessionData *>*			_sessions;
 		std::map<std::string, std::string>	_cookies;
 		std::string 						_uploadPath;
 		size_t 								_uploadSize;
 		bool								_chunked;
+		std::vector<SessionData *>*			_sessions;
 
 		// Private methods
     	bool isValidContentLengthFormat(const std::string &value);

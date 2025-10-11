@@ -325,7 +325,8 @@ int WebServer::receiveData(int client_fd)
 			}
 			// se existir faz append do novo chunk na request
 			else if (client->_request->getChunked())
-				client->_request->appendChunk(newData);
+				std::cout << "por implementar" << std::endl;
+				//client->_request->appendChunk(newData);
 
 			// verificar se o chunk eh o ultimo (pensar isso melhor com o Diogo)
 			if (!isRequestComplete(newData))

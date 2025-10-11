@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/06 20:36:38 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/11 05:06:57 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,14 @@
 
 HttpRequest::HttpRequest()
 	: _parseStatus(200),
-	  _sessions(NULL),
 	  _uploadSize(0),
-	  _config(NULL),
-	  session(NULL),
-	  _chunked(false)
+	  _chunked(false),
+	_sessions(NULL),
+	_config(NULL),
+	session(NULL)
 {}
 
-HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _sessions(sessions), _uploadSize(0), _config(config), _chunked(false) {
+HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _uploadSize(0),  _chunked(false),  _sessions(sessions), _config(config) {
 	parse(request_text);
 }
 
