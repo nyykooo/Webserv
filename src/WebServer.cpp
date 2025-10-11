@@ -320,8 +320,7 @@ int WebServer::receiveData(int client_fd)
 			if (!client->_request->getChunked())
 			{
 				delete client->_request;
-				HttpRequest *request  = new HttpRequest(newData, config, _sessions);
-				client->_request = request;
+				client->_request   = new HttpRequest(newData, config, _sessions);
 			}
 			// se existir faz append do novo chunk na request
 			else if (client->_request->getChunked())
@@ -337,6 +336,9 @@ int WebServer::receiveData(int client_fd)
 			else
 				client->_request->setChunked(false);
 		}
+		else
+			client->_request   = new HttpRequest(newData, config, _sessions);
+
 	}
 	catch (const std::exception &e)
 	{
