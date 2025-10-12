@@ -52,7 +52,6 @@ class HttpRequest
 		void parseBody(std::istringstream &stream);
 		void parseCookies();
 		void checkCreatedSessions(const std::string& cookiesLine);
-		bool chunkedRequestCompleted(const std::string& str);
 
 	public:
 		// Constructor
@@ -61,6 +60,8 @@ class HttpRequest
 		HttpRequest(const HttpRequest& other);
 		HttpRequest& operator=(const HttpRequest& other);
 		~HttpRequest();
+
+		bool chunkedRequestCompleted(const std::string& str);
 
 		// public atributes
 		Configuration*	_config;

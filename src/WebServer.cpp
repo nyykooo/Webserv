@@ -323,20 +323,22 @@ int WebServer::receiveData(int client_fd)
 				client->_request   = new HttpRequest(newData, config, _sessions);
 			}
 			// se existir faz append do novo chunk na request
-/* 			else if (client->_request->getChunked())
-				std::cout << "por implementar" << std::endl; */
-				//client->_request->appendChunk(newData);
+			else if (client->_request->getChunked() && !client->_request->chunkedRequestCompleted(newData))
+			{
+				std::cout << "req incompleted\n";
+				return (0);
+			}
 
 			// verificar se o chunk eh o ultimo (pensar isso melhor com o Diogo)
-			if (client->_request->getChunked() == true && !client->_request->isRequestCompleted())
-				return (0);
-/* 			if (!isRequestComplete(newData))
+			// if (client->_request->getChunked() == true && !client->_request->isRequestCompleted()){
+			// 	return (0);}
+			if (!isRequestComplete(newData))
 			{
 				client->_request->setChunked(true);
 				return 0; // Aguarda mais dados
 			}
 			else
-				client->_request->setChunked(false); */
+				client->_request->setChunked(false);
 		}
 		else {
 			client->_request   = new HttpRequest(newData, config, _sessions);
@@ -651,11 +653,12 @@ bool WebServer::isRequestComplete(const std::string &data)
 	std::string headers_lower = toLower(headers); // Converte uma vez
 
 	// Transfer-Encoding: chunked
-	if (headers_lower.find("transfer-encoding: chunked") != std::string::npos)
+	std::cout << "Headers: " <<  headers << std::endl;
+	if (headers_lower.find("Transfer-Encoding: chunked") != std::string::npos)
 		return data.find("0\r\n\r\n") != std::string::npos;
 
 	// Content-Length
-	if (headers_lower.find("content-length:") != std::string::npos)
+	if (headers_lower.find("Content-Length:") != std::string::npos)
 	{
 		int content_length = extractContentLength(headers_lower);
 		if (content_length >= 0)
@@ -680,7 +683,7 @@ void WebServer::handleClientInput(Client *client, int i)
 		}
 		else if (data == 0)
 		{
-			//std::cout << "chega aqui?" << std::endl;
+			std::cout << "chega aqui?" << std::endl;
 			setClientTime(_events[i].data.fd);
 			return;
 		}
@@ -692,32 +695,6 @@ void WebServer::handleClientInput(Client *client, int i)
 			setClientTime(_events[i].data.fd);
 		}
 	}
-	// else if (client->getProcessingState() == RECEIVING_LARGE)
-	// {
-	// 	ssize_t bytes = recv(client->getSocketFd(), _buffer, BUFFER_SIZE - 1, 0);
-	// 	if (bytes <= 0)
-	// 	{
-	// 		if (client->getUploadFd() != -1)
-	// 		{
-	// 			close(client->getUploadFd());
-	// 			std::remove(client->getUploadPath().c_str());
-	// 		}
-	// 		deleteClient(client->getSocketFd(), 0);
-	// 		return;
-	// 	}
-
-	// 	int result = continueLargePostUpload(client, _buffer, bytes);
-	// 	if (result == 1)
-	// 	{
-	// 		client->setProcessingState(PROCESSING);
-	// 		_events[i].events = EPOLLOUT;
-	// 		epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, client->getSocketFd(), &_events[i]);
-	// 	}
-	// 	else if (result == -1)
-	// 		deleteClient(client->getSocketFd(), 0);
-
-	// 	setClientTime(client->getSocketFd());
-	// }
 	else
 	{ // se o mano client esta com EPOLLIN siginidca que ele da pronto pra ser lido. E o status do processamento da req no server eh RECEIVING.
 		std::cerr << "AVISO: Cliente " << client->getSocketFd()

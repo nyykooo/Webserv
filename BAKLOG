@@ -27,3 +27,4 @@ Legenda:
 [ ] Diogo - Pesquisar sobre boundary
 [ ] Diogo - Manter tracking do chunk-size -> fazer parsing disso na HttpRequest
 [ ] Nicho - Enviar para HttpReq e avaliar se o pedido foi finalizado ou se ainda falta receber chunks
+[ ] Metodo "chunkedRequestCompleted" deve retornar int para avaliarmos os erros dinamicamente!
