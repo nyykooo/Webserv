@@ -323,22 +323,26 @@ int WebServer::receiveData(int client_fd)
 				client->_request   = new HttpRequest(newData, config, _sessions);
 			}
 			// se existir faz append do novo chunk na request
-			else if (client->_request->getChunked())
-				std::cout << "por implementar" << std::endl;
+/* 			else if (client->_request->getChunked())
+				std::cout << "por implementar" << std::endl; */
 				//client->_request->appendChunk(newData);
 
 			// verificar se o chunk eh o ultimo (pensar isso melhor com o Diogo)
-			if (!isRequestComplete(newData))
+			if (client->_request->getChunked() == true && !client->_request->isRequestCompleted())
+				return (0);
+/* 			if (!isRequestComplete(newData))
 			{
 				client->_request->setChunked(true);
 				return 0; // Aguarda mais dados
 			}
 			else
-				client->_request->setChunked(false);
+				client->_request->setChunked(false); */
 		}
-		else
+		else {
 			client->_request   = new HttpRequest(newData, config, _sessions);
-
+			if (client->_request->getChunked() == true && !client->_request->isRequestCompleted())
+				return (0);
+		}
 	}
 	catch (const std::exception &e)
 	{
@@ -570,7 +574,7 @@ void WebServer::startServer()
 		try
 		{
 			handleEvents(event_count);
-			lookForTimeouts();
+			//lookForTimeouts();
 		}
 		catch (const std::exception &e)
 		{
@@ -676,6 +680,7 @@ void WebServer::handleClientInput(Client *client, int i)
 		}
 		else if (data == 0)
 		{
+			//std::cout << "chega aqui?" << std::endl;
 			setClientTime(_events[i].data.fd);
 			return;
 		}

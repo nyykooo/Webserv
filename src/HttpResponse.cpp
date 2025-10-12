@@ -784,6 +784,8 @@ void HttpResponse::execMethod()
 	std::string method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
 
+	if (_req->hasParseError())
+		return ;
 	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it)
 	{
 		if (*it != "GET" && *it != "POST" && *it != "DELETE")
@@ -1149,16 +1151,6 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0), _method
 	_client = client;
 	_conf = client->_request->_config;
 	_req = client->_request;
-	if (_req->hasParseError())
-	{
-		_resStatus = _req->getParseStatus();
-		_loc = NULL;
-		_block = _conf;
-		setStatusTexts();
-		setMimeTypes();
-		setEnv(); // teste
-		return;
-	}
 	_loc = checkLocationBlock();
 	setStatusTexts();
 	if (_loc != NULL)
@@ -1167,6 +1159,11 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0), _method
 		_block = _conf;
 	setMimeTypes();
 	setEnv(); // teste
+	if (_req->hasParseError())
+	{
+		_resStatus = _req->getParseStatus();
+		return;
+	}
 }
 
 // ### SETTERS ###

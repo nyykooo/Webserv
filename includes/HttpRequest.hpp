@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/10/11 05:00:10 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/12 04:23:25 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,17 +31,18 @@ class HttpRequest
 	private:
 		// Attributes
 		int									_parseStatus;
-		std::string							_parseError;
 		std::string							method;
 		std::string							path;
 		std::string							version;
 		std::map<std::string, std::string> 	headers;
-		std::string							body;
+		std::string							_body;
 		std::map<std::string, std::string>	_cookies;
 		std::string 						_uploadPath;
 		size_t 								_uploadSize;
 		bool								_chunked;
 		std::vector<SessionData *>*			_sessions;
+		bool								_requestComplete;
+		std::string							_bodyBuffer;
 
 		// Private methods
     	bool isValidContentLengthFormat(const std::string &value);
@@ -49,9 +50,9 @@ class HttpRequest
 		void parse_requestline(const std::string &request_line);
 		void parse_headers(std::istringstream &stream);
 		void parseBody(std::istringstream &stream);
-		void setParseError(int status, const std::string& error);
 		void parseCookies();
 		void checkCreatedSessions(const std::string& cookiesLine);
+		bool chunkedRequestCompleted(const std::string& str);
 
 	public:
 		// Constructor
@@ -75,15 +76,16 @@ class HttpRequest
 		const std::string							&getUploadPath() const;
 		size_t 										getUploadSize() const;
 		int 										getParseStatus() const;
-		const std::string 							&getParseError() const;
 		bool 										hasParseError() const;
 		bool										getChunked() const;
+		bool										isRequestCompleted() const;
 
 		// setters
 		void setUploadPath(const std::string &path);
 		void setUploadSize(size_t size);
 		void setCookies(const std::string& key, const std::string& value);
 		void setChunked(bool stat);
+		void setParseStatus(int status);
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/11 05:06:57 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/12 04:46:36 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,13 @@ HttpRequest::HttpRequest()
 	  _uploadSize(0),
 	  _chunked(false),
 	_sessions(NULL),
+	_requestComplete(false),
 	_config(NULL),
 	session(NULL)
 {}
 
-HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _uploadSize(0),  _chunked(false),  _sessions(sessions), _config(config) {
+HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _uploadSize(0), 
+				_chunked(false),  _sessions(sessions), _requestComplete(false), _config(config)  {
 	parse(request_text);
 }
 
@@ -29,38 +31,109 @@ HttpRequest::~HttpRequest() {}
 
 HttpRequest::HttpRequest(const HttpRequest &other)
 	: _parseStatus(other._parseStatus),
-	  _parseError(other._parseError),
 	  method(other.method),
 	  path(other.path),
 	  version(other.version),
 	  headers(other.headers),
-	  body(other.body),
+	  _body(other._body),
+	  _requestComplete(other._requestComplete),
 	  _config(other._config)
 {}
+
+bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
+	std::map<std::string, std::string>::const_iterator transferEnconding = headers.find("Transfer-Encoding");
+	if (transferEnconding == headers.end())
+		return (true);
+	_chunked = true;
+	if (transferEnconding->second != "chunked") {
+		_parseStatus = 400;
+		return (true);
+	}
+	size_t pos = 0;
+	std::cout << RED << str << RESET << std::endl;
+
+	while (true) {
+		// Find the CRLF that terminates the chunk-size line
+		size_t crlf = str.find("\r\n", pos);
+		if (crlf == std::string::npos)
+			return (false); // incomplete line
+
+		std::string sizeStr = _bodyBuffer.substr(pos, crlf - pos);
+
+        // Convert hex size to integer
+		char *endptr = NULL;
+		long chunkSize = strtol(sizeStr.c_str(), &endptr, 16);
+		if (*endptr != '\0' || chunkSize < 0) {
+			_parseStatus = 400;
+            return (true); // invalid hex size
+		}
+
+		pos = crlf + 2; // move after "\r\n"
+
+		// Check if we have enough bytes for the chunk data
+		if (_bodyBuffer.size() < pos + static_cast<size_t>(chunkSize) + 2)
+			return (false); // incomplete chunk
+
+		// Chunk size 0 means end of body
+		if (chunkSize == 0) {
+			// Verify it ends with "\r\n"
+			if (_bodyBuffer.size() < pos + 2)
+				return false;
+			if (_bodyBuffer.substr(pos, 2) != "\r\n") {
+				_parseStatus = 400;
+				return true;
+            }
+
+            _bodyBuffer.erase(0, pos + 2); // remove parsed part
+            _requestComplete = true;
+            return true; // fully parsed
+        }
+        // Append the actual data to the de-chunked body
+		_body.append(_bodyBuffer, pos, chunkSize);
+		pos += chunkSize;
+
+		// After chunk data, there must be a CRLF
+		if (_bodyBuffer.substr(pos, 2) != "\r\n") {
+			_parseStatus = 400;
+			return true;
+		}
+		pos += 2;
+	}
+	return (false);
+}
 
 void HttpRequest::parse(const std::string &request_text)
 {
 	std::istringstream	stream(request_text);
 	std::string			request_line;
 
-	if (std::getline(stream, request_line) && !request_line.empty())
-	{
-		parse_requestline(request_line);
-		std::stringstream ss;
-		ss << "HTTP Request line parsed: " << method << " " << path << " " << version;
-		printLog(ss.str(), WHITE, std::cout);
+	std::cout << YELLOW << request_text << RESET << std::endl;
+	if (_chunked && !chunkedRequestCompleted(stream.str())) // to keep parsing the chunk request and don't check the other headers that come ONLY in first recv call
+		return ;
+	else {
+		if (std::getline(stream, request_line) && !request_line.empty())
+		{
+			parse_requestline(request_line);
+			std::stringstream ss;
+			ss << "HTTP Request line parsed: " << method << " " << path << " " << version;
+			printLog(ss.str(), WHITE, std::cout);
+			if (_parseStatus != 200)
+				return;
+		}
+		else
+		{
+			setParseStatus(400);
+				return;
+		}
+		parse_headers(stream);
 		if (_parseStatus != 200)
-			return;
+				return;
+		parseCookies();
+		if (!chunkedRequestCompleted(stream.str())) // It only enters here in the first chunked request
+			return ;
 	}
-	else
-	{
-		setParseError(400, "Empty or invalid request line");
-			return;
-	}
-	parse_headers(stream);
 	if (_parseStatus != 200)
 			return;
-	parseCookies();
 	if (stream.peek() != EOF)
 	{
 		parseBody(stream);
@@ -75,22 +148,22 @@ void HttpRequest::parse_requestline(const std::string &request_line)
 	stream >> method >> path >> version >> further;
 	if (method.empty() || path.empty() || version.empty() || !further.empty())
 	{
-		setParseError(400, "Invalid HTTP request line format");
+		setParseStatus(400);
 			return;
 	}
 	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
-		setParseError(405, "Method not allowed: " + method);
+		setParseStatus(405);
 			return;
 	}
 	if (version != "HTTP/1.1")
 	{
-		setParseError(505, "HTTP version not supported: " + version);
+		setParseStatus(505);
 			return;
 	}
 	if (path.length() > MAX_URI_LENGTH)
 	{
-		setParseError(414, "URI too long");
+		setParseStatus(414);
 			return;
 	}
 	this->method = method;
@@ -112,7 +185,7 @@ void HttpRequest::parse_headers(std::istringstream &stream)
 			
 		if (!header_line.empty() && std::isspace(header_line[0]))
 		{
-			setParseError(400, "Line folding is forbidden in HTTP headers");
+			setParseStatus(400);
 				return;
 		}
 		size_t colon_pos = header_line.find(':');
@@ -122,12 +195,12 @@ void HttpRequest::parse_headers(std::istringstream &stream)
 			std::string header_value = header_line.substr(colon_pos + 1);
 			if (header_name.length() > MAX_HEADER_NAME_LENGTH)
 			{
-				setParseError(400, "Header name too long");
+				setParseStatus(400);
 					return;
 			}
 			if (header_value.length() > MAX_HEADER_VALUE_LENGTH)
 			{
-				setParseError(400, "Header value too long");
+				setParseStatus(400);
 					return;
 			}
 			header_name.erase(header_name.find_last_not_of(" \t") + 1);
@@ -135,13 +208,13 @@ void HttpRequest::parse_headers(std::istringstream &stream)
 			headers[header_name] = header_value;
 			if (headers.size() > MAX_HEADERS_COUNT)
 			{
-				setParseError(400, "Too many headers");
+				setParseStatus(400);
 					return;
 			}
 		}
 		else
 		{
-			setParseError(400, "Invalid header format");
+			setParseStatus(400);
 				return;
 		}
 	}
@@ -151,51 +224,49 @@ void HttpRequest::parseBody(std::istringstream &stream)
 {
 	if (!_config)
 	{
-		setParseError(500, "Configuration required for request parsing");
+		setParseStatus(500);
 			return;
 	}
 	std::map<std::string, std::string>::const_iterator contentLengthIt = headers.find("Content-Length");
-	if (method == "POST")
+	std::map<std::string, std::string>::const_iterator transferEnconding = headers.find("Transfer-Encoding");
+	if (contentLengthIt == headers.end() && transferEnconding == headers.end())
 	{
-		if (contentLengthIt == headers.end())
-		{
-			setParseError(411, "Length required: POST requests must include Content-Length header");
-				return;
-		}
+		setParseStatus(411);
+		return ;
 	}
 	if (contentLengthIt != headers.end())
 	{
 		if (!isValidContentLengthFormat(contentLengthIt->second))
 		{
-			setParseError(400, "Invalid Content-Length format");
+			setParseStatus(400);
 				return;
 		}
 		long contentLength = std::atol(contentLengthIt->second.c_str());
 		if (contentLength < 0)
 		{
-			setParseError(400, "Invalid Content-Length: negative value");
+			setParseStatus(400);
 				return;
 		}
 		if (contentLength > _config->getRequestSize())
 		{
-			setParseError(413, "Content-Length exceeds server limit");
+			setParseStatus(413);
 				return;
 		}
 	}
 	std::string body_str((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
-	body = body_str;
-	if (body.length() > static_cast<size_t>(_config->getRequestSize()))
+	_body = body_str;
+	if (_body.length() > static_cast<size_t>(_config->getRequestSize()))
 	{
-		setParseError(413, "Request body too large");
+		setParseStatus(413);
 			return;
 	}
 	if (contentLengthIt != headers.end())
 	{
 		long contentLength = std::atol(contentLengthIt->second.c_str());
-		if (static_cast<long>(body.length()) != contentLength)
+		if (static_cast<long>(_body.length()) != contentLength)
 		{
-			setParseError(400, "Body size doesn't match Content-Length header");
-				return;
+			setParseStatus(400);
+			return ;
 		}
 	}
 }
@@ -217,10 +288,9 @@ bool HttpRequest::isValidContentLengthFormat(const std::string &value)
 	return true;
 }
 
-void HttpRequest::setParseError(int status, const std::string &error)
+void HttpRequest::setParseStatus(int status)
 {
 	_parseStatus = status;
-	_parseError = error;
 }
 
 bool HttpRequest::hasParseError() const
@@ -231,11 +301,6 @@ bool HttpRequest::hasParseError() const
 int HttpRequest::getParseStatus() const
 {
 	return _parseStatus;
-}
-
-const std::string &HttpRequest::getParseError() const
-{
-	return _parseError;
 }
 
 const std::string &HttpRequest::getUploadPath() const
@@ -353,7 +418,7 @@ const std::map<std::string, std::string>&	HttpRequest::getHeaders() const {
 }
 
 const std::string&	HttpRequest::getBody() const {
-	return (body);
+	return (_body);
 }
 
 const std::string& HttpRequest::getMethod() const {
@@ -373,4 +438,8 @@ bool HttpRequest::getChunked() const {
 
 void HttpRequest::setChunked(bool stat){
 	_chunked = stat;
+}
+
+bool	HttpRequest::isRequestCompleted() const {
+	return (_requestComplete);
 }
