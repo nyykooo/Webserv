@@ -88,6 +88,29 @@ void	LocationBlock::decrementLocationCurlyBracketsCount(void) {
 	_locationCurlyBracketsCount--;
 }
 
+// ######### VALIDATORS #########
+
+static long checkNewStatus(std::string word, const std::string& lastWord, LocationBlock& location) {
+	long status;
+	long value;
+	errno = 0;
+	char	*endptr;
+
+	status = -1;
+	if (word[0] == '=') {
+		word = word.substr(1, word.size());
+		status = std::strtol(word.c_str(), &endptr, 10);
+		if (errno == ERANGE || *endptr || status < 0 || word.empty())
+			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
+		return (status);
+	}
+	value = std::strtol(word.c_str(), &endptr, 10);
+	if (errno == ERANGE || *endptr || value > 599 || value < 300)
+		throw Configuration::WrongConfigFileException("value \"" + word + "\" must be between 300 and 599");
+	location.setErrorPage(static_cast<int>(value), lastWord, status);
+	return (status);
+}
+
 // ######### PARSERS #########
 
 void	parseRoot(std::string& line, LocationBlock& location) {
@@ -301,26 +324,4 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}
-}
-// ######### VALIDATORS #########
-
-static long checkNewStatus(std::string word, const std::string& lastWord, LocationBlock& location) {
-	long status;
-	long value;
-	errno = 0;
-	char	*endptr;
-
-	status = -1;
-	if (word[0] == '=') {
-		word = word.substr(1, word.size());
-		status = std::strtol(word.c_str(), &endptr, 10);
-		if (errno == ERANGE || *endptr || status < 0 || word.empty())
-			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
-		return (status);
-	}
-	value = std::strtol(word.c_str(), &endptr, 10);
-	if (errno == ERANGE || *endptr || value > 599 || value < 300)
-		throw Configuration::WrongConfigFileException("value \"" + word + "\" must be between 300 and 599");
-	location.setErrorPage(static_cast<int>(value), lastWord, status);
-	return (status);
 }
