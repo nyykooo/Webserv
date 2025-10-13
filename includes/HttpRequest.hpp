@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/10/12 04:23:25 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/13 03:53:13 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,6 @@ class HttpRequest
 
 		// Private methods
     	bool isValidContentLengthFormat(const std::string &value);
-		void parse(const std::string &request_text);
 		void parse_requestline(const std::string &request_line);
 		void parse_headers(std::istringstream &stream);
 		void parseBody(std::istringstream &stream);
@@ -62,6 +61,7 @@ class HttpRequest
 		~HttpRequest();
 
 		bool chunkedRequestCompleted(const std::string& str);
+		void parse(const std::string &request_text);
 
 		// public atributes
 		Configuration*	_config;

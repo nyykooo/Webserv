@@ -5,7 +5,7 @@
   sleep 2
   echo -en "5\r\npedia\r\n"
   sleep 2
-  echo -en "E\r\n in\r\nchunks.\r\n"
-  sleep 1
+  echo -en "C\r\n in\r\nchunks.\r\n"
+  sleep 2
   echo -en "0\r\n\r\n"
 ) | nc 127.0.0.1 8080

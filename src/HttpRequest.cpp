@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/12 04:46:36 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/13 20:46:30 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,65 +41,56 @@ HttpRequest::HttpRequest(const HttpRequest &other)
 {}
 
 bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
-	std::map<std::string, std::string>::const_iterator transferEnconding = headers.find("Transfer-Encoding");
-	if (transferEnconding == headers.end())
-		return (true);
-	_chunked = true;
-	if (transferEnconding->second != "chunked") {
-		_parseStatus = 400;
-		return (true);
-	}
 	size_t pos = 0;
-	std::cout << RED << str << RESET << std::endl;
 
 	while (true) {
+		_bodyBuffer = str;
 		// Find the CRLF that terminates the chunk-size line
-		size_t crlf = str.find("\r\n", pos);
+		size_t crlf = _bodyBuffer.find("\r\n", pos);
 		if (crlf == std::string::npos)
 			return (false); // incomplete line
-
 		std::string sizeStr = _bodyBuffer.substr(pos, crlf - pos);
+		
 
         // Convert hex size to integer
 		char *endptr = NULL;
 		long chunkSize = strtol(sizeStr.c_str(), &endptr, 16);
 		if (*endptr != '\0' || chunkSize < 0) {
 			_parseStatus = 400;
+			_requestComplete = true;
             return (true); // invalid hex size
 		}
-
 		pos = crlf + 2; // move after "\r\n"
-
-		// Check if we have enough bytes for the chunk data
-		if (_bodyBuffer.size() < pos + static_cast<size_t>(chunkSize) + 2)
-			return (false); // incomplete chunk
-
 		// Chunk size 0 means end of body
 		if (chunkSize == 0) {
+			
 			// Verify it ends with "\r\n"
-			if (_bodyBuffer.size() < pos + 2)
-				return false;
+			if (_bodyBuffer.size() < pos + 2) {
+				return true;
+			}
+				
 			if (_bodyBuffer.substr(pos, 2) != "\r\n") {
 				_parseStatus = 400;
 				return true;
             }
-
             _bodyBuffer.erase(0, pos + 2); // remove parsed part
             _requestComplete = true;
             return true; // fully parsed
         }
+		if (_bodyBuffer.size() < pos + chunkSize + 2)
+			return false; // wait for rest of chunk
         // Append the actual data to the de-chunked body
 		_body.append(_bodyBuffer, pos, chunkSize);
 		pos += chunkSize;
-
 		// After chunk data, there must be a CRLF
 		if (_bodyBuffer.substr(pos, 2) != "\r\n") {
 			_parseStatus = 400;
+			_requestComplete = true;
 			return true;
 		}
 		pos += 2;
 	}
-	return (false);
+	return (true);
 }
 
 void HttpRequest::parse(const std::string &request_text)
@@ -107,10 +98,10 @@ void HttpRequest::parse(const std::string &request_text)
 	std::istringstream	stream(request_text);
 	std::string			request_line;
 
-	std::cout << YELLOW << request_text << RESET << std::endl;
+	//std::cout << YELLOW << request_text << RESET << std::endl;
 	if (_chunked && !chunkedRequestCompleted(stream.str())) // to keep parsing the chunk request and don't check the other headers that come ONLY in first recv call
 		return ;
-	else {
+	else if (_chunked == false) {
 		if (std::getline(stream, request_line) && !request_line.empty())
 		{
 			parse_requestline(request_line);
@@ -127,14 +118,25 @@ void HttpRequest::parse(const std::string &request_text)
 		}
 		parse_headers(stream);
 		if (_parseStatus != 200)
-				return;
+			return;
 		parseCookies();
-		if (!chunkedRequestCompleted(stream.str())) // It only enters here in the first chunked request
+		std::map<std::string, std::string>::const_iterator transferEnconding = headers.find("Transfer-Encoding");
+		if (transferEnconding == headers.end())
 			return ;
+		if (transferEnconding->second != "chunked") {
+			_parseStatus = 400;
+			return ;
+		}
+		_chunked = true;
+		return ;
 	}
 	if (_parseStatus != 200)
-			return;
-	if (stream.peek() != EOF)
+		return;
+	if (_chunked) {
+		std::istringstream ss(_body);
+		parseBody(ss);
+	}
+	else if (stream.peek() != EOF)
 	{
 		parseBody(stream);
 	}

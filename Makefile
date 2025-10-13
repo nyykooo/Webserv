@@ -4,7 +4,7 @@ TESTERNAME= runTests
 
 CXX= c++
 
-CXXFLAGS= -Wall -Wextra -Werror -g -std=c++98 -O1 -fsanitize=address -fno-omit-frame-pointer
+CXXFLAGS= -Wall -Wextra -Werror -g -std=c++98 #-O1 -fsanitize=address -fno-omit-frame-pointer
 
 CXXTESTERFLAGS = -Wall -Wextra -Werror -g -std=c++17 -pthread
 

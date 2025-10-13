@@ -1265,6 +1265,7 @@ void HttpResponse::handlePOST()
 	//std::cout << "uploadDir: " << uploadDir << std::endl;
 	if (/* !createUploadDirectory(uploadDir) ||  */access(uploadDir.c_str(), W_OK) != 0)
 	{
+			std::cout << RED << "aqui?!" << RESET << std::endl;
 		_resStatus = 500; // Internal Server Error
 		_resBody = http_error_500_page;
 		//std::cout << RED << "Failed to access upload directory: " << uploadDir << RESET << std::endl;
@@ -1305,6 +1306,7 @@ void HttpResponse::handlePOST()
 		return;
 	} */
 	extractFileName();
+	_fileName = "test";
 	_fileName = uploadDir + _fileName;
 	//std::cout << GRAY << _fileName << RESET << std::endl;
 	if (!saveBodyToFile(_fileName, body))

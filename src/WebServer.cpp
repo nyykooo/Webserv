@@ -288,7 +288,7 @@ int WebServer::receiveData(int client_fd)
 
 	_buffer[bytes] = '\0';
 	std::string newData(_buffer);
-	//std::cout << CYAN << newData << RESET << std::endl;
+	std::cout << CYAN << _buffer << RESET << std::endl;
 
 	// APROFUNDAR ANALISE SOBRE O DOS E MAX_ABSOLUTE_REQUEST_SIZE
 	// Proteção contra DOS
@@ -322,26 +322,30 @@ int WebServer::receiveData(int client_fd)
 				delete client->_request;
 				client->_request   = new HttpRequest(newData, config, _sessions);
 			}
+			else
+				client->_request->parse(newData);
 			// se existir faz append do novo chunk na request
-			else if (client->_request->getChunked() && !client->_request->chunkedRequestCompleted(newData))
+/* 			else if (client->_request->getChunked() && !client->_request->chunkedRequestCompleted(newData))
 			{
 				std::cout << "req incompleted\n";
 				return (0);
-			}
+			} */
 
 			// verificar se o chunk eh o ultimo (pensar isso melhor com o Diogo)
-			// if (client->_request->getChunked() == true && !client->_request->isRequestCompleted()){
-			// 	return (0);}
-			if (!isRequestComplete(newData))
+
+			if (client->_request->getChunked() == true && !client->_request->isRequestCompleted()){
+				return (0);}
+/* 			if (!isRequestComplete(newData))
 			{
+				std::cout << "aquiiii" << std::endl;
 				client->_request->setChunked(true);
 				return 0; // Aguarda mais dados
 			}
 			else
-				client->_request->setChunked(false);
+				client->_request->setChunked(false); */
 		}
 		else {
-			client->_request   = new HttpRequest(newData, config, _sessions);
+			client->_request = new HttpRequest(newData, config, _sessions);
 			if (client->_request->getChunked() == true && !client->_request->isRequestCompleted())
 				return (0);
 		}
@@ -354,7 +358,6 @@ int WebServer::receiveData(int client_fd)
 		printLog(ss.str(), RED, std::cout);
 		return -1;
 	}
-
 	return (1);
 }
 static void sendResponseToClient(Client *client)
@@ -683,7 +686,6 @@ void WebServer::handleClientInput(Client *client, int i)
 		}
 		else if (data == 0)
 		{
-			std::cout << "chega aqui?" << std::endl;
 			setClientTime(_events[i].data.fd);
 			return;
 		}
