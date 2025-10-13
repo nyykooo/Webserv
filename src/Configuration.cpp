@@ -95,6 +95,15 @@ void	Configuration::decrementCurlyBracketsCount(void) {
 	_curlyBracketsCount--;
 }
 
+// ######### EXCEPTIONS #########
+
+const char* Configuration::WrongConfigFileException::what() const throw() {
+	return (_message.c_str());
+}
+
+
+// ######### VALIDATORS #########
+
 void	checkCurlyBrackets(std::string line) {
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
 	if (line.find('{') != std::string::npos)
@@ -106,15 +115,6 @@ void	checkCurlyBrackets(std::string line) {
 		Configuration::decrementCurlyBracketsCount();
 	}
 }
-
-// ######### EXCEPTIONS #########
-
-const char* Configuration::WrongConfigFileException::what() const throw() {
-	return (_message.c_str());
-}
-
-
-// ######### VALIDATORS #########
 
 unsigned long long validateRequestSize(std::string word, const char *tmpWord, char *endptr)
 {
