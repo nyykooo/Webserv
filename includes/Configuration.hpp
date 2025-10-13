@@ -13,7 +13,7 @@ class Configuration : public Block
 		
 
 	public:
-		std::vector<LocationBlock>			locations;
+		std::vector<LocationBlock>			_locations;
 
 		// SETTERS
 		void								setHost(const std::string& host, const std::string& port);
