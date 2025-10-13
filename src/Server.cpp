@@ -50,7 +50,7 @@ void	Server::initServerSocket(std::string ip, std::string port)
 {
 	struct addrinfo hints, *res;
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET6; // IPV6 to cover both IPV4 and IPV6
+	hints.ai_family = AF_INET; // IPV4
 	hints.ai_socktype = SOCK_STREAM; // TCP
 	hints.ai_flags = AI_NUMERICHOST; // Makes sure it's a numeric host (IPV4), avoiding DNS lookups (faster)
 	_hints = hints;
