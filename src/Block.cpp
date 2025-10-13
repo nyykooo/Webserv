@@ -12,11 +12,9 @@
 
 #include "../includes/headers.hpp"
 
-Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1)
-{
-	// _cgiMap[".php"] = "/usr/bin/php-cgi";
-	// _cgiMap[".py"] = "/usr/bin/python3";
-}
+// ######### LIFE CYCLE #########
+
+Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1) {}
 
 Block::Block(const Block& other)
 {
@@ -31,9 +29,7 @@ Block::Block(const Block& other)
 	_errorPage = other._errorPage;
 }
 
-Block::~Block()
-{
-}
+Block::~Block() {}
 
 Block &Block::operator=(const Block &other)
 {
@@ -52,7 +48,7 @@ Block &Block::operator=(const Block &other)
 	return *this;
 }
 
-// SETTERS
+// ######### SETTERS #########
 
 void Block::setRoot(const std::string& root)
 {
@@ -96,9 +92,23 @@ void Block::setAllowedMethods(const std::string& method)
 	}
 }
 
-void Block::removeAllowedMethods(void)
-{
-	_allowedMethods.clear();
+void	Block::setUploadDirectory(const std::string& str) {
+	_uploadDirectory = str;
+}
+
+const std::string&	Block::getUploadDirectory() const {
+	return (_uploadDirectory);
+}
+
+void	Block::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
+
+	ErrorPageRule rule;
+	rule.error = errorPage;
+	rule.errorPath = errorPagePath;
+	rule.newError = newStatus;
+
+	// std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
+	this->_errorPage.insert(rule);
 }
 
 void	Block::setRedirectStatusCode(int statusCode) {
@@ -109,7 +119,7 @@ void Block::setCgiMap(const std::string& extension, const std::string& path) {
 	_cgiMap[extension] = path;
 }
 
-// GETTERS
+// ######### GETTERS #########
 
 const std::string &Block::getRoot(void) const
 {
@@ -144,25 +154,13 @@ const std::map<std::string, std::string>& Block::getCgiMap(void) const {
 	return (_cgiMap);
 }
 
-void	Block::setUploadDirectory(const std::string& str) {
-	_uploadDirectory = str;
-}
-
-const std::string&	Block::getUploadDirectory() const {
-	return (_uploadDirectory);
-}
-
-void	Block::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
-
-	ErrorPageRule rule;
-	rule.error = errorPage;
-	rule.errorPath = errorPagePath;
-	rule.newError = newStatus;
-
-	// std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
-	this->_errorPage.insert(rule);
-}
-
 const std::set<ErrorPageRule>& Block::getErrorPage(void) const {
 	return (this->_errorPage);
+}
+
+// ######### REMOVE #########
+
+void Block::removeAllowedMethods(void)
+{
+	_allowedMethods.clear();
 }

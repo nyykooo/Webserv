@@ -1,5 +1,11 @@
 #include "../includes/headers.hpp"
 
+// ######### STATIC MEMBERS #########
+
+int LocationBlock::_locationCurlyBracketsCount = 0;
+
+// ######### LIFE CYCLE #########
+
 LocationBlock::LocationBlock() : Block() {}
 
 
@@ -40,19 +46,10 @@ LocationBlock& LocationBlock::operator=(const LocationBlock& other) {
 	return (*this);
 }
 
-int LocationBlock::_locationCurlyBracketsCount = 0;
-
-
-void	LocationBlock::setExactMatchModifier(bool value) {
-	_exactMatchModifier = value;
-}
+// ######### GETTERS #########
 
 bool	LocationBlock::getExactMatchModifier(void) const {
 	return (_exactMatchModifier);
-}
-
-void	LocationBlock::setLocation(const std::string& location) {
-	_location = location;
 }
 
 const std::string&	LocationBlock::getLocation(void) const {
@@ -63,6 +60,26 @@ int	LocationBlock::getLocationCurlyBracketsCount() {
 	return (_locationCurlyBracketsCount);
 }
 
+const std::map<std::string, std::string>&	LocationBlock::getCgiMap(void) const {
+	return (_cgiMap);
+}
+
+// ######### SETTERS #########
+
+void	LocationBlock::setExactMatchModifier(bool value) {
+	_exactMatchModifier = value;
+}
+
+void	LocationBlock::setLocation(const std::string& location) {
+	_location = location;
+}
+
+void	LocationBlock::setCgiMap(const std::string& extension, const std::string& path) {
+	_cgiMap[extension] = path;
+}
+
+// ######### CURLY BRACKETS #########
+
 void	LocationBlock::incrementLocationCurlyBracketsCount(void) {
 	_locationCurlyBracketsCount++;
 }
@@ -71,13 +88,30 @@ void	LocationBlock::decrementLocationCurlyBracketsCount(void) {
 	_locationCurlyBracketsCount--;
 }
 
-void	LocationBlock::setCgiMap(const std::string& extension, const std::string& path) {
-	_cgiMap[extension] = path;
+// ######### VALIDATORS #########
+
+static long checkNewStatus(std::string word, const std::string& lastWord, LocationBlock& location) {
+	long status;
+	long value;
+	errno = 0;
+	char	*endptr;
+
+	status = -1;
+	if (word[0] == '=') {
+		word = word.substr(1, word.size());
+		status = std::strtol(word.c_str(), &endptr, 10);
+		if (errno == ERANGE || *endptr || status < 0 || word.empty())
+			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
+		return (status);
+	}
+	value = std::strtol(word.c_str(), &endptr, 10);
+	if (errno == ERANGE || *endptr || value > 599 || value < 300)
+		throw Configuration::WrongConfigFileException("value \"" + word + "\" must be between 300 and 599");
+	location.setErrorPage(static_cast<int>(value), lastWord, status);
+	return (status);
 }
 
-const std::map<std::string, std::string>&	LocationBlock::getCgiMap(void) const {
-	return (_cgiMap);
-}
+// ######### PARSERS #########
 
 void	parseRoot(std::string& line, LocationBlock& location) {
 	std::stringstream ss(line);
@@ -91,7 +125,6 @@ void	parseRoot(std::string& line, LocationBlock& location) {
 		throw Configuration::WrongConfigFileException("no root defined.");
 	if (ss >> word)
 		throw Configuration::WrongConfigFileException("too many arguments when defining root.");
-	//std::cout << GRAY << webserv.getRoot() << RESET << std::endl;
 }
 
 void	parseAllowedMethods(std::string& line, LocationBlock& location) {
@@ -114,10 +147,6 @@ void	parseAllowedMethods(std::string& line, LocationBlock& location) {
 	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
 		location.setAllowedMethods(*it);
 	}
-
-/* 	for (std::vector<std::string>::const_iterator it = location.getMethods().begin(); it != location.getMethods().end(); it++) {
-		std::cout << *it << std::endl;
-	} */
 }
 
 void	parseRedirect(std::string& line, LocationBlock& location) {
@@ -154,27 +183,6 @@ void	parseAutoIndex(std::string& line, LocationBlock& location) {
 		throw Configuration::WrongConfigFileException("no value in autoindex defined.");
 	if (ss >> word)
 		throw Configuration::WrongConfigFileException("too many arguments when defining autoindex.");
-}
-
-static long checkNewStatus(std::string word, const std::string& lastWord, LocationBlock& location) {
-	long status;
-	long value;
-	errno = 0;
-	char	*endptr;
-
-	status = -1;
-	if (word[0] == '=') {
-		word = word.substr(1, word.size());
-		status = std::strtol(word.c_str(), &endptr, 10);
-		if (errno == ERANGE || *endptr || status < 0 || word.empty())
-			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
-		return (status);
-	}
-	value = std::strtol(word.c_str(), &endptr, 10);
-	if (errno == ERANGE || *endptr || value > 599 || value < 300)
-		throw Configuration::WrongConfigFileException("value \"" + word + "\" must be between 300 and 599");
-	location.setErrorPage(static_cast<int>(value), lastWord, status);
-	return (status);
 }
 
 static void	parseErrorPage(std::string& line, LocationBlock& location) {

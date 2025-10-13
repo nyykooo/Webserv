@@ -1,5 +1,12 @@
 #include "../includes/headers.hpp"
 
+// ######### STATIC MEMBERS #########
+
+int Configuration::_curlyBracketsCount = 0;
+std::set<std::pair<std::string, std::string> >	Configuration::_allHosts;
+
+// ######### LIFE CYCLE #########
+
 Configuration::Configuration(): Block(), _requestSize(1000000) {
 	_allowedMethods.push_back("GET");
 	_allowedMethods.push_back("POST");
@@ -9,9 +16,7 @@ Configuration::Configuration(): Block(), _requestSize(1000000) {
 Configuration::~Configuration() {}
 
 Configuration::Configuration(const Configuration& other): Block(other), _host(other._host), _serverName(other._serverName),
-	_requestSize(other._requestSize), locations(other.locations) {
-	// _root(other._root), _defaultFiles(other._defaultFiles),_redirectStatusCode(other._redirectStatusCode),  _autoIndex(other._autoIndex),_newLocation(other._newLocation), _allowedMethods(other._allowedMethods),
-	_root = other.getRoot();
+	_requestSize(other._requestSize), _locations(other._locations) {_root = other.getRoot();
 	_defaultFiles = other.getDefaultFiles();
 	_autoIndex = other.getAutoIndex();
 	_redirectStatusCode = other.getRedirectStatusCode();
@@ -30,34 +35,19 @@ Configuration&	Configuration::operator=(const Configuration& other) {
 		_newLocation = other._newLocation;
 		_allowedMethods = other._allowedMethods;
 		_cgiMap = other._cgiMap;
-		locations = other.locations;
+		_locations = other._locations;
 	}
 	return (*this);
 }
 
-int Configuration::_curlyBracketsCount = 0;
-std::set<std::pair<std::string, std::string> >	Configuration::_allHosts;
+// ######### GETTERS #########
 
 int	Configuration::getCurlyBracketsCount(void) {
 	return (_curlyBracketsCount);
 }
 
-void	Configuration::incrementCurlyBracketsCount(void) {
-	_curlyBracketsCount++;
-}
-
-void	Configuration::decrementCurlyBracketsCount(void) {
-	_curlyBracketsCount--;
-}
-
 const std::set<std::pair<std::string, std::string> >&	Configuration::getHost(void) const {
 	return (this->_host);
-}
-
-void	Configuration::setHost(const std::string& host, const std::string& port)
-{
-	_allHosts.insert(std::pair<std::string, std::string>(host, port));
-	this->_host.insert(std::pair<std::string, std::string>(host, port));
 }
 
 std::set<std::pair<std::string, std::string> >&	Configuration::getAllHosts(void) {
@@ -68,29 +58,51 @@ const std::vector<std::string>&	Configuration::getServerName(void) const {
 	return (this->_serverName);
 }
 
-void	Configuration::setServerName(const std::string& serverName) {
-	this->_serverName.push_back(serverName);
+long	Configuration::getRequestSize(void) const {
+	return (this->_requestSize);
 }
 
-const char* Configuration::WrongConfigFileException::what() const throw() {
-	return (_message.c_str());
+const std::map<std::string, std::string>&	Configuration::getCgiMap(void) const {
+	return (_cgiMap);
+}
+
+// ######### SETTERS #########
+
+void	Configuration::setHost(const std::string& host, const std::string& port)
+{
+	_allHosts.insert(std::pair<std::string, std::string>(host, port));
+	this->_host.insert(std::pair<std::string, std::string>(host, port));
+}
+
+void	Configuration::setServerName(const std::string& serverName) {
+	this->_serverName.push_back(serverName);
 }
 
 void	Configuration::setRequestSize(long reqSize) {
 	this->_requestSize = reqSize;
 }
 
-long	Configuration::getRequestSize(void) const {
-	return (this->_requestSize);
-}
-
 void	Configuration::setCgiMap(const std::string& extension, const std::string& path) {
 	_cgiMap[extension] = path;
 }
+// ######### CURLY BRACKETS METHODS
 
-const std::map<std::string, std::string>&	Configuration::getCgiMap(void) const {
-	return (_cgiMap);
+void	Configuration::incrementCurlyBracketsCount(void) {
+	_curlyBracketsCount++;
 }
+
+void	Configuration::decrementCurlyBracketsCount(void) {
+	_curlyBracketsCount--;
+}
+
+// ######### EXCEPTIONS #########
+
+const char* Configuration::WrongConfigFileException::what() const throw() {
+	return (_message.c_str());
+}
+
+
+// ######### VALIDATORS #########
 
 void	checkCurlyBrackets(std::string line) {
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
@@ -102,6 +114,26 @@ void	checkCurlyBrackets(std::string line) {
 		line.erase(line.size() - 1);
 		Configuration::decrementCurlyBracketsCount();
 	}
+}
+
+unsigned long long validateRequestSize(std::string word, const char *tmpWord, char *endptr)
+{
+	long				size = 0;
+	unsigned long long temp;
+
+	size = std::strtol(tmpWord, &endptr, 10);
+	temp = size;
+	if (*endptr == 'b' || *endptr == 'B')
+		;
+	else if (*endptr == 'k' || *endptr == 'K')
+		temp = temp * 1024;
+	else if (*endptr == 'm' || *endptr == 'M')
+		temp = temp * 1024 * 1024;
+	else if (*endptr == 'g' || *endptr == 'G')
+		temp = temp * 1024 * 1024 * 1024;
+	else
+		throw Configuration::WrongConfigFileException(word + " invalid body size number");
+	return temp;
 }
 
 bool	isValidIP(const std::string& host) {
@@ -153,49 +185,6 @@ bool	isValidPort(const std::string& word) {
 	return (true);
 }
 
-void	parseServerName(std::string& line, Configuration& confserv) {
-	std::stringstream ss(line);
-	std::string word;
-
-	checkCurlyBrackets(line);
-	ss >> word;
-	while (ss >> word) {
-		confserv.setServerName(word);
-	}
-/* 	for (std::set<std::pair<std::string, std::string> >::iterator it = getHost().begin(); it != this->getHost().end(); it++) {
-		std::cout << GRAY<< it->first << it->second << std::endl;
-	} */
-	if (confserv.getServerName().empty())
-		throw Configuration::WrongConfigFileException("no server_name defined");
-}
-
-void	parseHost(std::string& line, Configuration& confserv) {
-	std::stringstream ss(line);
-	std::string word;
-
-	checkCurlyBrackets(line);
-	//std::cout << GRAY << line << RESET << std::endl;
-	ss >> word;
-	while (ss >> word) {
-		size_t pos = word.find(':');
-		if (pos == 0 || pos == word.length() - 1) { // if a : is in the string without a host and a port
-			throw Configuration::WrongConfigFileException("invalid host/port " + word);
-		}
-		else if (pos != std::string::npos && isValidIP(word.substr(0, pos)) 
-				&& isValidPort(word.substr(pos + 1, word.size() - pos)))
-			confserv.setHost(word.substr(0, pos), word.substr(pos + 1, word.size() - pos));
-		else {
-			if (isValidPort(word))
-				confserv.setHost("0.0.0.0", word); // 0.0.0.0 or NULL is the default host
-			else if (isValidIP(word))
-				confserv.setHost(word, "8080"); // 8080 is the default port
-		}
-		//std::cout << BLUE << word << RESET << std::endl;
-	}
-	if (confserv.getHost().empty())
-		throw Configuration::WrongConfigFileException("no host mentioned.");
-}
-
 static long checkNewStatus(std::string word, const std::string& lastWord, Configuration& confserv) {
 	long status = -1;
 	long value;
@@ -216,6 +205,46 @@ static long checkNewStatus(std::string word, const std::string& lastWord, Config
 		throw Configuration::WrongConfigFileException("value \"" + word + "\" must be between 300 and 599");
 	confserv.setErrorPage(static_cast<int>(value), lastWord, status);
 	return (status);
+}
+
+// ######### PARSERS #########
+
+void	parseServerName(std::string& line, Configuration& confserv) {
+	std::stringstream ss(line);
+	std::string word;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	while (ss >> word) {
+		confserv.setServerName(word);
+	}
+	if (confserv.getServerName().empty())
+		throw Configuration::WrongConfigFileException("no server_name defined");
+}
+
+void	parseHost(std::string& line, Configuration& confserv) {
+	std::stringstream ss(line);
+	std::string word;
+
+	checkCurlyBrackets(line);
+	ss >> word;
+	while (ss >> word) {
+		size_t pos = word.find(':');
+		if (pos == 0 || pos == word.length() - 1) { // if a : is in the string without a host and a port
+			throw Configuration::WrongConfigFileException("invalid host/port " + word);
+		}
+		else if (pos != std::string::npos && isValidIP(word.substr(0, pos)) 
+				&& isValidPort(word.substr(pos + 1, word.size() - pos)))
+			confserv.setHost(word.substr(0, pos), word.substr(pos + 1, word.size() - pos));
+		else {
+			if (isValidPort(word))
+				confserv.setHost("0.0.0.0", word); // 0.0.0.0 or NULL is the default host
+			else if (isValidIP(word))
+				confserv.setHost(word, "8080"); // 8080 is the default port
+		}
+	}
+	if (confserv.getHost().empty())
+		throw Configuration::WrongConfigFileException("no host mentioned.");
 }
 
 static void	parseErrorPage(std::string& line, Configuration& confserv) {
@@ -265,20 +294,10 @@ void	parseRequestSize(const std::string& line, Configuration& confserv) {
 	ss >> word;
 	if (ss >> word) {
 		tmpWord = word.c_str();
-		size = std::strtol(tmpWord, &endptr, 10);
 		if (!std::isdigit(*tmpWord) || tmpWord == endptr || errno == ERANGE)
 			throw Configuration::WrongConfigFileException("invalid body size number");
-		temp = size;
-		if (*endptr == 'b' || *endptr == 'B')
-			;
-		else if (*endptr == 'k' || *endptr == 'K')
-			temp = temp * 1024;
-		else if (*endptr == 'm' || *endptr == 'M')
-			temp = temp * 1024 * 1024;
-		else if (*endptr == 'g' || *endptr == 'G')
-			temp = temp * 1024 * 1024 * 1024;
-		else
-			throw Configuration::WrongConfigFileException(word + " invalid body size number");
+		size = std::strtol(tmpWord, &endptr, 10);
+		temp = validateRequestSize(word, tmpWord, endptr);
 		if ((*endptr && *(endptr + 1)) || temp > LONG_MAX)
 			throw Configuration::WrongConfigFileException(word + " invalid body size number");
 		size = static_cast<long>(temp);
@@ -303,7 +322,6 @@ void	parseRoot(const std::string& line, Configuration& confserv) {
 		throw Configuration::WrongConfigFileException("no root defined.");
 	if (ss >> word)
 		throw Configuration::WrongConfigFileException("too many arguments when defining root.");
-	//std::cout << GRAY << confserv.getRoot() << RESET << std::endl;
 }
 
 void	parseDefaultFiles(const std::string& line, Configuration& confserv) {
@@ -377,10 +395,6 @@ void	parseAllowedMethods(std::string& line, Configuration& config) {
 	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
 		config.setAllowedMethods(*it);
 	}
-
-/* 	for (std::vector<std::string>::const_iterator it = location.getMethods().begin(); it != location.getMethods().end(); it++) {
-		std::cout << *it << std::endl;
-	} */
 }
 
 void	parseUploadDirectory(std::string& line, Configuration& config) {
@@ -420,7 +434,6 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 		std::stringstream ss(line);
 		std::string	word;
 		ss >> word;
-		// std::cout << YELLOW << word << RESET << std::endl;
 		if (word.at(0) == '#')
 			continue ;
 		if (word == "}") {
@@ -452,21 +465,19 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 		else if (word == "upload_dir")
 			parseUploadDirectory(line, confserv);
 		else if (word == "location") {
-			confserv.locations.push_back(LocationBlock(confserv));
-			parseLocationBlock(file, line, confserv.locations.back());
+			confserv._locations.push_back(LocationBlock(confserv));
+			parseLocationBlock(file, line, confserv._locations.back());
 		}
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in server block.");
-/* 		for (std::set<std::pair<int, std::string> >::iterator it = confserv.getErrorPage().begin(); it != confserv.getErrorPage().end(); it++) {
-			std::cout << GRAY<< it->first << " " << it->second << RESET << std::endl;
-		} */
 	}
-	//std::cout << Configuration::getCurlyBracketsCount() << std::endl;
 	if (Configuration::getCurlyBracketsCount() != 0)
 		throw Configuration::WrongConfigFileException("block brackets \"{}\" are misplaced.");
 	if (confserv.getHost().empty())
 		confserv.setHost("0.0.0.0", "8080");
 }
+
+// ######### SETUP #########
 
 void	setup(const char* file, std::vector<Configuration>& confserv) {
 	std::string file1 = file;
@@ -482,7 +493,6 @@ void	setup(const char* file, std::vector<Configuration>& confserv) {
 		std::stringstream	ss(line);
 		std::string			word;
 		ss >> word;
-		// std::cout << YELLOW << line << RESET << std::endl;
 		if (word.at(0) == '#')
 			continue ;
 		line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
@@ -497,17 +507,4 @@ void	setup(const char* file, std::vector<Configuration>& confserv) {
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}
-/* 	std::set<std::pair<std::string, std::string> >::const_iterator it;
-    for (it = confserv[0].getAllHosts().begin(); it != confserv[0].getAllHosts().end(); ++it) {
-		std::cout << CYAN << it->first << it->second << RESET << std::endl;
-	} */
-/* 	std::set<std::pair<std::string, std::string> >::iterator it;
-	for (it = Configuration::getAllHosts().begin(); it != Configuration::getAllHosts().end(); it++) {
-		std::cout << GREEN << "ip: " << it->first << " porta: " << it->second << std::endl;
-	} */
-/* 	std::vector<LocationBlock> loc = confserv[0].locations;
-	//std::cout << loc[0].getLocation() << std::endl;
-	for (std::vector<LocationBlock>::iterator it = loc.begin(); it != loc.end(); it++)   {
-		std::cout << "location: " << it->getLocation() << std::endl;
-	} */
 }

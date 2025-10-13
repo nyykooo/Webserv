@@ -12,7 +12,8 @@
 
 #include "../includes/headers.hpp"
 
-// ### ORTHODOX CANONICAL FORM ###
+// ######### LIFE CYCLE #########
+
 Client::Client() : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0)
 {
 	_time = std::time(NULL);
@@ -33,7 +34,7 @@ Client::Client(const Client &other) : Socket(other), _time(other.getTime()), _fi
 {
 	_response = NULL;
 	_request = NULL;
-	_state = other._state;
+	_state = other.getProcessingState();
 }
 
 Client &Client::operator=(const Client &other)
@@ -44,8 +45,8 @@ Client &Client::operator=(const Client &other)
 
 		if (_fileFd != -1)
 			close(_fileFd);
-		_time = other._time;
-		_state = other._state;
+		_time = other.getTime();
+		_state = other.getProcessingState();
 		_fileFd = -1;
 		_fileSize = 0;
 		_bytesSent = 0;
@@ -68,7 +69,7 @@ Client::~Client()
 	if (_fileFd != -1)
 	{
 		close(_fileFd);
-		_fileFd = -1; // analisar se eh realmente necessario
+		_fileFd = -1;
 	}
 	if (_response)
 		delete _response;
@@ -77,11 +78,10 @@ Client::~Client()
 	Socket::~Socket();
 }
 
-// ### PUBLIC METHODS ###
+// ######### PUBLIC METHODS #########
 
 Client *Client::initClientSocket(int server_fd)
 {
-	// Aloca memória para o endereço do cliente
 	sockaddr_storage addr; // Usando sockaddr_storage para suportar IPv4 e IPv6
 	socklen_t addr_len = sizeof(addr);
 
@@ -93,24 +93,17 @@ Client *Client::initClientSocket(int server_fd)
 		return NULL;
 	}
 
-	// Configura o socket do cliente
 	int events = EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR; // Monitorar leitura, fechamento e erros
 	setEvent(events, _socket_fd);
 
-	// Configura o endereço do cliente
-	addrinfo *_res = new addrinfo();						// Aloca memória para addrinfo
-	_res->ai_addr = (sockaddr *)new sockaddr_storage(addr); // Copia o endereço do cliente
-	_res->ai_addrlen = addr_len;							// Armazena o tamanho do endereço do cliente
+	addrinfo *_res = new addrinfo();
+	_res->ai_addr = (sockaddr *)new sockaddr_storage(addr);
+	_res->ai_addrlen = addr_len;
 
-	// Configura a família de endereços com base no tipo de endereço recebido
 	if (addr.ss_family == AF_INET)
-	{
 		_res->ai_family = AF_INET; // IPv4
-	}
 	else if (addr.ss_family == AF_INET6)
-	{
 		_res->ai_family = AF_INET6; // IPv6
-	}
 	else
 	{
 		std::cerr << "Família de endereços desconhecida ao aceitar conexão" << std::endl;
@@ -118,38 +111,52 @@ Client *Client::initClientSocket(int server_fd)
 		return NULL;
 	}
 
-	// Adicionar o non-blocking ao socket do cliente
 	int flags = fcntl(_socket_fd, F_GETFL, 0);
 	fcntl(_socket_fd, F_SETFL, flags | O_NONBLOCK);
 
-	int keepalive = 1;																 // Ativa o keepalive para o socket do cliente
-	setsockopt(_socket_fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive)); // Permite reutilizar o endereço
+	int keepalive = 1;
+	setsockopt(_socket_fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive));
 
-	// printServer(client_fd); // Imprime as informações do servidor
 	return this;
-}
-
-RequestProcessingState Client::getProcessingState() const
-{
-	return _state;
-}
-
-void Client::setProcessingState(RequestProcessingState state)
-{
-	_state = state;
 }
 
 bool Client::checkTimeout() const
 {
 	std::time_t curr_time = std::time(NULL);
-	// Verifica se o tempo decorrido desde a última atividade é maior que o timeout
 	if (curr_time - _time > CLIENT_TIMEOUT)
 		return true;
 	else
 		return false;
 }
 
-// ### GETTERS ###
+void Client::resetFileStreaming()
+{
+	if (_fileFd != -1)
+	{
+		close(_fileFd);
+		_fileFd = -1;
+	}
+	_fileSize = 0;
+	_bytesSent = 0;
+}
+bool Client::isFileStreaming() const
+{
+	return (_fileFd != -1 && _state == STREAMING);
+}
+double Client::getStreamingProgress() const
+{
+	if (_fileSize == 0)
+		return 0.0;
+	return (double)_bytesSent / (double)_fileSize;
+}
+
+// ######### GETTERS #########
+
+RequestProcessingState Client::getProcessingState() const
+{
+	return _state;
+}
+
 std::time_t Client::getTime() const
 {
 	return _time;
@@ -195,7 +202,13 @@ const std::string &Client::getOriginalHeaders() const
 	return _originalHeaders;
 }
 
-// ### SETTERS ###
+// ######### SETTERS #########
+
+void Client::setProcessingState(RequestProcessingState state)
+{
+	_state = state;
+}
+
 void Client::setTime(std::time_t time)
 {
 	_time = time;
@@ -236,25 +249,4 @@ void Client::setUploadPath(std::string uploadPath)
 void Client::setOriginalHeaders(const std::string &headers)
 {
 	_originalHeaders = headers;
-}
-
-void Client::resetFileStreaming()
-{
-	if (_fileFd != -1)
-	{
-		close(_fileFd);
-		_fileFd = -1;
-	}
-	_fileSize = 0;
-	_bytesSent = 0;
-}
-bool Client::isFileStreaming() const
-{
-	return (_fileFd != -1 && _state == STREAMING);
-}
-double Client::getStreamingProgress() const
-{
-	if (_fileSize == 0)
-		return 0.0;
-	return (double)_bytesSent / (double)_fileSize;
 }

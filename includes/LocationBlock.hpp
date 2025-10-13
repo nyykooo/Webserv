@@ -11,28 +11,28 @@ class LocationBlock : public Block
 		std::string												_uploadDirectory;
 	public:
 
-	// SETTERS
+		// SETTERS
 
-	void			setExactMatchModifier(bool value);
-	void			setLocation(const std::string& location);
-	static void		incrementLocationCurlyBracketsCount(void);
-	static void		decrementLocationCurlyBracketsCount(void);
-	void			setCgiMap(const std::string& extension, const std::string& path);
+		void			setExactMatchModifier(bool value);
+		void			setLocation(const std::string& location);
+		static void		incrementLocationCurlyBracketsCount(void);
+		static void		decrementLocationCurlyBracketsCount(void);
+		void			setCgiMap(const std::string& extension, const std::string& path);
 
-	// GETTERS
+		// GETTERS
 
-	bool										getExactMatchModifier(void) const;
-	const std::string&							getLocation(void) const;
-	static int									getLocationCurlyBracketsCount(void);
-	const std::map<std::string, std::string>&	getCgiMap(void) const;
+		bool										getExactMatchModifier(void) const;
+		const std::string&							getLocation(void) const;
+		static int									getLocationCurlyBracketsCount(void);
+		const std::map<std::string, std::string>&	getCgiMap(void) const;
 
-	// ORTHODOX CANONICAL FORM
+		// ORTHODOX CANONICAL FORM
 
-	LocationBlock();
-	LocationBlock(const Configuration&);
-	~LocationBlock();
-	LocationBlock(const LocationBlock& other);
-	LocationBlock& operator=(const LocationBlock& other);
+		LocationBlock();
+		LocationBlock(const Configuration&);
+		~LocationBlock();
+		LocationBlock(const LocationBlock& other);
+		LocationBlock& operator=(const LocationBlock& other);
 		
 };
 

@@ -32,7 +32,7 @@ int handleLocation(Client *client, LocationBlock loc)
 int findLocation(Client *client)
 {
 	std::string path = client->_request->getPath();
-	std::vector<LocationBlock> loc = client->_request->_config->locations;
+	std::vector<LocationBlock> loc = client->_request->_config->_locations;
 
 	std::vector<LocationBlock>::iterator it;
 	for (it = loc.begin(); it != loc.end(); ++it)
@@ -89,6 +89,8 @@ std::string toLower(const std::string &str)
 	}
 	return result;
 }
+
+// ### CLEANING STRINGS ###
 
 std::string removeSlashes(std::string path) {
 	std::string newPath;

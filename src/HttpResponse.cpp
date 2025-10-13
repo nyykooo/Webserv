@@ -574,9 +574,9 @@ LocationBlock *HttpResponse::checkLocationBlock()
 	size_t longestMatch;
 	LocationBlock *tempLocation = NULL;
 
-	it = _conf->locations.begin();
+	it = _conf->_locations.begin();
 	longestMatch = 0;
-	while (it != _conf->locations.end())
+	while (it != _conf->_locations.end())
 	{
 		const std::string &locationPath = it->getLocation();
 		const std::string &requestPath = _req->getPath();
