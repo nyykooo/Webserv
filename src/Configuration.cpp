@@ -116,6 +116,26 @@ const char* Configuration::WrongConfigFileException::what() const throw() {
 
 // ######### VALIDATORS #########
 
+unsigned long long validateRequestSize(std::string word, const char *tmpWord, char *endptr)
+{
+	long				size = 0;
+	unsigned long long temp;
+
+	size = std::strtol(tmpWord, &endptr, 10);
+	temp = size;
+	if (*endptr == 'b' || *endptr == 'B')
+		;
+	else if (*endptr == 'k' || *endptr == 'K')
+		temp = temp * 1024;
+	else if (*endptr == 'm' || *endptr == 'M')
+		temp = temp * 1024 * 1024;
+	else if (*endptr == 'g' || *endptr == 'G')
+		temp = temp * 1024 * 1024 * 1024;
+	else
+		throw Configuration::WrongConfigFileException(word + " invalid body size number");
+	return temp;
+}
+
 bool	isValidIP(const std::string& host) {
 	int					dotNum = 0;
 	std::stringstream 	ss(host);
@@ -274,20 +294,10 @@ void	parseRequestSize(const std::string& line, Configuration& confserv) {
 	ss >> word;
 	if (ss >> word) {
 		tmpWord = word.c_str();
-		size = std::strtol(tmpWord, &endptr, 10);
 		if (!std::isdigit(*tmpWord) || tmpWord == endptr || errno == ERANGE)
 			throw Configuration::WrongConfigFileException("invalid body size number");
-		temp = size;
-		if (*endptr == 'b' || *endptr == 'B')
-			;
-		else if (*endptr == 'k' || *endptr == 'K')
-			temp = temp * 1024;
-		else if (*endptr == 'm' || *endptr == 'M')
-			temp = temp * 1024 * 1024;
-		else if (*endptr == 'g' || *endptr == 'G')
-			temp = temp * 1024 * 1024 * 1024;
-		else
-			throw Configuration::WrongConfigFileException(word + " invalid body size number");
+		size = std::strtol(tmpWord, &endptr, 10);
+		temp = validateRequestSize(word, tmpWord, endptr);
 		if ((*endptr && *(endptr + 1)) || temp > LONG_MAX)
 			throw Configuration::WrongConfigFileException(word + " invalid body size number");
 		size = static_cast<long>(temp);
