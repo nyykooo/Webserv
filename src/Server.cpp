@@ -12,15 +12,15 @@
 
 #include "../includes/headers.hpp"
 
+// ######### LIFE CYCLE #########
+
 Server::Server() : Socket(), _ip("localhost"), _port("8080") // Valores padrão para IP e porta
 {
 	initServerSocket(_ip, _port);
 }
 
-// CONSTRUCTOR WITH PORT
 Server::Server(const std::string &ip, const std::string &port) : Socket(), _ip(ip), _port(port)
 {
-	// inicializa o socket do servidor com as configuracoes corretas
 	initServerSocket(ip, port);
 }
 
@@ -33,7 +33,7 @@ Server::Server(const Server &other) : Socket(other)
 Server &Server::operator=(const Server &other) {
 	if (this != &other)
 	{
-		Socket::operator=(other); // Para copiarmos a parte do objeto referente ao Socket
+		Socket::operator=(other);
 		_client_fds = other._client_fds;
 	}
 	return *this;
@@ -45,29 +45,26 @@ Server::~Server() {
 	printLog(ss.str(), RED, std::cout);
 }
 
-// ### INIT SERVER SOCKET ###
+// ######### INIT SERVER SOCKET #########
 void	Server::initServerSocket(std::string ip, std::string port)
 {
-	// Configura o socket hints e res
 	struct addrinfo hints, *res;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET; // IPv4
 	hints.ai_socktype = SOCK_STREAM; // TCP
-	hints.ai_flags = AI_NUMERICHOST;
-	_hints = hints; // Armazena as hints no socket
+	hints.ai_flags = AI_NUMERICHOST; // Makes sure it's a numeric host (IPV4), avoiding DNS lookups (faster)
+	_hints = hints;
 
-	// Obtém informações de endereço
     if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &res) != 0) {
         std::cerr << "Erro em getaddrinfo" << std::endl;
     }
-	_res = res; // Armazena o resultado de getaddrinfo no socket
+	_res = res;
 
 	_socket_fd = socket(_res->ai_family, _res->ai_socktype, _res->ai_protocol);
 	if (_socket_fd == -1)
 	{
 		throw Socket::SocketErrorException("failed to create server socket on " + ip + ":" + port);
 	}
-	// Torna o server socket não bloqueante
 	int flags = fcntl(_socket_fd, F_GETFL, 0);
 	fcntl(_socket_fd, F_SETFL, flags | O_NONBLOCK);
 	int opt = 1;
@@ -82,11 +79,10 @@ void	Server::initServerSocket(std::string ip, std::string port)
 		close(_socket_fd);
 		throw Socket::SocketErrorException("failed to listen on server socket on " + ip + ":" + port);
 	}
-	// Registra o server socket na epoll para monitorar
 	setEvent(EPOLLIN, _socket_fd);
 }
 
-// ### GETTERS ###
+// ######### GETTERS #########
 
 std::string Server::getIp() const {
 	return _ip;
@@ -96,7 +92,7 @@ std::string Server::getPort() const {
 	return _port;
 }
 
-// ### SETTERS ###
+// ######### SETTERS #########
 
 void Server::setIp(const std::string &ip) {
 	_ip = ip;

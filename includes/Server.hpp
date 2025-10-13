@@ -33,17 +33,12 @@ class Server : public Socket {
 
 		// ### PUBLIC METHODS ###
 		void	initServerSocket(std::string ip, std::string port);
-		Socket	*initClientSocket();
-		void	printServer(Socket *socket);
-		int		handleNewClient();
 
 		// ### GETTERS ###
-		std::vector<Client *>	getTime() const;
 		std::string				getIp() const;
 		std::string				getPort() const;
 
 		// ### SETTERS ###
-		void	setTime(std::vector<Client *> time);
 		void	setIp(const std::string &ip);
 		void	setPort(const std::string &port);
 };
