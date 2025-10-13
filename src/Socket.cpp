@@ -12,6 +12,8 @@
 
 #include "../includes/headers.hpp"
 
+// ######### LIFE CYCLE #########
+
 Socket::Socket() :_socket_fd(-1)
 {
 	memset(&_event, 0, sizeof(_event));
@@ -53,7 +55,8 @@ Socket::~Socket() {
 	}
 }
 
-// ### GETTERS ###
+// ######### GETTERS #########
+
 int Socket::getSocketFd() {
 	return _socket_fd;
 }
@@ -71,20 +74,20 @@ struct addrinfo *Socket::getHints() {
 	return &_hints;
 }
 
-// ### SETTERS ###
+// ######### SETTERS #########
 void Socket::setSocketFd(int fd) {
 	_socket_fd = fd;
 }
 
 void Socket::setEvent(int event_flags, int fd)
 {
-	_event.events = event_flags; // Define os eventos que o epoll irá monitorar
-	_event.data.fd = fd; // Define o file descriptor associado ao evento
+	_event.events = event_flags;
+	_event.data.fd = fd;
 }
 
 void Socket::setRes(struct addrinfo *res) {
 	if (_res) {
-		freeaddrinfo(_res); // Libera o recurso anterior, se necessário
+		freeaddrinfo(_res);
 	}
 	_res = res;
 }
@@ -93,7 +96,7 @@ void Socket::setHints(struct addrinfo hints) {
 	_hints = hints;
 }
 
-// ### EXCEPTION ###
+// ######### EXCEPTION #########
 
 const char* Socket::SocketErrorException::what() const throw() {
 	return _message.c_str();

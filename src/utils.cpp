@@ -90,6 +90,8 @@ std::string toLower(const std::string &str)
 	return result;
 }
 
+// ### CLEANING STRINGS ###
+
 std::string removeSlashes(std::string path) {
 	std::string newPath;
 	size_t		index;
