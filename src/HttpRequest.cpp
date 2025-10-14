@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/13 20:46:30 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/14 19:51:41 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,10 +41,10 @@ HttpRequest::HttpRequest(const HttpRequest &other)
 {}
 
 bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
+	_bodyBuffer += str;
 	size_t pos = 0;
-
 	while (true) {
-		_bodyBuffer = str;
+
 		// Find the CRLF that terminates the chunk-size line
 		size_t crlf = _bodyBuffer.find("\r\n", pos);
 		if (crlf == std::string::npos)
@@ -66,7 +66,7 @@ bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
 			
 			// Verify it ends with "\r\n"
 			if (_bodyBuffer.size() < pos + 2) {
-				return true;
+				return false;
 			}
 				
 			if (_bodyBuffer.substr(pos, 2) != "\r\n") {
@@ -89,6 +89,8 @@ bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
 			return true;
 		}
 		pos += 2;
+        _bodyBuffer.erase(0, pos);
+        pos = 0;
 	}
 	return (true);
 }
