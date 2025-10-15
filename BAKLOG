@@ -24,7 +24,8 @@ Legenda:
 [x] Check if all _conf in HttpResponse should be replaced by _block
 [x] Confirmar na norma se variaveis globais em C++ precisam comecar com "g_" "_g" ou "g"
 [ ] Ficheiro grande sem ser chunked request o que fazer?
-[ ] Diogo - Pesquisar sobre boundary
-[ ] Diogo - Manter tracking do chunk-size -> fazer parsing disso na HttpRequest
-[ ] Nicho - Enviar para HttpReq e avaliar se o pedido foi finalizado ou se ainda falta receber chunks
-[ ] Metodo "chunkedRequestCompleted" deve retornar int para avaliarmos os erros dinamicamente!
+[x] Diogo - Pesquisar sobre boundary
+[x] Diogo - Manter tracking do chunk-size -> fazer parsing disso na HttpRequest
+[x] Nicho - Enviar para HttpReq e avaliar se o pedido foi finalizado ou se ainda falta receber chunks
+[x] Metodo "chunkedRequestCompleted" deve retornar int para avaliarmos os erros dinamicamente!
+[ ]
