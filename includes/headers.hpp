@@ -41,22 +41,22 @@
 # include <climits>
 
 
-# include "macros.hpp"
-# include "enums.hpp"
-# include "structs.hpp"
-# include "Socket.hpp"
-# include "Block.hpp"
-# include "Configuration.hpp"
-# include "LocationBlock.hpp"
-# include "HttpRequest.hpp"
-# include "HttpResponse.hpp"
-# include "WebServer.hpp"
-# include "Client.hpp"
-# include "Server.hpp"
-# include "ErrorPageRule.hpp"
-# include "functions.hpp"
-# include "SessionData.hpp"
-# include "ErrorPages.hpp"
+#include "macros.hpp"
+#include "enums.hpp"
+#include "structs.hpp"
+#include "core/Socket.hpp"
+#include "config/Block.hpp"
+#include "config/Configuration.hpp"
+#include "config/LocationBlock.hpp"
+#include "http/HttpRequest.hpp"
+#include "http/HttpResponse.hpp"
+#include "core/WebServer.hpp"
+#include "client/Client.hpp"
+#include "core/Server.hpp"
+#include "config/ErrorPageRule.hpp"
+#include "functions.hpp"
+#include "client/SessionData.hpp"
+#include "http/ErrorPages.hpp"
 
 // remover depois!!!! servem para printar o hyperlink no terminal
 # include <netdb.h>
