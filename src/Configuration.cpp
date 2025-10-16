@@ -143,18 +143,18 @@ bool	isValidIP(const std::string& host) {
 
 	while (std::getline(ss, segment, '.')) {
 		dotNum++;
-		if (dotNum > 4)
-			return (false);
+		if (dotNum > 4 || segment == "")
+			throw Configuration::WrongConfigFileException("invalid host: " + host);
 		for (std::string::iterator it = segment.begin(); it != segment.end(); it++) {
-			if (*it == '{' || *it == '}')
-				continue ;
 			if (!std::isdigit(*it))
-				return (false);
+				throw Configuration::WrongConfigFileException("invalid host: " + host);
 		}
 		if (segment.size() > 4 || std::strtol(segment.c_str(), NULL, 10) > 255) {
 			throw Configuration::WrongConfigFileException("invalid host: " + host);
 		}
 	}
+	if (!host.empty() && host[host.size() - 1] == '.')
+		throw Configuration::WrongConfigFileException("invalid host: " + host);
 	return (dotNum == 4);
 }
 
