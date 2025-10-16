@@ -33,12 +33,14 @@ WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(co
 			_servers_map[server->getSocketFd()] = server; // Armazena o servidor no mapa usando o socket fd como chave
 			_logger << "Servidor iniciado no Ip/Port: " << server->getIp() << "/" << server->getPort();
 			printLog(_logger.str(), WHITE, std::cout);
+			_logger.str("");
 			_logger.clear();
 		}
 		else
 		{
 			_logger << "Erro ao inicializar o servidor na porta: " << it->first;
 			printLog(_logger.str(), WHITE, std::cout);
+			_logger.str("");
 			_logger.clear();
 			throw WebServerErrorException(_logger.str());
 		}
@@ -162,6 +164,7 @@ void WebServer::handleNewClient(int server_fd)
 	client_socket->_server = server;
 	_logger << "Novo cliente conectado - client_fd: " << client_socket->getSocketFd();
 	printLog(_logger.str(), WHITE, std::cout);
+	_logger.str("");
 	_logger.clear();
 	registerEpollSocket(client_socket);
 }
@@ -226,9 +229,7 @@ void WebServer::setBuffer(const char *buffer)
 		_buffer[BUFFER_SIZE - 1] = '\0'; // Garante que o buffer esteja null-terminated
 	}
 	else
-	{
 		_buffer[0] = '\0'; // Limpa o buffer se o ponteiro for nulo
-	}
 }
 
 // ### TESTANDO STARTSERVER DENTRO DA WEBSERVER ###
@@ -243,7 +244,10 @@ bool WebServer::tryConnection(int i)
 		}
 		catch (const std::exception &e)
 		{
-			std::cerr << "Error parsing HTTP request: " << e.what() << std::endl;
+			_logger << "Error parsing HTTP request: " << e.what();
+			printLog(_logger.str(), RED, std::cerr);
+			_logger.str("");
+			_logger.clear();
 			return true;
 		}
 	}
@@ -259,21 +263,15 @@ int WebServer::extractContentLength(const std::string &headers_lower)
 	size_t pos = content_length_pos + 15; // strlen("content-length:")
 
 	while (pos < headers_lower.length() && (headers_lower[pos] == ' ' || headers_lower[pos] == '\t'))
-	{
 		pos++;
-	}
 
 	size_t start = pos;
 
 	while (pos < headers_lower.length() && std::isdigit(headers_lower[pos]))
-	{
 		pos++;
-	}
 
 	if (pos == start)
-	{
 		return -1;
-	}
 	std::string length_str = headers_lower.substr(start, pos - start);
 	return std::atoi(length_str.c_str());
 }
@@ -303,6 +301,7 @@ int WebServer::receiveData(int client_fd)
 	{
 		_logger << "Configuração não encontrada para cliente " << client_fd;
 		printLog(_logger.str(), RED, std::cout);
+		_logger.str("");
 		_logger.clear();
 		_partial_requests.erase(client_fd);
 		return -1;
@@ -353,6 +352,7 @@ int WebServer::receiveData(int client_fd)
 		_partial_requests.erase(client_fd);
 		_logger << "Error parsing HTTP request: " << e.what();
 		printLog(_logger.str(), RED, std::cout);
+		_logger.str("");
 		_logger.clear();
 		return -1;
 	}
@@ -371,9 +371,9 @@ static void sendResponseToClient(Client *client)
 		int sent = send(client->getSocketFd(), buf + totalSent, size - totalSent, 0);
 		if (sent < 0)
 		{
-			std::cout << RED << "errno: " << strerror(errno) << RESET << std::endl;
 			_logger << "Erro ao enviar corpo ao cliente - client_fd: " << client->getSocketFd();
 			printLog(_logger.str(), RED, std::cout);
+			_logger.str("");
 			_logger.clear();
 			return;
 		}
@@ -381,6 +381,7 @@ static void sendResponseToClient(Client *client)
 	}
 	_logger << "Dados enviados ao cliente - client_fd: " << client->getSocketFd();
 	printLog(_logger.str(), WHITE, std::cout);
+	_logger.str("");
 	_logger.clear();
 }
 
@@ -391,31 +392,11 @@ void WebServer::sendData(int client_fd)
 	if (client->_response)
 		delete client->_response;
 
-	client->_response = new HttpResponse(client); // mudar esse construtor para um metodo para evitar multiplas alocacoes de memoria aqui (pode dar problemas)
-	// [NCC] a ideia eh inicializar o httpresponse antes, nao executar a logica dele, para assim poder rodar a isLarge sem duplicar a execucao de logica do HttpResponse
-	if (isLargeFileRequest(client)) // verifica se é um arquivo grande
-	{
-		client->setProcessingState(PROCESSING_LARGE); // Mudamos o estado para PROCESSING_LARGE para ser tratado no próximo ciclo
-		return;
-	}
-	client->_response->startResponse(); // Executa a lógica de resposta do HttpResponse
-
-	// client->setProcessingState(PROCESSING); // Comportamento atual // Precisa desse set de processing? o case para entrar na sendData ja eh processing
-	// const char *buf = client->_response->getResponse().c_str(); // HttpResponse poderia ter um metodo para ter um buffer em const char * e outro size_t
-	// size_t size = client->_response->getResponse().size();
-	// int sent = send(client_fd, buf, size, 0);
-	// if (sent == -1)
-	// {
-	// 	ss << "Erro ao enviar dados ao cliente - client_fd: " << client_fd;
-	// 	printLog(ss.str(), RED);
-	// 	return;
-	// }
-	// else
-	// {
-	// 	ss << "Dados enviados ao cliente - client_fd: " << client_fd;
-	// 	printLog(ss.str(), WHITE);
-	// }
-	// client->setProcessingState(COMPLETED);
+	client->_response = new HttpResponse(client);
+	if (isLargeFileRequest(client))
+		client->setProcessingState(PROCESSING_LARGE);
+	else
+		client->_response->startResponse();
 }
 
 void WebServer::setClientTime(int client_fd)
@@ -423,13 +404,8 @@ void WebServer::setClientTime(int client_fd)
 	std::vector<Client *>::iterator it;
 
 	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
-	{
 		if ((*it)->getSocketFd() == client_fd)
-		{
-			(*it)->setTime(std::time(NULL));
-			return;
-		}
-	}
+			return (*it)->setTime(std::time(NULL));;
 }
 
 void WebServer::deleteClient(int fd, int event)
@@ -442,51 +418,29 @@ void WebServer::deleteClient(int fd, int event)
 			
 			_logger << "Cliente desconectado - client_fd: " << (*it)->getSocketFd();
 			printLog(_logger.str(), RED, std::cout);
+			_logger.str("");
 			_logger.clear();
 			if (event == 0)
 			{
 				int x;
 				x = epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 				if (x == -1)
-				_logger << "ERRO AO REMOVER DA EPOLL";
-				printLog(_logger.str(), RED, std::cerr);	
-				_logger.clear();
+				{
+					_logger << "ERRO AO REMOVER DA EPOLL";
+					printLog(_logger.str(), RED, std::cerr);	
+					_logger.str("");
+					_logger.clear();
+				}
 			}
 			close((*it)->getSocketFd());
-			delete *it;					 // Libera a memória do cliente
-			it = _clients_vec.erase(it); // Remove o cliente do vetor
-
-			_client_to_server_map.erase(fd); // para remover o elemento do mapeamento
-			_partial_requests.erase(fd);	 // para remover o elemento do buffer
+			delete *it;	
+			it = _clients_vec.erase(it);
+			_client_to_server_map.erase(fd);
+			_partial_requests.erase(fd);
 			return;
 		}
 	}
 }
-
-// void WebServer::deleteClient(int fd)
-// {
-// 	std::vector<Client *>::iterator it;
-// 	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
-// 	{
-// 		if ((*it)->getSocketFd() == fd)
-// 		{
-// 			
-// 			ss << "Cliente desconectado - client_fd: " << (*it)->getSocketFd();
-// 			printLog(ss.str(), RED, std::cout);
-// 			int x;
-// 			x = epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
-// 			if (x == -1)
-// 				std::cerr << "ERRO AO REMOVER DA EPOLL" << std::endl;
-// 			close((*it)->getSocketFd());
-// 			delete *it;					 // Libera a memória do cliente
-// 			it = _clients_vec.erase(it); // Remove o cliente do vetor
-
-// 			_client_to_server_map.erase(fd); // para remover o elemento do mapeamento
-// 			_partial_requests.erase(fd);	 // para remover o elemento do buffer
-// 			return;
-// 		}
-// 	}
-// }
 
 void WebServer::treatExistingClient(int i)
 {
@@ -503,6 +457,7 @@ void WebServer::treatExistingClient(int i)
 		// Cliente desconectou ou houve erro
 		_logger << "Conexão fechada ou erro na conexão com o cliente - client_fd: " << client->getSocketFd();
 		printLog(_logger.str(), RED, std::cout);
+		_logger.str("");
 		_logger.clear();
 		deleteClient(_events[i].data.fd, 1);
 	}
@@ -530,6 +485,7 @@ void WebServer::lookForTimeouts()
 		{
 			_logger << "Client timeout detected - client_fd: " << (*it)->getSocketFd();
 			printLog(_logger.str(), RED, std::cout);
+			_logger.str("");
 			_logger.clear();
 			int fd = (*it)->getSocketFd();
 			// mata o processo cgi caso exista e esteja em execucao
@@ -556,6 +512,7 @@ void WebServer::lookForTimeouts()
 		{
 			_logger << "Session timeout reached - sessionId " << (*sit)->getSessionId();
 			printLog(_logger.str(), RED, std::cout);
+			_logger.str("");
 			_logger.clear();
 			delete (*sit);
         	sit = _sessions->erase(sit);
@@ -742,6 +699,7 @@ void WebServer::handleClientOutput(Client *client, int i)
 			{
 				_logger << "Erro ao modificar evento do cliente " << client->getSocketFd() << " para EPOLLIN";
 				printLog(_logger.str(), RED, std::cerr);
+				_logger.str("");
 				_logger.clear();
 				deleteClient(_events[i].data.fd, 0);
 				return ;
