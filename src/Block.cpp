@@ -6,17 +6,15 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/09 07:15:00 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/10 15:18:39 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/headers.hpp"
 
-Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1)
-{
-	// _cgiMap[".php"] = "/usr/bin/php-cgi";
-	// _cgiMap[".py"] = "/usr/bin/python3";
-}
+// ######### LIFE CYCLE #########
+
+Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1) {}
 
 Block::Block(const Block& other)
 {
@@ -28,11 +26,10 @@ Block::Block(const Block& other)
 	_redirectStatusCode = other._redirectStatusCode;
 	_cgiMap = other._cgiMap;
 	_uploadDirectory = other._uploadDirectory;
+	_errorPage = other._errorPage;
 }
 
-Block::~Block()
-{
-}
+Block::~Block() {}
 
 Block &Block::operator=(const Block &other)
 {
@@ -46,11 +43,12 @@ Block &Block::operator=(const Block &other)
 		_redirectStatusCode = other._redirectStatusCode;
 		_cgiMap = other._cgiMap;
 		_uploadDirectory = other._uploadDirectory;
+		_errorPage = other._errorPage;
 	}
 	return *this;
 }
 
-// SETTERS
+// ######### SETTERS #########
 
 void Block::setRoot(const std::string& root)
 {
@@ -94,9 +92,23 @@ void Block::setAllowedMethods(const std::string& method)
 	}
 }
 
-void Block::removeAllowedMethods(void)
-{
-	_allowedMethods.clear();
+void	Block::setUploadDirectory(const std::string& str) {
+	_uploadDirectory = str;
+}
+
+const std::string&	Block::getUploadDirectory() const {
+	return (_uploadDirectory);
+}
+
+void	Block::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
+
+	ErrorPageRule rule;
+	rule.error = errorPage;
+	rule.errorPath = errorPagePath;
+	rule.newError = newStatus;
+
+	// std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
+	this->_errorPage.insert(rule);
 }
 
 void	Block::setRedirectStatusCode(int statusCode) {
@@ -107,7 +119,7 @@ void Block::setCgiMap(const std::string& extension, const std::string& path) {
 	_cgiMap[extension] = path;
 }
 
-// GETTERS
+// ######### GETTERS #########
 
 const std::string &Block::getRoot(void) const
 {
@@ -142,10 +154,13 @@ const std::map<std::string, std::string>& Block::getCgiMap(void) const {
 	return (_cgiMap);
 }
 
-void	Block::setUploadDirectory(const std::string& str) {
-	_uploadDirectory = str;
+const std::set<ErrorPageRule>& Block::getErrorPage(void) const {
+	return (this->_errorPage);
 }
 
-const std::string&	Block::getUploadDirectory() const {
-	return (_uploadDirectory);
+// ######### REMOVE #########
+
+void Block::removeAllowedMethods(void)
+{
+	_allowedMethods.clear();
 }

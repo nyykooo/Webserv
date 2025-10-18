@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL) {}
+HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL), _filePos(0) {}
 
 HttpResponse::HttpResponse(const HttpResponse &other)
 {
@@ -16,7 +16,10 @@ HttpResponse HttpResponse::operator=(const HttpResponse &other)
 	return (*this);
 }
 
-HttpResponse::~HttpResponse() {}
+HttpResponse::~HttpResponse() {
+	if (_file.is_open())
+		_file.close();
+}
 
 void	HttpResponse::setHttpStatus(int status) {
 	std::map<int, std::string>::iterator itt = _statusTexts.find(status);
@@ -247,23 +250,56 @@ void HttpResponse::startResponse(void)
 	execMethod();
 }
 
-void HttpResponse::openReg(std::string path, int methodType)
+std::size_t HttpResponse::getContentLength(void) const
 {
-	std::ifstream file(path.c_str());
-	if (!file.is_open())
+	return _resContentLength;
+}
+
+std::ifstream &HttpResponse::getFileStream(void)
+{
+	return _file;
+}
+
+std::size_t HttpResponse::getFilePos(void) const
+{
+	return _filePos;
+}
+
+void	HttpResponse::setFilePos(std::size_t pos)
+{
+	_filePos = pos;
+}
+
+void HttpResponse::streamingFile(off_t fileSize, std::string contentType)
+{
+	_resContentLength = fileSize;
+	_resContentType = contentType;
+	_client->setProcessingState(STREAMING);
+}
+
+void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
+{
+	// std::ifstream file(path.c_str());
+	_file.open(path.c_str());
+	if (!_file.is_open())
 	{
 		std::cerr << "ERRO AO ABRIR FICHEIRO: " << strerror(errno) << std::endl;
 		_resStatus = 404;
 		return;
 	}
+	
 	_resStatus = 200;
+	// streaming logic
+	if (fileSize > MAX_MEMORY_FILE_SIZE)
+		return streamingFile(fileSize, getContentType(path));
 	if (methodType == DELETE)
 		return;
 	std::stringstream ss;
 
-	ss << file.rdbuf();
+	ss << _file.rdbuf();
 	_resBody = ss.str();
-	file.close();
+	_resContentLength = _resBody.size();
+	// _file.close(); -> we will close after streaming file is completed
 }
 
 void HttpResponse::setMimeTypes()
@@ -436,25 +472,6 @@ void HttpResponse::setStatusTexts()
 	_statusTexts.insert(std::make_pair(507, "507 Insufficient Storage"));
 }
 
-const std::string HttpResponse::getMimeType(const std::string &fileExtension)
-{
-	size_t pos = fileExtension.find_last_of('.');
-
-	if (pos == std::string::npos)
-		return "application/octet-stream"; // default
-
-	std::string ext = fileExtension.substr(pos + 1);
-
-	for (size_t i = 0; i < ext.size(); ++i)
-		ext[i] = std::tolower(ext[i]); // lowercase because it could be insensitive case
-
-	std::map<std::string, std::string>::const_iterator it = _mimeTypes.find(ext);
-	if (it != _mimeTypes.end())
-		return it->second;
-
-	return ("application/octet-stream");
-}
-
 static std::string createDirIndex(std::string path)
 {
 	std::string dirIndex = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Directory Index</title></head><body><h1>Directory Index for " + path + "</h1><ul>";
@@ -493,6 +510,7 @@ void HttpResponse::openDir(std::string path)
 			std::stringstream ss;
 			ss << file.rdbuf();
 			_resBody = ss.str();
+			_resContentLength = _resBody.size();
 			file.close();
 			_resStatus = 200;
 			return;
@@ -502,6 +520,7 @@ void HttpResponse::openDir(std::string path)
 	{
 
 		_resBody = createDirIndex(path);
+		_resContentLength = _resBody.size();
 		_resStatus = 200;
 	}
 	else {
@@ -555,7 +574,7 @@ void HttpResponse::checkFile(int methodType)
 		return; // mudar status do HttpResponse/Client Bruno feature e retorna para nao bloquear o server
 	}
 	if (methodType == GET && S_ISREG(st.st_mode))
-		openReg(_fileName, methodType);
+			openReg(_fileName, methodType, st.st_size);
 	else if (S_ISDIR(st.st_mode))
 	{
 		//std::cout << "Diretório encontrado: " << _fileName << std::endl;
@@ -574,9 +593,9 @@ LocationBlock *HttpResponse::checkLocationBlock()
 	size_t longestMatch;
 	LocationBlock *tempLocation = NULL;
 
-	it = _conf->locations.begin();
+	it = _conf->_locations.begin();
 	longestMatch = 0;
-	while (it != _conf->locations.end())
+	while (it != _conf->_locations.end())
 	{
 		const std::string &locationPath = it->getLocation();
 		const std::string &requestPath = _req->getPath();
@@ -784,6 +803,8 @@ void HttpResponse::execMethod()
 	std::string method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
 
+	if (_req->hasParseError())
+		return ;
 	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it)
 	{
 		if (*it != "GET" && *it != "POST" && *it != "DELETE")
@@ -816,278 +837,6 @@ void HttpResponse::execMethod()
     	handlePOST();
 }
 
-static const std::string &http_error_400_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>400</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>400 Bad Request</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_403_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>403</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>403 Forbidden</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_404_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>404</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>404 Page not found</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_405_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>405</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>405 Method Not Allowed</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_408_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>408</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>408 Request Timeout</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_409_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>409</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>409 Conflict</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_411_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>411</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>411 Length Required</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_413_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>413</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>413 Payload Too Large</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_414_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>414</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>414 URI Too Long</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_415_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>415</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>415 Unsupported Media Type</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_500_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>500</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>500 Internal Server Error</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_501_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>501</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>501 Not implemented</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_502_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>502</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>502 Bad Gateway</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_503_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>503</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>503 Service Unavailable</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_504_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>504</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>504 Gateway Timeout</h1>"
-	"</body>"
-	"</html>";
-
-static const std::string &http_error_505_page =
-	"<!DOCTYPE html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"UTF-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>505</title>"
-	"<style>"
-	"body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }"
-	"h1 { color: #333; }"
-	"</style>"
-	"</head>"
-	"<body>"
-	"<h1>505 Version Not Supported</h1>"
-	"</body>"
-	"</html>";
-
 const std::string HttpResponse::httpFileContent(int errorPage)
 {
 
@@ -1110,14 +859,11 @@ const std::string HttpResponse::httpFileContent(int errorPage)
 
 int HttpResponse::openFile()
 {
-	if (_conf == NULL)
-	{
-		_fileName = ".html";
+	if (_block->getErrorPage().empty())
 		return (0);
-	}
-	std::set<ErrorPageRule>::const_iterator it = _conf->getErrorPage().begin();
+	std::set<ErrorPageRule>::const_iterator it = _block->getErrorPage().begin();
 
-	while (it != _conf->getErrorPage().end())
+	while (it != _block->getErrorPage().end())
 	{
 		if ((*it).error == _resStatus)
 		{
@@ -1128,7 +874,7 @@ int HttpResponse::openFile()
 
 		it++;
 	}
-	if (it == _conf->getErrorPage().end())
+	if (it == _block->getErrorPage().end())
 	{
 		_fileName = ".html";
 		return (0);
@@ -1259,6 +1005,26 @@ std::string HttpResponse::cgiHeader()
 	return (header.str() + CRLF + _cgiBody);
 }
 
+
+const std::string HttpResponse::getMimeType(const std::string &fileExtension)
+{
+	size_t pos = fileExtension.find_last_of('.');
+
+	if (pos == std::string::npos)
+		return "application/octet-stream"; // default
+
+	std::string ext = fileExtension.substr(pos + 1);
+
+	for (size_t i = 0; i < ext.size(); ++i)
+		ext[i] = std::tolower(ext[i]); // lowercase because it could be insensitive case
+
+	std::map<std::string, std::string>::const_iterator it = _mimeTypes.find(ext);
+	if (it != _mimeTypes.end())
+		return it->second;
+
+	return ("application/octet-stream");
+}
+
 std::string HttpResponse::header(int requestType)
 {
 	std::ostringstream header;
@@ -1280,6 +1046,7 @@ std::string HttpResponse::header(int requestType)
 		_resBody += "<hr><center>WebServer/1.0</center>";
 		_resBody += "</body>";
 		_resBody += "</html>";
+		_resContentLength = _resBody.size();
 	}
 	header << "HTTP/1.1 " << _httpStatus << CRLF;
 	header << "Server: WebServer/1.0" << CRLF;
@@ -1288,7 +1055,7 @@ std::string HttpResponse::header(int requestType)
 	if (_resStatus == 204 || _resStatus == 304)
 		header << "Content-Length: 0" << CRLF;
 	else
-		header << "Content-Length: " << _resBody.size() << CRLF;
+		header << "Content-Length: " << _resContentLength << CRLF;
 	if (requestType == REDIRECT)
 		header << "Location: " << _block->getNewLocation() << CRLF;
 	if (_req != NULL && _req->getParseStatus() == 200)
@@ -1338,12 +1105,19 @@ const std::string HttpResponse::checkErrorResponse(const std::string &page)
 	if (errorPage < 0)
 	{
 		_resBody = http_error_404_page;
+		_resContentLength = _resBody.size();
 		return (header(ERROR) + _resBody);
 	}
 	else if (errorPage == 0)
+	{
 		_resBody = page;
+		_resContentLength = _resBody.size();
+	}
 	else
+	{
 		_resBody = httpFileContent(errorPage);
+		_resContentLength = _resBody.size();
+	}
 	if (_resStatus == 204 || _resStatus == 304)
 		return (header(OK));
 	return (header(ERROR) + _resBody);
@@ -1401,6 +1175,8 @@ const std::string HttpResponse::checkStatusCode()
 		return (checkErrorResponse(http_error_413_page));
 	case 414:
 		return (checkErrorResponse(http_error_414_page));
+	case 415:
+		return (checkErrorResponse(http_error_415_page));
 	case 500:
 		return (checkErrorResponse(http_error_500_page));
 	case 501:
@@ -1422,24 +1198,20 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0), _method
 	_client = client;
 	_conf = client->_request->_config;
 	_req = client->_request;
-	if (_req->hasParseError())
-	{
-		_resStatus = _req->getParseStatus();
-		_loc = NULL;
-		_block = _conf;
-		setStatusTexts();
-		setMimeTypes();
-		setEnv(); // teste
-		return;
-	}
 	_loc = checkLocationBlock();
 	setStatusTexts();
 	if (_loc != NULL)
-		_block = _loc;
+	_block = _loc;
 	else
-		_block = _conf;
+	_block = _conf;
 	setMimeTypes();
 	setEnv(); // teste
+	if (_req->hasParseError())
+	{
+		_resStatus = _req->getParseStatus();
+		return;
+	}
+	_filePos = 0;
 }
 
 // ### SETTERS ###
@@ -1519,6 +1291,7 @@ void HttpResponse::handlePOST()
 	{
 		_resStatus = 415; // Unsupported Media Type
 		_resBody = http_error_415_page;
+		_resContentLength = _resBody.size();
 		return;
 	}
 	// Ver se upload dir existe no config.
@@ -1528,6 +1301,8 @@ void HttpResponse::handlePOST()
 	{
 		_resStatus = 405;
 		_resBody = http_error_405_page;
+		_resContentLength = _resBody.size();
+		_resContentLength = _resBody.size();
 		return ;
 /* 		uploadDir = "/tmp/webserv_uploads";
 		printLog("Upload directory not configured, using default: " + uploadDir, YELLOW, std::cout); */
@@ -1543,6 +1318,7 @@ void HttpResponse::handlePOST()
 	{
 		_resStatus = 500; // Internal Server Error
 		_resBody = http_error_500_page;
+		_resContentLength = _resBody.size();
 		//std::cout << RED << "Failed to access upload directory: " << uploadDir << RESET << std::endl;
 		return ;
 	}
@@ -1581,12 +1357,14 @@ void HttpResponse::handlePOST()
 		return;
 	} */
 	extractFileName();
+	// _fileName = "test";
 	_fileName = uploadDir + _fileName;
 	//std::cout << GRAY << _fileName << RESET << std::endl;
 	if (!saveBodyToFile(_fileName, body))
 	{
 		_resStatus = 500; // Internal Server Error
 		_resBody = http_error_500_page;
+		_resContentLength = _resBody.size();
 		return;
 	}
 	// Sucesso - 201 Created

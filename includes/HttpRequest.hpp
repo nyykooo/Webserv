@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/10/04 19:52:37 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/13 03:53:13 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,24 +31,24 @@ class HttpRequest
 	private:
 		// Attributes
 		int									_parseStatus;
-		std::string							_parseError;
 		std::string							method;
 		std::string							path;
 		std::string							version;
 		std::map<std::string, std::string> 	headers;
-		std::string							body;
-		std::vector<SessionData *>*			_sessions;
+		std::string							_body;
 		std::map<std::string, std::string>	_cookies;
 		std::string 						_uploadPath;
 		size_t 								_uploadSize;
+		bool								_chunked;
+		std::vector<SessionData *>*			_sessions;
+		bool								_requestComplete;
+		std::string							_bodyBuffer;
 
 		// Private methods
     	bool isValidContentLengthFormat(const std::string &value);
-		void parse(const std::string &request_text);
 		void parse_requestline(const std::string &request_line);
 		void parse_headers(std::istringstream &stream);
 		void parseBody(std::istringstream &stream);
-		void setParseError(int status, const std::string& error);
 		void parseCookies();
 		void checkCreatedSessions(const std::string& cookiesLine);
 
@@ -59,6 +59,9 @@ class HttpRequest
 		HttpRequest(const HttpRequest& other);
 		HttpRequest& operator=(const HttpRequest& other);
 		~HttpRequest();
+
+		bool chunkedRequestCompleted(const std::string& str);
+		void parse(const std::string &request_text);
 
 		// public atributes
 		Configuration*	_config;
@@ -74,13 +77,16 @@ class HttpRequest
 		const std::string							&getUploadPath() const;
 		size_t 										getUploadSize() const;
 		int 										getParseStatus() const;
-		const std::string 							&getParseError() const;
 		bool 										hasParseError() const;
+		bool										getChunked() const;
+		bool										isRequestCompleted() const;
 
 		// setters
 		void setUploadPath(const std::string &path);
 		void setUploadSize(size_t size);
 		void setCookies(const std::string& key, const std::string& value);
+		void setChunked(bool stat);
+		void setParseStatus(int status);
 };
 
 #endif

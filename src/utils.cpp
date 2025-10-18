@@ -32,7 +32,7 @@ int handleLocation(Client *client, LocationBlock loc)
 int findLocation(Client *client)
 {
 	std::string path = client->_request->getPath();
-	std::vector<LocationBlock> loc = client->_request->_config->locations;
+	std::vector<LocationBlock> loc = client->_request->_config->_locations;
 
 	std::vector<LocationBlock>::iterator it;
 	for (it = loc.begin(); it != loc.end(); ++it)
@@ -90,6 +90,8 @@ std::string toLower(const std::string &str)
 	return result;
 }
 
+// ### CLEANING STRINGS ###
+
 std::string removeSlashes(std::string path) {
 	std::string newPath;
 	size_t		index;
@@ -103,4 +105,39 @@ std::string removeSlashes(std::string path) {
 	if (end != std::string::npos)
 		newPath.erase(end + 1);
 	return (newPath);
+}
+
+// ### CONTENT TYPE ###
+std::string getContentType(const std::string &filePath)
+{
+	size_t dotPos = filePath.find_last_of('.');
+	if (dotPos == std::string::npos)
+	{
+		return "application/octet-stream";
+	}
+
+	std::string extension = filePath.substr(dotPos + 1);
+
+	if (extension == "html" || extension == "htm")
+		return "text/html";
+	if (extension == "css")
+		return "text/css";
+	if (extension == "js")
+		return "application/javascript";
+	if (extension == "jpg" || extension == "jpeg")
+		return "image/jpeg";
+	if (extension == "png")
+		return "image/png";
+	if (extension == "gif")
+		return "image/gif";
+	if (extension == "pdf")
+		return "application/pdf";
+	if (extension == "mp4")
+		return "video/mp4";
+	if (extension == "mp3")
+		return "audio/mpeg";
+	if (extension == "txt")
+		return "text/plain";
+
+	return "application/octet-stream";
 }

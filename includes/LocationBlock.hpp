@@ -1,7 +1,6 @@
 #include "headers.hpp"
 
 class WebServer;
-class  ErrorPageRule;
 
 class LocationBlock : public Block 
 {
@@ -9,34 +8,31 @@ class LocationBlock : public Block
 		bool													_exactMatchModifier;
 		std::string												_location;
 		static int												_locationCurlyBracketsCount;
-		std::set<ErrorPageRule>									_errorPage;
 		std::string												_uploadDirectory;
 	public:
 
-	// SETTERS
+		// SETTERS
 
-	void			setExactMatchModifier(bool value);
-	void			setLocation(const std::string& location);
-	void			setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
-	static void		incrementLocationCurlyBracketsCount(void);
-	static void		decrementLocationCurlyBracketsCount(void);
-	void			setCgiMap(const std::string& extension, const std::string& path);
+		void			setExactMatchModifier(bool value);
+		void			setLocation(const std::string& location);
+		static void		incrementLocationCurlyBracketsCount(void);
+		static void		decrementLocationCurlyBracketsCount(void);
+		void			setCgiMap(const std::string& extension, const std::string& path);
 
-	// GETTERS
+		// GETTERS
 
-	bool										getExactMatchModifier(void) const;
-	const std::string&							getLocation(void) const;
-	const std::set<ErrorPageRule>&				getErrorPage(void) const;
-	static int									getLocationCurlyBracketsCount(void);
-	const std::map<std::string, std::string>&	getCgiMap(void) const;
+		bool										getExactMatchModifier(void) const;
+		const std::string&							getLocation(void) const;
+		static int									getLocationCurlyBracketsCount(void);
+		const std::map<std::string, std::string>&	getCgiMap(void) const;
 
-	// ORTHODOX CANONICAL FORM
+		// ORTHODOX CANONICAL FORM
 
-	LocationBlock();
-	LocationBlock(const Configuration&);
-	~LocationBlock();
-	LocationBlock(const LocationBlock& other);
-	LocationBlock& operator=(const LocationBlock& other);
+		LocationBlock();
+		LocationBlock(const Configuration&);
+		~LocationBlock();
+		LocationBlock(const LocationBlock& other);
+		LocationBlock& operator=(const LocationBlock& other);
 		
 };
 

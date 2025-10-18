@@ -19,6 +19,13 @@ Legenda:
 [x] COOKIES: Fix SegFault Ctrl + C -> Ctrl + C no curl quebra o server
 [x] COOKIES: Fix Segfault "curl -I 127.0.0.1:8080"
 [ ] GET/POST of large files incompleted by client timeout disconnection
-[ ] Implement CGI logic for POST method
-[ ] Create static functions for each error
-[ ] Check if all _conf in HttpResponse should be replaced by _block
+[x] Implement CGI logic for POST method
+[x] Create static functions for each error
+[x] Check if all _conf in HttpResponse should be replaced by _block
+[x] Confirmar na norma se variaveis globais em C++ precisam comecar com "g_" "_g" ou "g"
+[ ] Ficheiro grande sem ser chunked request o que fazer?
+[x] Diogo - Pesquisar sobre boundary
+[x] Diogo - Manter tracking do chunk-size -> fazer parsing disso na HttpRequest
+[x] Nicho - Enviar para HttpReq e avaliar se o pedido foi finalizado ou se ainda falta receber chunks
+[x] Metodo "chunkedRequestCompleted" deve retornar int para avaliarmos os erros dinamicamente!
+[ ] fazer tranposicao do setMimeType para um utilitario e remover a getcontentype
