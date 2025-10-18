@@ -389,13 +389,13 @@ void WebServer::sendData(int client_fd)
 {
 	Client *client = findClient(client_fd, _clients_vec);
 
-	if (client->_response)
+	if (client->_response != NULL)
 		delete client->_response;
 
 	client->_response = new HttpResponse(client);
-	if (isLargeFileRequest(client))
-		client->setProcessingState(PROCESSING_LARGE);
-	else
+	// if (isLargeFileRequest(client))
+	// 	client->setProcessingState(PROCESSING_LARGE);
+	// else
 		client->_response->startResponse();
 }
 
@@ -673,24 +673,52 @@ void WebServer::handleClientOutput(Client *client, int i)
 	switch (client->getProcessingState())
 	{
 	case PROCESSING:
+		_logger << "WebServer >> handleClientOutput >> starting response PROCESSING for client_fd: " << client->getSocketFd();
+		printLog(_logger.str(), CYAN, std::cout);
+		_logger.str("");
+		_logger.clear();
 		sendData(_events[i].data.fd);
 		if (client->getProcessingState() == PROCESSING)
 			client->setProcessingState(COMPLETED);
+		else if (client->getProcessingState() == STREAMING)
+		{
+			_logger << "WebServer >> handleClientOutput >> starting reponse STREAMING for client_fd: " << client->getSocketFd();
+			printLog(_logger.str(), CYAN, std::cout);
+			_logger.str("");
+			_logger.clear();
+			sendResponseToClient(client); // this case will only send headers to warn the client about the content type and size of the req file
+		}
 		break;
 
-	case PROCESSING_LARGE: // Processamento de arquivos grandes
-		if (startLargeFileStreaming(client))
-			client->setProcessingState(STREAMING);
-		else
-			client->setProcessingState(COMPLETED);
-		break;
-
-	case STREAMING: // Streaming de arquivos grandes
+	case STREAMING: // Streaming of large files
 		if (!continueLargeFileStreaming(client))
-			client->setProcessingState(COMPLETED);
+		{
+			_logger << "WebServer >> handleClientOutput >> response streaming finished for client_fd: " << client->getSocketFd();
+			printLog(_logger.str(), CYAN, std::cout);
+			_logger.str("");
+			_logger.clear();
+			// client->setProcessingState(COMPLETED);
+			_events[i].events = EPOLLIN;
+			if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]) == 0)
+				client->setProcessingState(RECEIVING);
+			else
+			{
+				_logger << "Erro ao modificar evento do cliente " << client->getSocketFd() << " para EPOLLIN";
+				printLog(_logger.str(), RED, std::cerr);
+				_logger.str("");
+				_logger.clear();
+				deleteClient(_events[i].data.fd, 0);
+				return ;
+			}
+			client->setTime(std::time(NULL));
+		}
 		break;
 
 	case COMPLETED:
+			_logger << "WebServer >> handleClientOutput >> request treatment COMPLETED for client_fd: " << client->getSocketFd();
+			printLog(_logger.str(), CYAN, std::cout);
+			_logger.str("");
+			_logger.clear();
 			sendResponseToClient(client);
 			_events[i].events = EPOLLIN;
 			if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]) == 0)
@@ -762,39 +790,6 @@ bool WebServer::isLargeFileRequest(Client *client)
 	return (st.st_size > MAX_MEMORY_FILE_SIZE);
 }
 
-std::string WebServer::getContentType(const std::string &filePath)
-{
-	size_t dotPos = filePath.find_last_of('.');
-	if (dotPos == std::string::npos)
-	{
-		return "application/octet-stream";
-	}
-
-	std::string extension = filePath.substr(dotPos + 1);
-
-	if (extension == "html" || extension == "htm")
-		return "text/html";
-	if (extension == "css")
-		return "text/css";
-	if (extension == "js")
-		return "application/javascript";
-	if (extension == "jpg" || extension == "jpeg")
-		return "image/jpeg";
-	if (extension == "png")
-		return "image/png";
-	if (extension == "gif")
-		return "image/gif";
-	if (extension == "pdf")
-		return "application/pdf";
-	if (extension == "mp4")
-		return "video/mp4";
-	if (extension == "mp3")
-		return "audio/mpeg";
-	if (extension == "txt")
-		return "text/plain";
-
-	return "application/octet-stream";
-}
 
 bool WebServer::startLargeFileStreaming(Client *client)
 {
@@ -861,41 +856,89 @@ bool WebServer::startLargeFileStreaming(Client *client)
 	return (true);
 }
 
+// std::streamsize HttpResponse::readFileChunk(char *buffer, std::streamsize size)
+// {
+//     _file.read(buffer, size);
+//     return _file.gcount();
+// }
 bool WebServer::continueLargeFileStreaming(Client *client)
 {
-	const size_t CHUNK_SIZE = 8192;
-	char buffer[CHUNK_SIZE];
+    const size_t CHUNK_SIZE = 8192;
+    char buffer[CHUNK_SIZE];
 
-	ssize_t bytesRead = read(client->getFileFd(), buffer, CHUNK_SIZE);
-	if (bytesRead <= 0)
-	{
-		if (bytesRead < 0)
-			logStreamingError(client->getSocketFd(), "read");
-		else
-			logStreamingInfo(client->getSocketFd(), "streaming completo");
-		client->resetFileStreaming();
-		return false;
-	}
+    std::ifstream &file = client->_response->getFileStream();
 
-	size_t totalSent = 0;
-	while (totalSent < static_cast<size_t>(bytesRead))
-	{
-		ssize_t bytesSent = send(client->getSocketFd(),
-								 buffer + totalSent,
-								 bytesRead - totalSent,
-								 0);
+    if (!file.is_open()) {
+        logStreamingError(client->getSocketFd(), "file not open");
+        return false;
+    }
 
-		if (bytesSent <= 0)
-		{
-			logStreamingError(client->getSocketFd(), "send");
-			client->resetFileStreaming();
-			return false;
-		}
-		totalSent += bytesSent;
-	}
-	client->setBytesSent(client->getBytesSent() + totalSent);
-	return (client->getBytesSent() < client->getFileSize());
+    file.read(buffer, CHUNK_SIZE);
+    std::streamsize bytesRead = file.gcount();
+
+    if (bytesRead <= 0) {
+        if (file.bad())
+            logStreamingError(client->getSocketFd(), "read");
+        else
+            logStreamingInfo(client->getSocketFd(), "streaming completo");
+        client->resetFileStreaming();
+        return false;
+    }
+
+    ssize_t bytesSent = send(client->getSocketFd(), buffer, bytesRead, 0);
+    if (bytesSent <= 0) {
+        logStreamingError(client->getSocketFd(), "send");
+        client->resetFileStreaming();
+        return false;
+    }
+
+    // Atualiza o progresso total do arquivo (pode ser menor que bytesRead)
+    size_t newFilePos = client->_response->getFilePos() + bytesSent;
+    client->_response->setFilePos(newFilePos);
+
+    // _logger << "WebServer >> continueLargeFileStreaming >> data sent to client - client_fd: " << client->getSocketFd();
+    // printLog(_logger.str(), WHITE, std::cout);
+    // _logger.str("");
+    // _logger.clear();
+	std::cout << "newFilePos: " << newFilePos << std::endl;
+    return (newFilePos < client->_response->getContentLength());
 }
+
+// bool WebServer::continueLargeFileStreaming(Client *client)
+// {
+// 	const size_t CHUNK_SIZE = 8192;
+// 	char buffer[CHUNK_SIZE];
+
+// 	ssize_t bytesRead = read(client->getFileFd(), buffer, CHUNK_SIZE);
+// 	if (bytesRead <= 0)
+// 	{
+// 		if (bytesRead < 0)
+// 			logStreamingError(client->getSocketFd(), "read");
+// 		else
+// 			logStreamingInfo(client->getSocketFd(), "streaming completo");
+// 		client->resetFileStreaming();
+// 		return false;
+// 	}
+
+// 	size_t totalSent = 0;
+// 	while (totalSent < static_cast<size_t>(bytesRead))
+// 	{
+// 		ssize_t bytesSent = send(client->getSocketFd(),
+// 								 buffer + totalSent,
+// 								 bytesRead - totalSent,
+// 								 0);
+
+// 		if (bytesSent <= 0)
+// 		{
+// 			logStreamingError(client->getSocketFd(), "send");
+// 			client->resetFileStreaming();
+// 			return false;
+// 		}
+// 		totalSent += bytesSent;
+// 	}
+// 	client->setBytesSent(client->getBytesSent() + totalSent);
+// 	return (client->getBytesSent() < client->getFileSize());
+// }
 
 void WebServer::logStreamingError(int client_fd, const std::string &operation, const std::string &details)
 {

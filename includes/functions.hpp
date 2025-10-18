@@ -28,4 +28,6 @@ void		printLog(std::string message, const char *color, std::ostream &stream);
 std::string toLower(const std::string &str);
 std::string removeSlashes(std::string path);
 
+std::string getContentType(const std::string &filePath);
+
 #endif

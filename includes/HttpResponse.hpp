@@ -27,6 +27,8 @@ class HttpResponse {
 		int									_cgiPid;
 		std::string							_response;
 		std::string							_resBody;
+		std::size_t							_resContentLength;
+		std::string							_resContentType;
 		std::string							_fileName;
 		Configuration						*_conf; // pensar sobre manter ou colocar dentro do client
 		HttpRequest							*_req; // pensar sobre manter ou colocar dentro do client
@@ -67,6 +69,9 @@ class HttpResponse {
 		std::string							_cgiLocation;
 		std::string							_cgiContentLength;
 		int									_cgiHeadersFound;
+
+		std::ifstream						_file;
+		std::size_t							_filePos;
 		
 		public:
 		
@@ -80,6 +85,7 @@ class HttpResponse {
 		void	setCgiCookies(const std::string& cookie);
 		void	setCgiContentType(std::string& type);
 		void	setCgiLocation(const std::string& location);
+		void	setFilePos(std::size_t pos);
 
 		//GETTERS
 		const std::string&		getResponse(void) const;
@@ -88,7 +94,10 @@ class HttpResponse {
 		std::string				getFullPath(void);
 		const std::string		getMimeType(const std::string& fileExtension);
 		const Configuration&	getConfig(void) const;
-		int				getCgiPid(void) const;
+		int						getCgiPid(void) const;
+		std::ifstream			&getFileStream(void);
+		std::size_t				getFilePos(void) const;
+		std::size_t				getContentLength(void) const;
 		
 		// EXEC METHOD
 		void	startResponse();
@@ -99,7 +108,7 @@ class HttpResponse {
 		bool		saveBodyToFile(const std::string& path, const std::string& content) const;
 		bool		createUploadDirectory(const std::string& path) const;
 		void	handleDELETE();
-		void	openReg(std::string path, int methodType);
+		void	openReg(std::string path, int methodType, off_t fileSize);
 		void	openDir(std::string path);
 		const std::string checkStatusCode();
 		std::string cgiHeader();
@@ -137,6 +146,8 @@ class HttpResponse {
 		void	forkExecCgi(std::string interpreter);
 		void	checkCgiProcess();
 		void 	terminateCgiProcess(void);
+
+		void	streamingFile(off_t fileSize, std::string contentType);
 };
 
 #endif

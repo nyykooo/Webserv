@@ -28,4 +28,4 @@ Legenda:
 [x] Diogo - Manter tracking do chunk-size -> fazer parsing disso na HttpRequest
 [x] Nicho - Enviar para HttpReq e avaliar se o pedido foi finalizado ou se ainda falta receber chunks
 [x] Metodo "chunkedRequestCompleted" deve retornar int para avaliarmos os erros dinamicamente!
-[ ]
+[ ] fazer tranposicao do setMimeType para um utilitario e remover a getcontentype

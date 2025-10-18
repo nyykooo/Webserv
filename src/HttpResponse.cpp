@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL) {}
+HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL), _filePos(0) {}
 
 HttpResponse::HttpResponse(const HttpResponse &other)
 {
@@ -16,7 +16,10 @@ HttpResponse HttpResponse::operator=(const HttpResponse &other)
 	return (*this);
 }
 
-HttpResponse::~HttpResponse() {}
+HttpResponse::~HttpResponse() {
+	if (_file.is_open())
+		_file.close();
+}
 
 void	HttpResponse::setHttpStatus(int status) {
 	std::map<int, std::string>::iterator itt = _statusTexts.find(status);
@@ -247,23 +250,56 @@ void HttpResponse::startResponse(void)
 	execMethod();
 }
 
-void HttpResponse::openReg(std::string path, int methodType)
+std::size_t HttpResponse::getContentLength(void) const
 {
-	std::ifstream file(path.c_str());
-	if (!file.is_open())
+	return _resContentLength;
+}
+
+std::ifstream &HttpResponse::getFileStream(void)
+{
+	return _file;
+}
+
+std::size_t HttpResponse::getFilePos(void) const
+{
+	return _filePos;
+}
+
+void	HttpResponse::setFilePos(std::size_t pos)
+{
+	_filePos = pos;
+}
+
+void HttpResponse::streamingFile(off_t fileSize, std::string contentType)
+{
+	_resContentLength = fileSize;
+	_resContentType = contentType;
+	_client->setProcessingState(STREAMING);
+}
+
+void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
+{
+	// std::ifstream file(path.c_str());
+	_file.open(path.c_str());
+	if (!_file.is_open())
 	{
 		std::cerr << "ERRO AO ABRIR FICHEIRO: " << strerror(errno) << std::endl;
 		_resStatus = 404;
 		return;
 	}
+	
 	_resStatus = 200;
+	// streaming logic
+	if (fileSize > MAX_MEMORY_FILE_SIZE)
+		return streamingFile(fileSize, getContentType(path));
 	if (methodType == DELETE)
 		return;
 	std::stringstream ss;
 
-	ss << file.rdbuf();
+	ss << _file.rdbuf();
 	_resBody = ss.str();
-	file.close();
+	_resContentLength = _resBody.size();
+	// _file.close(); -> we will close after streaming file is completed
 }
 
 void HttpResponse::setMimeTypes()
@@ -436,25 +472,6 @@ void HttpResponse::setStatusTexts()
 	_statusTexts.insert(std::make_pair(507, "507 Insufficient Storage"));
 }
 
-const std::string HttpResponse::getMimeType(const std::string &fileExtension)
-{
-	size_t pos = fileExtension.find_last_of('.');
-
-	if (pos == std::string::npos)
-		return "application/octet-stream"; // default
-
-	std::string ext = fileExtension.substr(pos + 1);
-
-	for (size_t i = 0; i < ext.size(); ++i)
-		ext[i] = std::tolower(ext[i]); // lowercase because it could be insensitive case
-
-	std::map<std::string, std::string>::const_iterator it = _mimeTypes.find(ext);
-	if (it != _mimeTypes.end())
-		return it->second;
-
-	return ("application/octet-stream");
-}
-
 static std::string createDirIndex(std::string path)
 {
 	std::string dirIndex = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Directory Index</title></head><body><h1>Directory Index for " + path + "</h1><ul>";
@@ -493,6 +510,7 @@ void HttpResponse::openDir(std::string path)
 			std::stringstream ss;
 			ss << file.rdbuf();
 			_resBody = ss.str();
+			_resContentLength = _resBody.size();
 			file.close();
 			_resStatus = 200;
 			return;
@@ -502,6 +520,7 @@ void HttpResponse::openDir(std::string path)
 	{
 
 		_resBody = createDirIndex(path);
+		_resContentLength = _resBody.size();
 		_resStatus = 200;
 	}
 	else {
@@ -555,7 +574,7 @@ void HttpResponse::checkFile(int methodType)
 		return; // mudar status do HttpResponse/Client Bruno feature e retorna para nao bloquear o server
 	}
 	if (methodType == GET && S_ISREG(st.st_mode))
-		openReg(_fileName, methodType);
+			openReg(_fileName, methodType, st.st_size);
 	else if (S_ISDIR(st.st_mode))
 	{
 		//std::cout << "Diretório encontrado: " << _fileName << std::endl;
@@ -986,6 +1005,26 @@ std::string HttpResponse::cgiHeader()
 	return (header.str() + CRLF + _cgiBody);
 }
 
+
+const std::string HttpResponse::getMimeType(const std::string &fileExtension)
+{
+	size_t pos = fileExtension.find_last_of('.');
+
+	if (pos == std::string::npos)
+		return "application/octet-stream"; // default
+
+	std::string ext = fileExtension.substr(pos + 1);
+
+	for (size_t i = 0; i < ext.size(); ++i)
+		ext[i] = std::tolower(ext[i]); // lowercase because it could be insensitive case
+
+	std::map<std::string, std::string>::const_iterator it = _mimeTypes.find(ext);
+	if (it != _mimeTypes.end())
+		return it->second;
+
+	return ("application/octet-stream");
+}
+
 std::string HttpResponse::header(int requestType)
 {
 	std::ostringstream header;
@@ -1007,6 +1046,7 @@ std::string HttpResponse::header(int requestType)
 		_resBody += "<hr><center>WebServer/1.0</center>";
 		_resBody += "</body>";
 		_resBody += "</html>";
+		_resContentLength = _resBody.size();
 	}
 	header << "HTTP/1.1 " << _httpStatus << CRLF;
 	header << "Server: WebServer/1.0" << CRLF;
@@ -1015,7 +1055,7 @@ std::string HttpResponse::header(int requestType)
 	if (_resStatus == 204 || _resStatus == 304)
 		header << "Content-Length: 0" << CRLF;
 	else
-		header << "Content-Length: " << _resBody.size() << CRLF;
+		header << "Content-Length: " << _resContentLength << CRLF;
 	if (requestType == REDIRECT)
 		header << "Location: " << _block->getNewLocation() << CRLF;
 	if (_req != NULL && _req->getParseStatus() == 200)
@@ -1065,12 +1105,19 @@ const std::string HttpResponse::checkErrorResponse(const std::string &page)
 	if (errorPage < 0)
 	{
 		_resBody = http_error_404_page;
+		_resContentLength = _resBody.size();
 		return (header(ERROR) + _resBody);
 	}
 	else if (errorPage == 0)
+	{
 		_resBody = page;
+		_resContentLength = _resBody.size();
+	}
 	else
+	{
 		_resBody = httpFileContent(errorPage);
+		_resContentLength = _resBody.size();
+	}
 	if (_resStatus == 204 || _resStatus == 304)
 		return (header(OK));
 	return (header(ERROR) + _resBody);
@@ -1154,9 +1201,9 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0), _method
 	_loc = checkLocationBlock();
 	setStatusTexts();
 	if (_loc != NULL)
-		_block = _loc;
+	_block = _loc;
 	else
-		_block = _conf;
+	_block = _conf;
 	setMimeTypes();
 	setEnv(); // teste
 	if (_req->hasParseError())
@@ -1164,6 +1211,7 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0), _method
 		_resStatus = _req->getParseStatus();
 		return;
 	}
+	_filePos = 0;
 }
 
 // ### SETTERS ###
@@ -1243,6 +1291,7 @@ void HttpResponse::handlePOST()
 	{
 		_resStatus = 415; // Unsupported Media Type
 		_resBody = http_error_415_page;
+		_resContentLength = _resBody.size();
 		return;
 	}
 	// Ver se upload dir existe no config.
@@ -1252,6 +1301,8 @@ void HttpResponse::handlePOST()
 	{
 		_resStatus = 405;
 		_resBody = http_error_405_page;
+		_resContentLength = _resBody.size();
+		_resContentLength = _resBody.size();
 		return ;
 /* 		uploadDir = "/tmp/webserv_uploads";
 		printLog("Upload directory not configured, using default: " + uploadDir, YELLOW, std::cout); */
@@ -1267,6 +1318,7 @@ void HttpResponse::handlePOST()
 	{
 		_resStatus = 500; // Internal Server Error
 		_resBody = http_error_500_page;
+		_resContentLength = _resBody.size();
 		//std::cout << RED << "Failed to access upload directory: " << uploadDir << RESET << std::endl;
 		return ;
 	}
@@ -1312,6 +1364,7 @@ void HttpResponse::handlePOST()
 	{
 		_resStatus = 500; // Internal Server Error
 		_resBody = http_error_500_page;
+		_resContentLength = _resBody.size();
 		return;
 	}
 	// Sucesso - 201 Created
