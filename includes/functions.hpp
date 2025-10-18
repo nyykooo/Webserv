@@ -16,7 +16,6 @@
 # include "headers.hpp"
 
 // ### HTTP METHODS ###
-int			execMethod(Client *client);
 int			findLocation(Client *client);
 
 // ### TIMESTAMP LOGS ###
