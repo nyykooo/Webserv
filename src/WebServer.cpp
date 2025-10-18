@@ -393,10 +393,7 @@ void WebServer::sendData(int client_fd)
 		delete client->_response;
 
 	client->_response = new HttpResponse(client);
-	// if (isLargeFileRequest(client))
-	// 	client->setProcessingState(PROCESSING_LARGE);
-	// else
-		client->_response->startResponse();
+	client->_response->startResponse();
 }
 
 void WebServer::setClientTime(int client_fd)
@@ -715,6 +712,7 @@ void WebServer::handleClientOutput(Client *client, int i)
 		break;
 
 	case COMPLETED:
+			// PASSAR ESSE BLOCO PARA DENTRO DE UMA FUNCAO
 			_logger << "WebServer >> handleClientOutput >> request treatment COMPLETED for client_fd: " << client->getSocketFd();
 			printLog(_logger.str(), CYAN, std::cout);
 			_logger.str("");
@@ -756,106 +754,6 @@ void WebServer::handleClientOutput(Client *client, int i)
 	}
 }
 
-bool WebServer::isLargeFileRequest(Client *client)
-{
-	const HttpRequest *request = client->_request;
-	// eh soh para GETs!
-	if (request->getMethod() != "GET")
-	{
-		return false;
-	}
-	// imitando a handleGet
-	std::string newRoot = removeSlashes(client->_response->getConfig().getRoot());
-	std::string locPath = removeSlashes(client->_response->getFullPath());
-	std::string fileName = newRoot + "/" + locPath;
-
-	struct stat st;
-	if (stat(fileName.c_str(), &st) == -1)
-	{
-		// Arquivo não existe - não é large file
-		std::cout << RED << "stat error: " << errno << RESET << std::endl;
-		return false;
-	}
-
-	// S_ISREG verifica se o arquivo é um "regular file"
-	// st.st_mode contém informações sobre o tipo do arquivo
-
-	// Retorna:
-	// true  = É arquivo regular (dados normais)
-	// false = NÃO é arquivo regular (diretório, link, device, etc.)
-	// eh possivel explandir essa macro e fazer de forma manual. Mas nao acredito ser um problema de norme da 42.
-	if (!S_ISREG(st.st_mode))
-		return false;
-
-	return (st.st_size > MAX_MEMORY_FILE_SIZE);
-}
-
-
-bool WebServer::startLargeFileStreaming(Client *client)
-{
-	// Depois encapsular essa logica do file path
-	std::string newRoot = removeSlashes(client->_response->getConfig().getRoot());
-	std::string locPath = removeSlashes(client->_response->getFullPath());
-	std::string fileName = newRoot + "/" + locPath;
-
-	struct stat st;
-	if (stat(fileName.c_str(), &st) == -1)
-	{
-		logStreamingError(client->getSocketFd(), "stat arquivo", fileName);
-		return false;
-	}
-
-	// aqui a diferenca em relacao ao processamento normal eh que abriremos o file para leitura sequencial. Evitamos aquela copia total para a memoria
-	int fd = open(fileName.c_str(), O_RDONLY);
-	if (fd < 0)
-	{
-		logStreamingError(client->getSocketFd(), "abertura arquivo", fileName);
-		return false;
-	}
-
-	client->setFileFd(fd); // mantem aberto para leitura sequencial e ao fim eh fechado pela resetFileStreaming do client
-	client->setFileSize(st.st_size);
-	client->setBytesSent(0);
-
-	std::ostringstream info;
-	info << "iniciando streaming de " << fileName << " (" << st.st_size << " bytes)";
-	logStreamingInfo(client->getSocketFd(), info.str());
-
-	std::ostringstream headers;
-	headers << "HTTP/1.1 200 OK\r\n";
-	headers << "Content-Type: " << getContentType(fileName) << "\r\n";
-	headers << "Content-Length: " << st.st_size << "\r\n";
-	headers << "\r\n";
-
-	std::string headerStr = headers.str();
-	ssize_t headersSent = send(client->getSocketFd(), headerStr.c_str(), headerStr.length(), 0);
-
-	if (headersSent < 0)
-	{
-		logStreamingError(client->getSocketFd(), "envio headers");
-		client->resetFileStreaming();
-		return false;
-	}
-	else if (headersSent == 0)
-	{
-		logStreamingError(client->getSocketFd(), "send headers retornou 0", "cliente possivelmente desconectado");
-		client->resetFileStreaming();
-		return false;
-	}
-	else if (headersSent < static_cast<ssize_t>(headerStr.length()))
-	{
-		std::ostringstream warning;
-		warning << "headers enviados parcialmente: " << headersSent << "/" << headerStr.length() << " bytes";
-		logStreamingInfo(client->getSocketFd(), warning.str());
-	}
-	else
-	{
-		logStreamingInfo(client->getSocketFd(), "headers enviados com sucesso");
-	}
-
-	return (true);
-}
-
 // std::streamsize HttpResponse::readFileChunk(char *buffer, std::streamsize size)
 // {
 //     _file.read(buffer, size);
@@ -869,7 +767,10 @@ bool WebServer::continueLargeFileStreaming(Client *client)
     std::ifstream &file = client->_response->getFileStream();
 
     if (!file.is_open()) {
-        logStreamingError(client->getSocketFd(), "file not open");
+		_logger << "WebServer >> continueLargeFileStreaming >> error openning file for client - client_fd: " << client->getSocketFd();
+		printLog(_logger.str(), RED, std::cerr);
+		_logger.str("");
+		_logger.clear();
         return false;
     }
 
@@ -878,16 +779,22 @@ bool WebServer::continueLargeFileStreaming(Client *client)
 
     if (bytesRead <= 0) {
         if (file.bad())
-            logStreamingError(client->getSocketFd(), "read");
-        else
-            logStreamingInfo(client->getSocketFd(), "streaming completo");
+		{
+			_logger << "WebServer >> continueLargeFileStreaming >> error when reading file for client - client_fd: " << client->getSocketFd();
+			printLog(_logger.str(), RED, std::cerr);
+			_logger.str("");
+			_logger.clear();
+		}
         client->resetFileStreaming();
         return false;
     }
 
     ssize_t bytesSent = send(client->getSocketFd(), buffer, bytesRead, 0);
     if (bytesSent <= 0) {
-        logStreamingError(client->getSocketFd(), "send");
+		_logger << "WebServer >> continueLargeFileStreaming >> error when sending data to client - client_fd: " << client->getSocketFd();
+		printLog(_logger.str(), RED, std::cerr);
+		_logger.str("");
+		_logger.clear();
         client->resetFileStreaming();
         return false;
     }
@@ -895,101 +802,31 @@ bool WebServer::continueLargeFileStreaming(Client *client)
     // Atualiza o progresso total do arquivo (pode ser menor que bytesRead)
     size_t newFilePos = client->_response->getFilePos() + bytesSent;
     client->_response->setFilePos(newFilePos);
-
-    // _logger << "WebServer >> continueLargeFileStreaming >> data sent to client - client_fd: " << client->getSocketFd();
-    // printLog(_logger.str(), WHITE, std::cout);
-    // _logger.str("");
-    // _logger.clear();
-	std::cout << "newFilePos: " << newFilePos << std::endl;
     return (newFilePos < client->_response->getContentLength());
 }
 
-// bool WebServer::continueLargeFileStreaming(Client *client)
-// {
-// 	const size_t CHUNK_SIZE = 8192;
-// 	char buffer[CHUNK_SIZE];
-
-// 	ssize_t bytesRead = read(client->getFileFd(), buffer, CHUNK_SIZE);
-// 	if (bytesRead <= 0)
-// 	{
-// 		if (bytesRead < 0)
-// 			logStreamingError(client->getSocketFd(), "read");
-// 		else
-// 			logStreamingInfo(client->getSocketFd(), "streaming completo");
-// 		client->resetFileStreaming();
-// 		return false;
-// 	}
-
-// 	size_t totalSent = 0;
-// 	while (totalSent < static_cast<size_t>(bytesRead))
-// 	{
-// 		ssize_t bytesSent = send(client->getSocketFd(),
-// 								 buffer + totalSent,
-// 								 bytesRead - totalSent,
-// 								 0);
-
-// 		if (bytesSent <= 0)
-// 		{
-// 			logStreamingError(client->getSocketFd(), "send");
-// 			client->resetFileStreaming();
-// 			return false;
-// 		}
-// 		totalSent += bytesSent;
-// 	}
-// 	client->setBytesSent(client->getBytesSent() + totalSent);
-// 	return (client->getBytesSent() < client->getFileSize());
-// }
-
-void WebServer::logStreamingError(int client_fd, const std::string &operation, const std::string &details)
-{
-	std::cerr << "[STREAMING ERROR] Cliente " << client_fd
-			  << " - " << operation;
-	if (!details.empty())
-	{
-		std::cerr << ": " << details;
-	}
-	std::cerr << " (" << strerror(errno) << ")" << std::endl;
-}
-
-void WebServer::logStreamingInfo(int client_fd, const std::string &message)
-{
-	std::cout << "[STREAMING INFO] Cliente " << client_fd
-			  << " - " << message << std::endl;
-}
-
+// NAO FAZ MAIS SENTIDO ESTAR DENTRO DA HTTPREQ?
 std::string WebServer::extractHostHeaderSimple(const std::string &rawRequest)
 {
 	size_t header_end = rawRequest.find("\r\n\r\n");
 	if (header_end == std::string::npos)
-	{
 		return "";
-	}
 	std::string headers = rawRequest.substr(0, header_end);
 	std::string headers_lower = toLower(headers);
 	size_t host_pos = headers_lower.find("host:");
 	if (host_pos == std::string::npos)
-	{
 		return "";
-	}
 	size_t pos = host_pos + 5;
 	while (pos < headers_lower.length() && (headers_lower[pos] == ' ' || headers_lower[pos] == '\t'))
-	{
 		pos++;
-	}
 	size_t start = pos;
 	while (pos < headers.length() && headers[pos] != '\r' && headers[pos] != '\n')
-	{
 		pos++;
-	}
 	if (pos == start)
-	{
 		return "";
-	}
 	std::string host = headers.substr(start, pos - start);
 	while (!host.empty() && (host[host.length() - 1] == ' ' || host[host.length() - 1] == '\t'))
-	{
 		host.erase(host.length() - 1);
-	}
 	return host;
 }
 
