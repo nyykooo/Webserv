@@ -584,7 +584,7 @@ void HttpResponse::checkFile(int methodType)
 			_resStatus = 409;
 	}
 /* 	else if (S_ISLNK(st.st_mode))
-		std::cout << "Link simbólico\n"; */
+		//std::cout << "Link simbólico\n"; */
 }
 
 LocationBlock *HttpResponse::checkLocationBlock()
@@ -746,11 +746,11 @@ void HttpResponse::setEnv()
 		_serverName = "SERVER_NAME=" + parseHostHeader(this->_req->getHeaders().find("Host")->second);
 	}
 	setTempEnv(_serverName);
-	_contentType = parseContentType(this->_req->getHeaders());
-	if (_contentType != "")
+	_cgiContentType = parseContentType(this->_req->getHeaders());
+	if (_cgiContentType != "")
 	{
-		_contentType = "CONTENT_TYPE=" + _contentType;
-		setTempEnv(_contentType);
+		_cgiContentType = "CONTENT_TYPE=" + _cgiContentType;
+		setTempEnv(_cgiContentType);
 	}
 	parsePath();
 	setTempEnv(_pathInfo);
@@ -769,7 +769,7 @@ void HttpResponse::setEnv()
 	ss << "\n\t" << _requestMethod;
 	ss << "\n\t" << _remoteAddress;
 	ss << "\n\t" << _gatewayInterface;
-	ss << "\n\t" << _contentType;
+	ss << "\n\t" << _cgiContentType;
 	ss << "\n\t" << _scriptName;
 	ss << "\n\t" << _serverName;
 	ss << "\n\t" << _queryString;
@@ -928,6 +928,7 @@ void HttpResponse::parseCgiHeaders() {
 	std::string			header;
 	std::stringstream	ss(_cgiHeaders);
 
+	_cgiContentType.clear();
 	while (std::getline(ss, segment)) {
 		std::stringstream	ss2(segment);
 		ss2 >> header;
@@ -1052,7 +1053,7 @@ std::string HttpResponse::header(int requestType)
 	header << "Server: WebServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
 	header << "Content-Type: " << fileType << CRLF;
-	if (_resStatus == 204 || _resStatus == 304)
+	if (_resStatus == 204 || _resStatus == 201 || _resStatus == 304)
 		header << "Content-Length: 0" << CRLF;
 	else
 		header << "Content-Length: " << _resContentLength << CRLF;
@@ -1134,13 +1135,15 @@ const std::string HttpResponse::checkStatusCode()
 	case 200:
 		if (_cgiRequest)
 			return (cgiHeader()); // nao usa header pois a _response eh toda montada pelo cgi
+		else if (_method == DELETE || _method == POST)
+			return (header(OK));
 		return (header(OK) + _resBody);
 	case 206:
 		if (_method == DELETE || _method == POST)
 			return (header(OK));
 		return (header(OK) + _resBody);
 	case 201:				// [NCC] pelo que entendi o 201 so sera gerado pelo POST, por isso podemos garantir que o CGI atuara sempre
-		return (header(OK) + _resBody); // nao usa header pois a _response eh toda montada pelo cgi
+		return (header(OK)); // nao usa header pois a _response eh toda montada pelo cgi
 	case 202:
 		return ("HTTP/1.1 202 Accepted");
 	case 204:
@@ -1193,7 +1196,7 @@ const std::string HttpResponse::checkStatusCode()
 	return _resBody;
 }
 
-HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0)
+HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resContentLength(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0)
 {
 	_client = client;
 	_conf = client->_request->_config;
@@ -1251,18 +1254,15 @@ void HttpResponse::setTempEnv(const std::string &str)
 	_tempEnv.push_back(str);
 }
 
-void	HttpResponse::extractFileName() {
+void	HttpResponse::extractFileName(const std::string& str) {
 	size_t pos;
-	std::string	str;
-
-	str = _req->getBody();
 
 	pos = str.find("filename=\"");
-	if (pos != std::string::npos) {
-		pos += 10; // skip 'filename="'
-		size_t end = str.find("\"", pos);
-		_fileName = str.substr(pos, end - pos);
-	}
+	if (pos == std::string::npos) 
+		return ;
+	pos += 10; // skip 'filename="'
+	size_t end = str.find("\"", pos);
+	_fileName = str.substr(pos, end - pos);
 }
 
 void	HttpResponse::cleanUploadDir() {
@@ -1278,6 +1278,101 @@ void	HttpResponse::cleanUploadDir() {
 	if (end != std::string::npos)
 		clean.erase(end + 1);
 	_block->setUploadDirectory(clean);
+}
+
+bool	HttpResponse::isRequestUpload() {
+	_contentType = parseContentType(_req->getHeaders());
+	size_t	pos = _contentType.find("multipart/form-data");
+	if (pos == std::string::npos)
+		return (false);
+	size_t pos2 = _contentType.find("boundary=");
+	if (pos2 == std::string::npos)
+		return (false);
+	_boundary = _contentType.substr(pos2 + 9, _contentType.size()); // +9 to skip 'boundary='
+	_contentType = "multipart/form-data";
+	return (true);
+}
+
+int HttpResponse::processMultipartFormData()
+{
+	if (_boundary.empty())
+		return 400; // Bad Request
+    std::string boundaryMarker = "--" + _boundary;
+    std::string endBoundary = boundaryMarker + "--";
+    size_t pos = 0;
+    size_t next = 0;
+    bool allSuccess = true;
+    bool anySuccess = false;
+
+    while (true)
+    {
+        // Find start of next part
+        pos = _req->getBody().find(boundaryMarker, pos);
+        if (pos == std::string::npos)
+            break;
+
+        pos += boundaryMarker.size();
+
+        // End of body reached?
+        if (_req->getBody().compare(pos, 2, "--") == 0)
+            break; // reached final boundary
+
+        // Skip CRLF
+        if (_req->getBody().compare(pos, 2, "\r\n") == 0)
+            pos += 2;
+
+        // Find next boundary or end of body
+        next = _req->getBody().find(boundaryMarker, pos);
+        if (next == std::string::npos) {
+            // This is the last part — take until endBoundary or end of body
+            next = _req->getBody().find(endBoundary, pos);
+            if (next == std::string::npos)
+                next = _req->getBody().size();
+        }
+
+        std::string part = _req->getBody().substr(pos, next - pos);
+
+        // Split headers and content
+        size_t headerEnd = part.find("\r\n\r\n");
+        if (headerEnd == std::string::npos)
+            return 400; // invalid part (missing header separator)
+
+        std::string headers = part.substr(0, headerEnd);
+        std::string content = part.substr(headerEnd + 4); // skip CRLFCRLF
+
+        // Extract filename from this part's headers
+        extractFileName(headers);
+        if (_fileName.empty()) {
+            allSuccess = false;
+            continue; // skip this part (no filename)
+        }
+
+        _fileName = _newUploadDir + _fileName;
+
+        // Save file content
+        if (saveBodyToFile(_fileName, content))
+            anySuccess = true;
+        else
+            allSuccess = false;
+
+        // Advance to after next boundary marker
+        pos = next;
+    }
+
+    if (!anySuccess)
+        return 400; // all failed (Bad Request)
+    if (!allSuccess)
+        return 200; // some failed
+    return 201;     // all succeeded (Created)
+}
+
+void	HttpResponse::setNewUploadDir() {
+	if (_newUploadDir == "") {
+		if (_block->getUploadDirectory() == "")
+			_newUploadDir = _newRoot + "/" + _block->getUploadDirectory();
+		else
+			_newUploadDir = _newRoot + "/" + _block->getUploadDirectory() + "/";
+	}
 }
 
 void HttpResponse::handlePOST()
@@ -1296,24 +1391,18 @@ void HttpResponse::handlePOST()
 	}
 	// Ver se upload dir existe no config.
 	std::string uploadDir = _block->getUploadDirectory();
-	//td::cout << "uploadDir: " << uploadDir << " " << _block->getRoot() << std::endl;
-	if (uploadDir == "")
+	if (uploadDir == "" || !isRequestUpload())
 	{
-		_resStatus = 405;
-		_resBody = http_error_405_page;
-		_resContentLength = _resBody.size();
+		std::cout << uploadDir << std::endl;
+		_resStatus = 400;
+		_resBody = http_error_400_page;
 		_resContentLength = _resBody.size();
 		return ;
-/* 		uploadDir = "/tmp/webserv_uploads";
-		printLog("Upload directory not configured, using default: " + uploadDir, YELLOW, std::cout); */
 	}
 	cleanUploadDir();
 	//std::cout << "_newRoot = " << _newRoot << std::endl;
-	if (_block->getUploadDirectory() == "")
-		uploadDir = _newRoot + "/" + _block->getUploadDirectory();
-	else
-		uploadDir = _newRoot + "/" + _block->getUploadDirectory() + "/";
-	//std::cout << "uploadDir: " << uploadDir << std::endl;
+	setNewUploadDir(); // this sets the Upload Directory with the root
+	//std::cout << "uploadDir: " << _newUploadDir << std::endl;
 	if (/* !createUploadDirectory(uploadDir) ||  */access(uploadDir.c_str(), W_OK) != 0)
 	{
 		_resStatus = 500; // Internal Server Error
@@ -1322,45 +1411,12 @@ void HttpResponse::handlePOST()
 		//std::cout << RED << "Failed to access upload directory: " << uploadDir << RESET << std::endl;
 		return ;
 	}
-	/* if (!_req->getUploadPath().empty())
-	{
-		// Upload grande - o arquivo já está no disco (temporário)
-		// Arrumar o nome considerando content/type.
-		std::string tempPath = _req->getUploadPath();
-		std::string tempFilename = tempPath.substr(tempPath.find_last_of("/") + 1);
-		std::string finalPath = uploadDir + "/" + tempFilename;
-		if (rename(tempPath.c_str(), finalPath.c_str()) != 0)
-		{
-			_resStatus = 500;
-			_resBody = "Failed to move uploaded file";
-			std::cout << RED << "Failed to move uploaded file from " << tempPath << " to " << finalPath << RESET << std::endl;
-			return;
-		}
-		_resStatus = 201; // Created
-		_resBody = "File uploaded successfully: " + tempFilename;
-		std::cout << GREEN << "File uploaded successfully to " << finalPath << RESET << std::endl;
-		return;
-	}
-	// O mesmo aqui para pequenos files, Arrumar o nome considerando content/type.
-	time_t now = time(NULL);
-	std::stringstream ss;
-	ss << "upload_" << now << ".bin"; // Extensão genérica temporária
-	std::string filename = ss.str();
-	std::string fullPath = uploadDir + "/" + filename; */
-	// Salvar o body no arquivo
-	std::string body = _req->getBody();
-	//std::cout << RED << body << RESET << std::endl;
-/* 	if (body.empty())
-	{
-		_resStatus = 400; // Bad Request
-		_resBody = "Empty body in POST request";
-		return;
-	} */
-	extractFileName();
+	_resStatus = processMultipartFormData();
+/* 	extractFileName();
 	// _fileName = "test";
 	_fileName = uploadDir + _fileName;
 	//std::cout << GRAY << _fileName << RESET << std::endl;
-	if (!saveBodyToFile(_fileName, body))
+	if (!saveBodyToFile(_fileName, _req->getBody()))
 	{
 		_resStatus = 500; // Internal Server Error
 		_resBody = http_error_500_page;
@@ -1368,7 +1424,7 @@ void HttpResponse::handlePOST()
 		return;
 	}
 	// Sucesso - 201 Created
-	_resStatus = 201;
+	_resStatus = 201; */
 	//_resBody = "File uploaded successfully: " + filename;
 	//std::cout << GREEN << "File uploaded successfully to " << fullPath << RESET << std::endl;
 }

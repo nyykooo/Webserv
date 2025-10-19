@@ -278,73 +278,73 @@ int WebServer::extractContentLength(const std::string &headers_lower)
 
 int WebServer::receiveData(int client_fd)
 {
-	ssize_t bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
-	if (bytes <= 0)
-		return -1;
 
-	_buffer[bytes] = '\0';
-	std::string newData(_buffer);
-	std::cout << CYAN << _buffer << RESET << std::endl;
-
-	// APROFUNDAR ANALISE SOBRE O DOS E MAX_ABSOLUTE_REQUEST_SIZE
-	// Proteção contra DOS
-	// if (_partial_requests[client_fd].size() + newData.size() > MAX_ABSOLUTE_REQUEST_SIZE)
-	// {
-	// 	// Criar um erro 413 "Request entity too large"
-	// 	_partial_requests.erase(client_fd);
-	// 	return -1;
-	// }
-
-
-	Configuration *config = findConfigForRequestFast(newData, client_fd);
-	if (!config)
-	{
-		_logger << "Configuração não encontrada para cliente " << client_fd;
-		printLog(_logger.str(), RED, std::cout);
-		_logger.str("");
-		_logger.clear();
-		_partial_requests.erase(client_fd);
-		return -1;
-	}
 	try
 	{
-		// encontra o client
-		Client *client = findClient(client_fd, _clients_vec);
-		// verifica se o client tem req
-		if (client->_request != NULL)
-		{
-			// verifica se sua req tem chunked == false
-			if (!client->_request->getChunked())
-			{
-				delete client->_request;
-				client->_request   = new HttpRequest(newData, config, _sessions);
+		std::string newData;
+		ssize_t		bytes;
+		while (true) {
+			while ((bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0)) > 0) {
+				newData.append(_buffer, bytes);
 			}
-			else
-				client->_request->parse(newData);
-			// se existir faz append do novo chunk na request
-/* 			else if (client->_request->getChunked() && !client->_request->chunkedRequestCompleted(newData))
+			//std::cout << "data: " CYAN << newData << RESET << std::endl;
+			if (newData.empty())
+				return -1;
+			Configuration *config = findConfigForRequestFast(newData, client_fd);
+			if (!config)
 			{
-				std::cout << "req incompleted\n";
-				return (0);
-			} */
-
-			// verificar se o chunk eh o ultimo (pensar isso melhor com o Diogo)
-
-			if (client->_request->getChunked() == true && !client->_request->isRequestCompleted()){
-				return (0);}
-/* 			if (!isRequestComplete(newData))
-			{
-				std::cout << "aquiiii" << std::endl;
-				client->_request->setChunked(true);
-				return 0; // Aguarda mais dados
+				_logger << "Configuração não encontrada para cliente " << client_fd;
+				printLog(_logger.str(), RED, std::cout);
+				_logger.str("");
+				_logger.clear();
+				_partial_requests.erase(client_fd);
+				return -1;
 			}
-			else
-				client->_request->setChunked(false); */
-		}
-		else {
-			client->_request = new HttpRequest(newData, config, _sessions);
-			if (client->_request->getChunked() == true && !client->_request->isRequestCompleted())
-				return (0);
+			// encontra o client
+			Client *client = findClient(client_fd, _clients_vec);
+			// verifica se o client tem req
+			if (client->_request != NULL)
+			{
+				// verifica se sua req tem chunked == false
+				if (!client->_request->getChunked())
+				{
+					delete client->_request;
+					client->_request   = new HttpRequest(newData, config, _sessions);
+				}
+				else
+					client->_request->parse(newData);
+				// se existir faz append do novo chunk na request
+	/* 			else if (client->_request->getChunked() && !client->_request->chunkedRequestCompleted(newData))
+				{
+					std::cout << "req incompleted\n";
+					return (0);
+				} */
+
+				// verificar se o chunk eh o ultimo (pensar isso melhor com o Diogo)
+				if (client->_request->isRequestCompleted())
+					break ;
+				else if (client->_request->getChunked() && !client->_request->isRequestCompleted())
+					return (0);
+				else if (!client->_request->isRequestCompleted())
+					continue ;
+	/* 			if (!isRequestComplete(newData))
+				{
+					std::cout << "aquiiii" << std::endl;
+					client->_request->setChunked(true);
+					return 0; // Aguarda mais dados
+				}
+				else
+					client->_request->setChunked(false); */
+			}
+			else {
+				client->_request = new HttpRequest(newData, config, _sessions);
+				if (client->_request->isRequestCompleted())
+					break ;
+				else if (client->_request->getChunked() && !client->_request->isRequestCompleted())
+					return (0);
+				else if (!client->_request->isRequestCompleted())
+					continue ;
+			}
 		}
 	}
 	catch (const std::exception &e)
@@ -616,7 +616,7 @@ bool WebServer::isRequestComplete(const std::string &data)
 	std::string headers_lower = toLower(headers); // Converte uma vez
 
 	// Transfer-Encoding: chunked
-	std::cout << "Headers: " <<  headers << std::endl;
+	//std::cout << "Headers: " <<  headers << std::endl;
 	if (headers_lower.find("Transfer-Encoding: chunked") != std::string::npos)
 		return data.find("0\r\n\r\n") != std::string::npos;
 
@@ -900,7 +900,7 @@ bool WebServer::continueLargeFileStreaming(Client *client)
     // printLog(_logger.str(), WHITE, std::cout);
     // _logger.str("");
     // _logger.clear();
-	std::cout << "newFilePos: " << newFilePos << std::endl;
+	//std::cout << "newFilePos: " << newFilePos << std::endl;
     return (newFilePos < client->_response->getContentLength());
 }
 
