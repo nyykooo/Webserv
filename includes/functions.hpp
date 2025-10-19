@@ -23,6 +23,7 @@ int			findLocation(Client *client);
 std::string	setTimeStamp();
 std::string get_http_date();
 void		printLog(std::string message, const char *color, std::ostream &stream);
+void	printLogNew(std::stringstream &ss, const char	*color, std::ostream &stream, bool clean);
 
 // ### UTILS ### 
 std::string toLower(const std::string &str);

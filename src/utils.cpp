@@ -74,6 +74,19 @@ std::string get_http_date()
     return std::string(buf);
 }
 
+
+void	printLogNew(std::stringstream &ss, const char	*color, std::ostream &stream, bool clean)
+{
+	std::string message = ss.str();
+	std::string time = setTimeStamp();
+	stream << "[" + time + "]: " << color << message << RESET << std::endl;
+	if (clean)
+	{
+		ss.str("");
+		ss.clear();
+	}
+}
+
 void	printLog(std::string message, const char	*color, std::ostream &stream)
 {
 	std::string time = setTimeStamp();
