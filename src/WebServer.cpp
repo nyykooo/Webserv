@@ -354,31 +354,31 @@ int WebServer::receiveData(int client_fd)
 	}
 	return (1);
 }
-static void sendResponseToClient(Client *client)
+static bool sendResponseToClient(Client *client)
 {
 	std::stringstream _logger;
 	client->_response->setResponse(client->_response->checkStatusCode());
 	const char *buf = client->_response->getResponse().c_str();
 	size_t size = client->_response->getResponse().size();
-	size_t totalSent = 0;
+	size_t totalSent = client->_response->getFilePos();
 
-	while (totalSent < size)
+	int sentBytes = send(client->getSocketFd(), buf + totalSent, size - totalSent, 0);
+	if (sentBytes < 0)
 	{
-		int sent = send(client->getSocketFd(), buf + totalSent, size - totalSent, 0);
-		if (sent < 0)
-		{
-			_logger << "Erro ao enviar corpo ao cliente - client_fd: " << client->getSocketFd();
-			printLog(_logger.str(), RED, std::cout);
-			_logger.str("");
-			_logger.clear();
-			return;
-		}
-		totalSent += sent;
+		_logger << "Erro ao enviar corpo ao cliente - client_fd: " << client->getSocketFd();
+		printLog(_logger.str(), RED, std::cout);
+		_logger.str("");
+		_logger.clear();
+		return false;
 	}
+	totalSent += sentBytes;
+
 	_logger << "Dados enviados ao cliente - client_fd: " << client->getSocketFd();
 	printLog(_logger.str(), WHITE, std::cout);
 	_logger.str("");
 	_logger.clear();
+	client->_response->setFilePos(totalSent);
+	return (client->_response->getFilePos() >= size);
 }
 
 void WebServer::sendData(int client_fd)
@@ -668,7 +668,7 @@ void WebServer::handleClientOutput(Client *client, int i)
 		printLogNew(_logger, CYAN, std::cout, true);
 		sendData(_events[i].data.fd);
 		if (client->getProcessingState() == PROCESSING)
-			client->setProcessingState(COMPLETED);
+			client->setProcessingState(SEND_DATA);
 		else if (client->getProcessingState() == STREAMING)
 		{
 			_logger << "WebServer >> handleClientOutput >> starting reponse STREAMING for client_fd: " << client->getSocketFd();
@@ -699,7 +699,7 @@ void WebServer::handleClientOutput(Client *client, int i)
 	case COMPLETED:
 			_logger << "WebServer >> handleClientOutput >> request treatment COMPLETED for client_fd: " << client->getSocketFd();
 			printLogNew(_logger, CYAN, std::cout, true);
-			sendResponseToClient(client);
+			// sendResponseToClient(client);
 			_events[i].events = EPOLLIN;
 			if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]) == 0)
 				client->setProcessingState(RECEIVING);
@@ -713,13 +713,20 @@ void WebServer::handleClientOutput(Client *client, int i)
 			client->setTime(std::time(NULL));
 			break;
 
+	case SEND_DATA:
+			_logger << "WebServer >> hanldeClientOutput >> sending data to client_fd: " << client->getSocketFd();
+			printLogNew(_logger, CYAN, std::cout, true);
+			if (sendResponseToClient(client))
+				client->setProcessingState(COMPLETED);
+			break;
+
 	case CGI_PROCESSING:
 		// client->_response->startResponse();
 		client->_response->checkCgiProcess();
 		if (client->getProcessingState() == CGI_COMPLETED)
 		{
 			// client->_response->setResponse(client->_response->checkStatusCode()); // garante que o response esta atualizado
-			client->setProcessingState(COMPLETED);
+			client->setProcessingState(SEND_DATA);
 		}
 		break;
 
