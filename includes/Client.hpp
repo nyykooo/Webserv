@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: brunhenr <brunhenr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/09/20 17:16:12 by brunhenr         ###   ########.fr       */
+/*   Updated: 2025/10/20 13:36:04 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ class Client : public Socket {
 		size_t 							_uploadSize;
 		size_t 							_uploadReceived;
 		std::string						_uploadPath;
+		bool							_firstRequest;
 
 	public:
 		// ### ATRIBUTES ###
@@ -59,6 +60,7 @@ class Client : public Socket {
 		const size_t 					&getUploadReceived() const;
 		const std::string 				&getUploadPath() const;
 		const std::string 				&getOriginalHeaders() const;
+		bool							getFirstRequest();
 
 		// ### SETTERS ###
 		void							setTime(std::time_t time);
@@ -70,6 +72,7 @@ class Client : public Socket {
 		void 							setUploadReceived(size_t uploadReceived);
 		void 							setUploadPath(std::string uploadPath);
 		void 							setOriginalHeaders(const std::string &headers);
+		void							setFirstRequest(bool value);
 
 };
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/06 20:48:07 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/20 13:37:03 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ Client::Client() : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0)
 	_time = std::time(NULL);
 }
 
-Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0)
+Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0), _firstRequest(true)
 {
 	_uploadFd = -1;
 	_uploadSize = 0;
@@ -202,6 +202,9 @@ const std::string &Client::getOriginalHeaders() const
 	return _originalHeaders;
 }
 
+bool Client::getFirstRequest() {
+	return (_firstRequest);
+}
 // ######### SETTERS #########
 
 void Client::setProcessingState(RequestProcessingState state)
@@ -249,4 +252,8 @@ void Client::setUploadPath(std::string uploadPath)
 void Client::setOriginalHeaders(const std::string &headers)
 {
 	_originalHeaders = headers;
+}
+
+void Client::setFirstRequest(bool value) {
+	_firstRequest = value;
 }
