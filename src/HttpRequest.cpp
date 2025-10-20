@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/14 19:51:41 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/19 18:01:03 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,8 +22,8 @@ HttpRequest::HttpRequest()
 	session(NULL)
 {}
 
-HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _uploadSize(0), 
-				_chunked(false),  _sessions(sessions), _requestComplete(false), _config(config)  {
+HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _contentLength(0), _headersCompleted(false),
+		_uploadSize(0), _chunked(false),  _sessions(sessions), _requestComplete(false), _config(config)  {
 	parse(request_text);
 }
 
@@ -103,7 +103,7 @@ void HttpRequest::parse(const std::string &request_text)
 	//std::cout << YELLOW << request_text << RESET << std::endl;
 	if (_chunked && !chunkedRequestCompleted(stream.str())) // to keep parsing the chunk request and don't check the other headers that come ONLY in first recv call
 		return ;
-	else if (_chunked == false) {
+	else if (_chunked == false && !_headersCompleted) {
 		if (std::getline(stream, request_line) && !request_line.empty())
 		{
 			parse_requestline(request_line);
@@ -123,14 +123,14 @@ void HttpRequest::parse(const std::string &request_text)
 			return;
 		parseCookies();
 		std::map<std::string, std::string>::const_iterator transferEnconding = headers.find("Transfer-Encoding");
-		if (transferEnconding == headers.end())
-			return ;
-		if (transferEnconding->second != "chunked") {
-			_parseStatus = 400;
-			return ;
+		if (transferEnconding != headers.end()) {
+			if (transferEnconding->second != "chunked") {
+				_parseStatus = 400;
+				return ;
+			}
+			_chunked = true;
+			return ;			
 		}
-		_chunked = true;
-		return ;
 	}
 	if (_parseStatus != 200)
 		return;
@@ -222,6 +222,7 @@ void HttpRequest::parse_headers(std::istringstream &stream)
 				return;
 		}
 	}
+	_headersCompleted = true;
 }
 
 void HttpRequest::parseBody(std::istringstream &stream)
@@ -245,13 +246,13 @@ void HttpRequest::parseBody(std::istringstream &stream)
 			setParseStatus(400);
 				return;
 		}
-		long contentLength = std::atol(contentLengthIt->second.c_str());
-		if (contentLength < 0)
+		_contentLength = std::atol(contentLengthIt->second.c_str());
+		if (_contentLength < 0)
 		{
 			setParseStatus(400);
 				return;
 		}
-		if (contentLength > _config->getRequestSize())
+		else if (_contentLength > _config->getRequestSize())
 		{
 			setParseStatus(413);
 				return;
@@ -259,6 +260,11 @@ void HttpRequest::parseBody(std::istringstream &stream)
 	}
 	std::string body_str((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
 	_body = body_str;
+	if (static_cast<size_t>(_contentLength) != _body.size()) {
+		_requestComplete = false;
+		return ;
+	}
+	_requestComplete = true;
 	if (_body.length() > static_cast<size_t>(_config->getRequestSize()))
 	{
 		setParseStatus(413);

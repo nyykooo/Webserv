@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/10/13 03:53:13 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/19 17:27:01 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,8 @@ class HttpRequest
 	private:
 		// Attributes
 		int									_parseStatus;
+		long								_contentLength;
+		bool								_headersCompleted;
 		std::string							method;
 		std::string							path;
 		std::string							version;

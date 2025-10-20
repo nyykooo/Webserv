@@ -72,6 +72,9 @@ class HttpResponse {
 
 		std::ifstream						_file;
 		std::size_t							_filePos;
+
+		std::string							_newUploadDir;
+		std::string							_boundary;
 		
 		public:
 		
@@ -86,6 +89,7 @@ class HttpResponse {
 		void	setCgiContentType(std::string& type);
 		void	setCgiLocation(const std::string& location);
 		void	setFilePos(std::size_t pos);
+		void	setNewUploadDir();
 
 		//GETTERS
 		const std::string&		getResponse(void) const;
@@ -130,8 +134,10 @@ class HttpResponse {
 		void	parseCgiStatus(const std::string& segment);
 		void	parseContentLength(const std::string& segment);
 		void	buildFullPath();
-		void	extractFileName();
+		void	extractFileName(const std::string& str);
 		void	cleanUploadDir();
+		bool	isRequestUpload();
+		int		processMultipartFormData();
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();
