@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/20 23:16:58 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/21 15:58:10 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,15 +100,20 @@ bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
 	return (true);
 }
 
-void HttpRequest::checkHeaders(const std::string& str) {
+void HttpRequest::checkHeaders(std::string& str) {
 	if (_headersCompleted)
 		return ;
-	size_t pos = str.find("\r\n\r\n");
+_headersNotParsed += str;
+	size_t pos = _headersNotParsed.find("\r\n\r\n");
 	if (pos == std::string::npos) {
-		_headersNotParsed.append(str);
+		
 		return ;
 	}
-	_headersNotParsed.append(str.substr(0, pos));
+/* 	std::cout << RED << pos << RESET << std::endl; */
+	str = _headersNotParsed.substr(pos + 4);
+	_headersNotParsed = _headersNotParsed.substr(0, pos);
+/* 	std::cout << YELLOW << "size: " << str.size() << RESET << std::endl;
+	std::cout << YELLOW << "size now: " << str.size() << RESET << std::endl; */
 	_headersCompleted = true;
 }
 
@@ -133,13 +138,12 @@ void HttpRequest::parse(const std::string &request_text)
 	if (!_headersCompleted)
 		return ;
 	checkChunkedRequest();
-	std::cout << YELLOW << "status: " << _parseStatus << RESET << std::endl;
 	if (_parseStatus == 400)
 		return ;
 	//std::cout << YELLOW << request_text << RESET << std::endl;
 	if (_chunked && !chunkedRequestCompleted(temp)) // to keep parsing the chunk request and don't check the other headers that come ONLY in first recv call
 		return ;	
-	parse_headers(temp);
+	parse_headers();
 	if (_parseStatus != 200) {
 		_requestComplete = true;
 		return ;
@@ -151,50 +155,60 @@ void HttpRequest::parse(const std::string &request_text)
 	}
 }
 
-void HttpRequest::parseBody()
-{
-	std::cout << GREEN << _body << std::endl;
+bool HttpRequest::checkContentLength() {
+	std::map<std::string, std::string>::const_iterator contentLengthIt = _headers.find("Content-Length");
+	std::map<std::string, std::string>::const_iterator transferEnconding = _headers.find("Transfer-Encoding");
+
 	if (_body.length() > static_cast<size_t>(_config->getRequestSize()))
 	{
 		_parseStatus = 413;
-		_requestComplete = true;
-		return;
+		return (false);
 	}
-	//std::cout << GREEN << _body << std::endl;
-	//std::cout << CYAN << _contentLength << " " << _body.size() << RESET << std::endl;
-	if (_contentLength != 0 && static_cast<size_t>(_contentLength) < _body.size())
-		return ;
-	_requestComplete = true;
-	if (_body.size() == 0) {
-		parseCookies();
-		return ;
-	}
-	std::map<std::string, std::string>::const_iterator contentLengthIt = _headers.find("Content-Length");
-	std::map<std::string, std::string>::const_iterator transferEnconding = _headers.find("Transfer-Encoding");
-	if (contentLengthIt == _headers.end() && transferEnconding == _headers.end()) // validar isto apenas quando ja tiver o body completo
+	if (_body.size() > 0 && contentLengthIt == _headers.end() && transferEnconding == _headers.end()) // validar isto apenas quando ja tiver o body completo
 	{
 		_parseStatus = 411;
-		return ;
+		return (false);
 	}
 	else if (contentLengthIt != _headers.end() && transferEnconding != _headers.end()) {
 		_parseStatus = 400;
-		return ;
+		return (false);
 	}
 	if (contentLengthIt != _headers.end())
 	{
 		if (!isValidContentLengthFormat(contentLengthIt->second))
 		{
 			_parseStatus = 400;
-			return;
+			return (false);
 		}
 		_contentLength = std::atol(contentLengthIt->second.c_str());
-		if (_contentLength < 0)
+		if (_contentLength < 0) {
 			_parseStatus = 400;
-		else if (_contentLength > _config->getRequestSize())
+			return (false);
+		}	
+		else if (_contentLength > _config->getRequestSize()) {
 			_parseStatus = 413;
-		else if (_contentLength == 0)
+			return (false);
+		}
+		else if (_contentLength == 0) {
 			_requestComplete = true;
+			return (true);
+		}	
 	}
+	return (true);
+}
+
+void HttpRequest::parseBody()
+{
+	//std::cout << GREEN << _body << std::endl;
+	//std::cout << GREEN << _body << std::endl;
+	//std::cout << CYAN << _contentLength << " " << _body.size() << RESET << std::endl;
+	if (!checkContentLength()) {
+		_requestComplete = true;
+		return ;
+	}
+	if (_contentLength != 0 && _body.size() < static_cast<size_t>(_contentLength))
+		return ;
+	_requestComplete = true;
 	if (_parseStatus != 200)
 		return ;
 	parseCookies();
@@ -231,13 +245,13 @@ void HttpRequest::parse_requestline(const std::string &request_line)
 	this->_version = version;
 }
 
-void HttpRequest::parse_headers(std::string& str)
+void HttpRequest::parse_headers()
 {
 	if (_headersParsed)
 		return ;
 	std::istringstream	stream(_headersNotParsed);
 	std::string			header_line;
-	size_t				headersSize = _headersNotParsed.size() + 4; // sum CRLF CRLF
+	//size_t				headersSize = _headersNotParsed.size() + 4; // sum CRLF CRLF
 
 	if (std::getline(stream, header_line) && !header_line.empty()) {
 			parse_requestline(header_line);
@@ -287,10 +301,7 @@ void HttpRequest::parse_headers(std::string& str)
 			return;
 		}
 	}
-	_headersParsed = true;
-	std::cout << YELLOW << "size: " << str.size() << RESET << std::endl;
-	str = str.substr(headersSize, str.size());
-	std::cout << YELLOW << "size now: " << str.size() << RESET << std::endl;	
+	_headersParsed = true;	
 }
 
 bool HttpRequest::isValidContentLengthFormat(const std::string &value)

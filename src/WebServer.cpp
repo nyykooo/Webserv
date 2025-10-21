@@ -188,11 +188,6 @@ struct epoll_event *WebServer::getEvents() const
 	return _events;
 }
 
-char *WebServer::getBuffer()
-{
-	return _buffer;
-}
-
 const std::vector<Configuration> &WebServer::getConfigurations() const
 {
 	return _configurations;
@@ -217,17 +212,6 @@ void WebServer::setClientsVec(const std::vector<Client *> &clients_vec)
 void WebServer::setEvents(struct epoll_event *events)
 {
 	_events = events;
-}
-
-void WebServer::setBuffer(const char *buffer)
-{
-	if (buffer)
-	{
-		strncpy(_buffer, buffer, BUFFER_SIZE - 1);
-		_buffer[BUFFER_SIZE - 1] = '\0'; // Garante que o buffer esteja null-terminated
-	}
-	else
-		_buffer[0] = '\0'; // Limpa o buffer se o ponteiro for nulo
 }
 
 // ### TESTANDO STARTSERVER DENTRO DA WEBSERVER ###
@@ -275,13 +259,15 @@ int WebServer::extractContentLength(const std::string &headers_lower)
 int WebServer::receiveData(int client_fd)
 {
 	std::string	newData;
+	char 		buffer[BUFFER_SIZE];
 	ssize_t		bytes;
 
-	bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
+	bytes = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
 	if (bytes <= 0)
 		return (-1);
-	newData = _buffer;
-	std::cout << "data: " CYAN << newData << RESET << std::endl;
+	buffer[bytes] = '\0';
+	newData = buffer;
+	//std::cout << "data: " CYAN << newData << RESET << std::endl;
 	if (newData.empty())
 		return -1;
 	Configuration *config = findConfigForRequestFast(newData, client_fd);
@@ -301,6 +287,8 @@ int WebServer::receiveData(int client_fd)
 		// verifica se o client tem req
 		if (client->_request != NULL)
 		{
+			if (client->_request->RequestCompleted())
+				client->setFirstRequest(true);
 			if (client->getFirstRequest())
 			{
 				delete client->_request;
@@ -309,7 +297,7 @@ int WebServer::receiveData(int client_fd)
 			}
 			else
 				client->_request->parse(newData);
-			std::cout << YELLOW << client->_request->getParseStatus() << RESET << std::endl;
+			//std::cout << YELLOW << client->_request->getParseStatus() << RESET << std::endl;
 			if (!client->_request->RequestCompleted())
 				return (0);
 		}

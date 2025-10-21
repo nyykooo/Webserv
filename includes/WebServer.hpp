@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/05 13:22:57 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/21 12:55:15 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,6 @@ class WebServer
 		std::map<int, std::pair<std::string, std::string> >	_client_to_server_map; // mapeia o fd do cliente para o ip:port do servidor
 		std::vector<Configuration>							_configurations; // armazena as configurações do servidor
 		struct epoll_event									*_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
-		char 												_buffer[BUFFER_SIZE]; // buffer para leitura de dados
 		std::vector<SessionData *>							*_sessions;
 
 	public:
