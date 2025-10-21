@@ -274,73 +274,49 @@ int WebServer::extractContentLength(const std::string &headers_lower)
 
 int WebServer::receiveData(int client_fd)
 {
+	std::string	newData;
+	ssize_t		bytes;
 
+	bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0);
+	if (bytes <= 0)
+		return (-1);
+	newData = _buffer;
+	std::cout << "data: " CYAN << newData << RESET << std::endl;
+	if (newData.empty())
+		return -1;
+	Configuration *config = findConfigForRequestFast(newData, client_fd);
+	if (!config)
+	{
+		_logger << "Configuração não encontrada para cliente " << client_fd;
+		printLog(_logger.str(), RED, std::cout);
+		_logger.str("");
+		_logger.clear();
+		_partial_requests.erase(client_fd);
+		return -1;
+	}
 	try
 	{
-		std::string newData;
-		ssize_t		bytes;
-		while (true) {
-			while ((bytes = recv(client_fd, _buffer, BUFFER_SIZE - 1, 0)) > 0) {
-				newData.append(_buffer, bytes);
-			}
-			//std::cout << "data: " CYAN << newData << RESET << std::endl;
-			if (newData.empty())
-				return -1;
-			Configuration *config = findConfigForRequestFast(newData, client_fd);
-			if (!config)
+		// encontra o client
+		Client *client = findClient(client_fd, _clients_vec);
+		// verifica se o client tem req
+		if (client->_request != NULL)
+		{
+			if (client->getFirstRequest())
 			{
-				_logger << "Configuração não encontrada para cliente " << client_fd;
-				printLog(_logger.str(), RED, std::cout);
-				_logger.str("");
-				_logger.clear();
-				_partial_requests.erase(client_fd);
-				return -1;
+				delete client->_request;
+				client->_request   = new HttpRequest(newData, config, _sessions);
+				client->setFirstRequest(false);
 			}
-			// encontra o client
-			Client *client = findClient(client_fd, _clients_vec);
-			// verifica se o client tem req
-			if (client->_request != NULL)
-			{
-				// verifica se sua req tem chunked == false
-				if (!client->_request->getChunked())
-				{
-					delete client->_request;
-					client->_request   = new HttpRequest(newData, config, _sessions);
-				}
-				else
-					client->_request->parse(newData);
-				// se existir faz append do novo chunk na request
-	/* 			else if (client->_request->getChunked() && !client->_request->chunkedRequestCompleted(newData))
-				{
-					std::cout << "req incompleted\n";
-					return (0);
-				} */
-
-				// verificar se o chunk eh o ultimo (pensar isso melhor com o Diogo)
-				if (client->_request->isRequestCompleted())
-					break ;
-				else if (client->_request->getChunked() && !client->_request->isRequestCompleted())
-					return (0);
-				else if (!client->_request->isRequestCompleted())
-					continue ;
-	/* 			if (!isRequestComplete(newData))
-				{
-					std::cout << "aquiiii" << std::endl;
-					client->_request->setChunked(true);
-					return 0; // Aguarda mais dados
-				}
-				else
-					client->_request->setChunked(false); */
-			}
-			else {
-				client->_request = new HttpRequest(newData, config, _sessions);
-				if (client->_request->isRequestCompleted())
-					break ;
-				else if (client->_request->getChunked() && !client->_request->isRequestCompleted())
-					return (0);
-				else if (!client->_request->isRequestCompleted())
-					continue ;
-			}
+			else
+				client->_request->parse(newData);
+			std::cout << YELLOW << client->_request->getParseStatus() << RESET << std::endl;
+			if (!client->_request->RequestCompleted())
+				return (0);
+		}
+		else {
+			client->_request = new HttpRequest(newData, config, _sessions);
+			if (!client->_request->RequestCompleted())
+				return (0);
 		}
 	}
 	catch (const std::exception &e)
@@ -599,33 +575,7 @@ Configuration *WebServer::findConfigForRequestFast(const std::string &rawRequest
 }
 
 // ### PRIVATE METHODS ###
-bool WebServer::isRequestComplete(const std::string &data)
-{
-	size_t header_end = data.find("\r\n\r\n");
-	if (header_end == std::string::npos)
-		return false;
 
-	std::string headers = data.substr(0, header_end);
-	std::string headers_lower = toLower(headers); // Converte uma vez
-
-	// Transfer-Encoding: chunked
-	//std::cout << "Headers: " <<  headers << std::endl;
-	if (headers_lower.find("Transfer-Encoding: chunked") != std::string::npos)
-		return data.find("0\r\n\r\n") != std::string::npos;
-
-	// Content-Length
-	if (headers_lower.find("Content-Length:") != std::string::npos)
-	{
-		int content_length = extractContentLength(headers_lower);
-		if (content_length >= 0)
-		{
-			size_t body_start = header_end + 4;
-			return (data.length() >= body_start + content_length);
-		}
-	}
-
-	return true;
-}
 
 void WebServer::handleClientInput(Client *client, int i)
 {

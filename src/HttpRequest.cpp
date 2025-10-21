@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/19 18:01:03 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/20 23:16:58 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ HttpRequest::HttpRequest()
 {}
 
 HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _contentLength(0), _headersCompleted(false),
-		_uploadSize(0), _chunked(false),  _sessions(sessions), _requestComplete(false), _config(config)  {
+		_uploadSize(0), _chunkedRequestSize(0), _chunked(false),  _sessions(sessions), _requestComplete(false), _headersParsed(false), _config(config)  {
 	parse(request_text);
 }
 
@@ -31,10 +31,10 @@ HttpRequest::~HttpRequest() {}
 
 HttpRequest::HttpRequest(const HttpRequest &other)
 	: _parseStatus(other._parseStatus),
-	  method(other.method),
-	  path(other.path),
-	  version(other.version),
-	  headers(other.headers),
+	  _method(other._method),
+	  _path(other._path),
+	  _version(other._version),
+	  _headers(other._headers),
 	  _body(other._body),
 	  _requestComplete(other._requestComplete),
 	  _config(other._config)
@@ -60,6 +60,11 @@ bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
 			_requestComplete = true;
             return (true); // invalid hex size
 		}
+		_chunkedRequestSize += chunkSize;
+		if (_chunkedRequestSize > static_cast<size_t>(_config->getRequestSize())) {
+			_parseStatus = 413;
+			return (true);
+		}
 		pos = crlf + 2; // move after "\r\n"
 		// Chunk size 0 means end of body
 		if (chunkSize == 0) {
@@ -72,14 +77,14 @@ bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
 			if (_bodyBuffer.substr(pos, 2) != "\r\n") {
 				_parseStatus = 400;
 				return true;
-            }
-            _bodyBuffer.erase(0, pos + 2); // remove parsed part
-            _requestComplete = true;
-            return true; // fully parsed
-        }
+			}
+			_bodyBuffer.erase(0, pos + 2); // remove parsed part
+			_requestComplete = true;
+			return true; // fully parsed
+		}
 		if (_bodyBuffer.size() < pos + chunkSize + 2)
 			return false; // wait for rest of chunk
-        // Append the actual data to the de-chunked body
+		// Append the actual data to the de-chunked body
 		_body.append(_bodyBuffer, pos, chunkSize);
 		pos += chunkSize;
 		// After chunk data, there must be a CRLF
@@ -89,59 +94,110 @@ bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
 			return true;
 		}
 		pos += 2;
-        _bodyBuffer.erase(0, pos);
-        pos = 0;
+		_bodyBuffer.erase(0, pos);
+		pos = 0;
 	}
 	return (true);
 }
 
+void HttpRequest::checkHeaders(const std::string& str) {
+	if (_headersCompleted)
+		return ;
+	size_t pos = str.find("\r\n\r\n");
+	if (pos == std::string::npos) {
+		_headersNotParsed.append(str);
+		return ;
+	}
+	_headersNotParsed.append(str.substr(0, pos));
+	_headersCompleted = true;
+}
+
+void HttpRequest::checkChunkedRequest() {
+	std::map<std::string, std::string>::const_iterator transferEnconding = _headers.find("Transfer-Encoding");
+	if (transferEnconding != _headers.end()) {
+		if (transferEnconding->second != "chunked") {
+			_parseStatus = 400;
+			_requestComplete = true;
+			return ;
+		}
+		_chunked = true;
+	}
+}
+
 void HttpRequest::parse(const std::string &request_text)
 {
-	std::istringstream	stream(request_text);
 	std::string			request_line;
+	std::string			temp = request_text;
 
-	//std::cout << YELLOW << request_text << RESET << std::endl;
-	if (_chunked && !chunkedRequestCompleted(stream.str())) // to keep parsing the chunk request and don't check the other headers that come ONLY in first recv call
+	checkHeaders(temp);
+	if (!_headersCompleted)
 		return ;
-	else if (_chunked == false && !_headersCompleted) {
-		if (std::getline(stream, request_line) && !request_line.empty())
-		{
-			parse_requestline(request_line);
-			std::stringstream ss;
-			ss << "HTTP Request line parsed: " << method << " " << path << " " << version;
-			printLog(ss.str(), WHITE, std::cout);
-			if (_parseStatus != 200)
-				return;
-		}
-		else
-		{
-			setParseStatus(400);
-				return;
-		}
-		parse_headers(stream);
-		if (_parseStatus != 200)
-			return;
+	checkChunkedRequest();
+	std::cout << YELLOW << "status: " << _parseStatus << RESET << std::endl;
+	if (_parseStatus == 400)
+		return ;
+	//std::cout << YELLOW << request_text << RESET << std::endl;
+	if (_chunked && !chunkedRequestCompleted(temp)) // to keep parsing the chunk request and don't check the other headers that come ONLY in first recv call
+		return ;	
+	parse_headers(temp);
+	if (_parseStatus != 200) {
+		_requestComplete = true;
+		return ;
+	}
+	//std::cout << request_text << std::endl;
+	if (!_chunked) {
+		_body.append(temp);
+		parseBody();
+	}
+}
+
+void HttpRequest::parseBody()
+{
+	std::cout << GREEN << _body << std::endl;
+	if (_body.length() > static_cast<size_t>(_config->getRequestSize()))
+	{
+		_parseStatus = 413;
+		_requestComplete = true;
+		return;
+	}
+	//std::cout << GREEN << _body << std::endl;
+	//std::cout << CYAN << _contentLength << " " << _body.size() << RESET << std::endl;
+	if (_contentLength != 0 && static_cast<size_t>(_contentLength) < _body.size())
+		return ;
+	_requestComplete = true;
+	if (_body.size() == 0) {
 		parseCookies();
-		std::map<std::string, std::string>::const_iterator transferEnconding = headers.find("Transfer-Encoding");
-		if (transferEnconding != headers.end()) {
-			if (transferEnconding->second != "chunked") {
-				_parseStatus = 400;
-				return ;
-			}
-			_chunked = true;
-			return ;			
+		return ;
+	}
+	std::map<std::string, std::string>::const_iterator contentLengthIt = _headers.find("Content-Length");
+	std::map<std::string, std::string>::const_iterator transferEnconding = _headers.find("Transfer-Encoding");
+	if (contentLengthIt == _headers.end() && transferEnconding == _headers.end()) // validar isto apenas quando ja tiver o body completo
+	{
+		_parseStatus = 411;
+		return ;
+	}
+	else if (contentLengthIt != _headers.end() && transferEnconding != _headers.end()) {
+		_parseStatus = 400;
+		return ;
+	}
+	if (contentLengthIt != _headers.end())
+	{
+		if (!isValidContentLengthFormat(contentLengthIt->second))
+		{
+			_parseStatus = 400;
+			return;
 		}
+		_contentLength = std::atol(contentLengthIt->second.c_str());
+		if (_contentLength < 0)
+			_parseStatus = 400;
+		else if (_contentLength > _config->getRequestSize())
+			_parseStatus = 413;
+		else if (_contentLength == 0)
+			_requestComplete = true;
 	}
 	if (_parseStatus != 200)
-		return;
-	if (_chunked) {
-		std::istringstream ss(_body);
-		parseBody(ss);
-	}
-	else if (stream.peek() != EOF)
-	{
-		parseBody(stream);
-	}
+		return ;
+	parseCookies();
 }
 
 void HttpRequest::parse_requestline(const std::string &request_line)
@@ -152,133 +208,89 @@ void HttpRequest::parse_requestline(const std::string &request_line)
 	stream >> method >> path >> version >> further;
 	if (method.empty() || path.empty() || version.empty() || !further.empty())
 	{
-		setParseStatus(400);
-			return;
+		_parseStatus = 400;
+		return;
 	}
 	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
-		setParseStatus(405);
-			return;
+		_parseStatus = 405;
+		return;
 	}
 	if (version != "HTTP/1.1")
 	{
-		setParseStatus(505);
-			return;
+		_parseStatus = 505;
+		return;
 	}
 	if (path.length() > MAX_URI_LENGTH)
 	{
-		setParseStatus(414);
-			return;
+		_parseStatus = 414;
+		return;
 	}
-	this->method = method;
-	this->path = path;
-	this->version = version;
+	this->_method = method;
+	this->_path = path;
+	this->_version = version;
 }
 
-void HttpRequest::parse_headers(std::istringstream &stream)
+void HttpRequest::parse_headers(std::string& str)
 {
-	std::string header_line;
+	if (_headersParsed)
+		return ;
+	std::istringstream	stream(_headersNotParsed);
+	std::string			header_line;
+	size_t				headersSize = _headersNotParsed.size() + 4; // sum CRLF CRLF
 
-	while (std::getline(stream, header_line) && !header_line.empty())
+	if (std::getline(stream, header_line) && !header_line.empty()) {
+			parse_requestline(header_line);
+			std::stringstream ss;
+			ss << "HTTP Request line parsed: " << _method << " " << _path << " " << _version;
+			printLog(ss.str(), WHITE, std::cout);
+			if (_parseStatus != 200)
+				return ;
+		}
+	else {
+		_parseStatus = 400;
+		return;
+	}
+	while (std::getline(stream, header_line))
 	{
+		if (header_line.empty())
+			break ;
 		if (!header_line.empty() && header_line[header_line.size() - 1] == '\r')
 			header_line.erase(header_line.size() - 1);
-
 		if (header_line.empty())
 			break;
 			
-		if (!header_line.empty() && std::isspace(header_line[0]))
-		{
-			setParseStatus(400);
-				return;
+		if (!header_line.empty() && std::isspace(header_line[0])) {
+			_parseStatus = 400;
+			return;
 		}
 		size_t colon_pos = header_line.find(':');
-		if (colon_pos != std::string::npos)
-		{
-			std::string header_name = header_line.substr(0, colon_pos);
-			std::string header_value = header_line.substr(colon_pos + 1);
-			if (header_name.length() > MAX_HEADER_NAME_LENGTH)
-			{
-				setParseStatus(400);
-					return;
-			}
-			if (header_value.length() > MAX_HEADER_VALUE_LENGTH)
-			{
-				setParseStatus(400);
-					return;
-			}
-			header_name.erase(header_name.find_last_not_of(" \t") + 1);
-			header_value.erase(0, header_value.find_first_not_of(" \t"));
-			headers[header_name] = header_value;
-			if (headers.size() > MAX_HEADERS_COUNT)
-			{
-				setParseStatus(400);
-					return;
-			}
-		}
-		else
-		{
-			setParseStatus(400);
-				return;
-		}
-	}
-	_headersCompleted = true;
-}
-
-void HttpRequest::parseBody(std::istringstream &stream)
-{
-	if (!_config)
-	{
-		setParseStatus(500);
+		if (colon_pos == std::string::npos) {
+			_parseStatus = 400;
 			return;
-	}
-	std::map<std::string, std::string>::const_iterator contentLengthIt = headers.find("Content-Length");
-	std::map<std::string, std::string>::const_iterator transferEnconding = headers.find("Transfer-Encoding");
-	if (contentLengthIt == headers.end() && transferEnconding == headers.end())
-	{
-		setParseStatus(411);
-		return ;
-	}
-	if (contentLengthIt != headers.end())
-	{
-		if (!isValidContentLengthFormat(contentLengthIt->second))
-		{
-			setParseStatus(400);
-				return;
 		}
-		_contentLength = std::atol(contentLengthIt->second.c_str());
-		if (_contentLength < 0)
-		{
-			setParseStatus(400);
-				return;
-		}
-		else if (_contentLength > _config->getRequestSize())
-		{
-			setParseStatus(413);
-				return;
-		}
-	}
-	std::string body_str((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
-	_body = body_str;
-	if (static_cast<size_t>(_contentLength) != _body.size()) {
-		_requestComplete = false;
-		return ;
-	}
-	_requestComplete = true;
-	if (_body.length() > static_cast<size_t>(_config->getRequestSize()))
-	{
-		setParseStatus(413);
+		std::string header_name = header_line.substr(0, colon_pos);
+		std::string header_value = header_line.substr(colon_pos + 1);
+		if (header_name.length() > MAX_HEADER_NAME_LENGTH) {
+			_parseStatus = 400;
 			return;
-	}
-	if (contentLengthIt != headers.end())
-	{
-		long contentLength = std::atol(contentLengthIt->second.c_str());
-		if (static_cast<long>(_body.length()) != contentLength)
-		{
-			setParseStatus(400);
-			return ;
+		}
+		if (header_value.length() > MAX_HEADER_VALUE_LENGTH) {
+			_parseStatus = 400;
+			return;
+		}
+		header_name.erase(header_name.find_last_not_of(" \t") + 1);
+		header_value.erase(0, header_value.find_first_not_of(" \t"));
+		_headers[header_name] = header_value;
+		if (_headers.size() > MAX_HEADERS_COUNT) {
+			_parseStatus = 400;
+			return;
 		}
 	}
+	_headersParsed = true;
+	std::cout << YELLOW << "size: " << str.size() << RESET << std::endl;
+	str = str.substr(headersSize, str.size());
+	std::cout << YELLOW << "size now: " << str.size() << RESET << std::endl;	
 }
 
 bool HttpRequest::isValidContentLengthFormat(const std::string &value)
@@ -296,40 +308,6 @@ bool HttpRequest::isValidContentLengthFormat(const std::string &value)
 	if (value.length() == 19 && value > "9223372036854775807")
 		return false;
 	return true;
-}
-
-void HttpRequest::setParseStatus(int status)
-{
-	_parseStatus = status;
-}
-
-bool HttpRequest::hasParseError() const
-{
-	return (_parseStatus != 200);
-}
-
-int HttpRequest::getParseStatus() const
-{
-	return _parseStatus;
-}
-
-const std::string &HttpRequest::getUploadPath() const
-{
-	return _uploadPath;
-}
-
-size_t HttpRequest::getUploadSize() const
-{
-	return _uploadSize;
-}
-
-void HttpRequest::setUploadPath(const std::string &path)
-{
-	_uploadPath = path;
-}
-void HttpRequest::setUploadSize(size_t size)
-{
-	_uploadSize = size;
 }
 
 std::string generateRandomSessionId(size_t index) {
@@ -424,7 +402,7 @@ void	HttpRequest::setCookies(const std::string& key, const std::string& value) {
 }
 
 const std::map<std::string, std::string>&	HttpRequest::getHeaders() const {
-	return (headers);
+	return (_headers);
 }
 
 const std::string&	HttpRequest::getBody() const {
@@ -432,15 +410,15 @@ const std::string&	HttpRequest::getBody() const {
 }
 
 const std::string& HttpRequest::getMethod() const {
-	return (method);
+	return (_method);
 }
 
 const std::string& HttpRequest::getPath() const {
-	return (path);
+	return (_path);
 }
 
 const std::string& HttpRequest::getVersion() const {
-	return (version);
+	return (_version);
 }
 bool HttpRequest::getChunked() const {
 	return _chunked;
@@ -450,6 +428,40 @@ void HttpRequest::setChunked(bool stat){
 	_chunked = stat;
 }
 
-bool	HttpRequest::isRequestCompleted() const {
+bool	HttpRequest::RequestCompleted() const {
 	return (_requestComplete);
+}
+
+void HttpRequest::setParseStatus(int status)
+{
+	_parseStatus = status;
+}
+
+bool HttpRequest::hasParseError() const
+{
+	return (_parseStatus != 200);
+}
+
+int HttpRequest::getParseStatus() const
+{
+	return _parseStatus;
+}
+
+const std::string &HttpRequest::getUploadPath() const
+{
+	return _uploadPath;
+}
+
+size_t HttpRequest::getUploadSize() const
+{
+	return _uploadSize;
+}
+
+void HttpRequest::setUploadPath(const std::string &path)
+{
+	_uploadPath = path;
+}
+void HttpRequest::setUploadSize(size_t size)
+{
+	_uploadSize = size;
 }
