@@ -837,6 +837,11 @@ void HttpResponse::execMethod()
     	handlePOST();
 }
 
+int HttpResponse::getStatusCode(void) const
+{
+	return _resStatus;
+}
+
 const std::string HttpResponse::httpFileContent(int errorPage)
 {
 
@@ -1209,12 +1214,12 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resCo
 	_block = _conf;
 	setMimeTypes();
 	setEnv(); // teste
+	_filePos = 0;
 	if (_req->hasParseError())
 	{
 		_resStatus = _req->getParseStatus();
 		return;
 	}
-	_filePos = 0;
 }
 
 // ### SETTERS ###

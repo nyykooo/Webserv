@@ -102,6 +102,7 @@ class HttpResponse {
 		std::ifstream			&getFileStream(void);
 		std::size_t				getFilePos(void) const;
 		std::size_t				getContentLength(void) const;
+		int						getStatusCode(void) const;
 		
 		// EXEC METHOD
 		void	startResponse();

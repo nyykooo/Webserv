@@ -267,7 +267,6 @@ int WebServer::receiveData(int client_fd)
 		return (-1);
 	buffer[bytes] = '\0';
 	newData = buffer;
-	//std::cout << "data: " CYAN << newData << RESET << std::endl;
 	if (newData.empty())
 		return -1;
 	Configuration *config = findConfigForRequestFast(newData, client_fd);
@@ -297,7 +296,6 @@ int WebServer::receiveData(int client_fd)
 			}
 			else
 				client->_request->parse(newData);
-			//std::cout << YELLOW << client->_request->getParseStatus() << RESET << std::endl;
 			if (!client->_request->RequestCompleted())
 				return (0);
 		}
@@ -325,19 +323,19 @@ static bool sendResponseToClient(Client *client)
 	const char *buf = client->_response->getResponse().c_str();
 	size_t size = client->_response->getResponse().size();
 	size_t totalSent = client->_response->getFilePos();
-
-	int sentBytes = send(client->getSocketFd(), buf + totalSent, size - totalSent, 0);
+	int bytesToSend = size - totalSent;
+	int sentBytes = send(client->getSocketFd(), buf + totalSent, bytesToSend, 0);
 	if (sentBytes < 0)
 	{
 		_logger << "Erro ao enviar corpo ao cliente - client_fd: " << client->getSocketFd();
 		printLog(_logger.str(), RED, std::cout);
 		_logger.str("");
 		_logger.clear();
-		return false;
+		return true;
 	}
 	totalSent += sentBytes;
 
-	_logger << "Dados enviados ao cliente - client_fd: " << client->getSocketFd();
+	_logger << "Dados enviados ao cliente - client_fd: " << client->getSocketFd() << " " << totalSent;
 	printLog(_logger.str(), WHITE, std::cout);
 	_logger.str("");
 	_logger.clear();
@@ -724,12 +722,6 @@ bool WebServer::continueLargeFileStreaming(Client *client)
     size_t newFilePos = client->_response->getFilePos() + bytesSent;
     client->_response->setFilePos(newFilePos);
 
-	std::cout << "newFilePos: " << newFilePos << std::endl;
-    // _logger << "WebServer >> continueLargeFileStreaming >> data sent to client - client_fd: " << client->getSocketFd();
-    // printLog(_logger.str(), WHITE, std::cout);
-    // _logger.str("");
-    // _logger.clear();
-	//std::cout << "newFilePos: " << newFilePos << std::endl;
     return (newFilePos < client->_response->getContentLength());
 }
 
