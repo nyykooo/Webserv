@@ -190,9 +190,13 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		close(debugFd);				  // Fechar o descritor original
 
 		// mudar de diretorio para o diretorio do CGI
-		if (chdir(_fullPath.c_str()) == -1)
+		size_t found;
+		found = _fullPath.find_last_of("/");
+		std::string path = _fullPath.substr(0, found);
+
+		if (chdir(path.c_str()) == -1)
 		{
-			ss << "CGI Chdir error: " << strerror(errno) << std::endl;
+			ss << "CGI Chdir error: " << strerror(errno) << path << std::endl;
 			printLog(ss.str(), RED, std::cerr);
 			exit(1); // Internal Server Error
 		}

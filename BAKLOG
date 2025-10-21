@@ -29,3 +29,7 @@ Legenda:
 [x] Nicho - Enviar para HttpReq e avaliar se o pedido foi finalizado ou se ainda falta receber chunks
 [x] Metodo "chunkedRequestCompleted" deve retornar int para avaliarmos os erros dinamicamente!
 [ ] fazer tranposicao do setMimeType para um utilitario e remover a getcontentype
+
+### 42 Evaluation Official Tester
+[ ] The method HEAD is returning a indefined response
+[ ] File directory/youpi.bla not being located/identified ss << "CGI Execution error: " << strerror(errno);
