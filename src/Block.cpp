@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/10 15:18:39 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/22 17:04:12 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,8 +106,6 @@ void	Block::setErrorPage(int errorPage, const std::string& errorPagePath, int ne
 	rule.error = errorPage;
 	rule.errorPath = errorPagePath;
 	rule.newError = newStatus;
-
-	// std::cout << "error: " << errorPage << " ;errorPath: " << errorPagePath << " ;newStatus: " << newStatus << std::endl;
 	this->_errorPage.insert(rule);
 }
 

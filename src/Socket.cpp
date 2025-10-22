@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 17:16:05 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/07/23 19:22:25 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/22 17:44:57 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,15 +16,15 @@
 
 Socket::Socket() :_socket_fd(-1)
 {
-	memset(&_event, 0, sizeof(_event));
-	memset(&_hints, 0, sizeof(_hints));
+	std::memset(&_event, 0, sizeof(_event));
+	std::memset(&_hints, 0, sizeof(_hints));
 	_res = NULL;
 }
 
 Socket::Socket(const Socket &other) : _socket_fd(other._socket_fd)
 {
-	memset(&_hints, 0, sizeof(_hints));
-	memset(&_event, 0, sizeof(_event));
+	std::memset(&_hints, 0, sizeof(_hints));
+	std::memset(&_event, 0, sizeof(_event));
 	_res = NULL;
 	_hints = other._hints;
 	_event = other._event;

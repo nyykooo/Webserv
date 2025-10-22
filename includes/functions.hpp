@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   functions.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:14:08 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/27 21:17:24 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/22 16:59:11 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,14 +16,13 @@
 # include "headers.hpp"
 
 // ### HTTP METHODS ###
-int			execMethod(Client *client);
 int			findLocation(Client *client);
 
 // ### TIMESTAMP LOGS ###
 std::string	setTimeStamp();
-std::string get_http_date();
+std::string	get_http_date();
 void		printLog(std::string message, const char *color, std::ostream &stream);
-void	printLogNew(std::stringstream &ss, const char	*color, std::ostream &stream, bool clean);
+void		printLogNew(std::stringstream &ss, const char	*color, std::ostream &stream, bool clean);
 
 // ### UTILS ### 
 std::string toLower(const std::string &str);

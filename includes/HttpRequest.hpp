@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/10/21 15:54:15 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/22 17:00:03 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,10 +65,10 @@ class HttpRequest
 		HttpRequest& operator=(const HttpRequest& other);
 		~HttpRequest();
 
-		bool chunkedRequestCompleted(const std::string& str);
-		void parse(const std::string &request_text);
-		void checkHeaders(std::string& str);
-		void checkChunkedRequest();
+		bool	chunkedRequestCompleted(const std::string& str);
+		void	parse(const std::string &request_text);
+		void	checkHeaders(std::string& str);
+		void	checkChunkedRequest();
 		bool	checkContentLength();
 
 		// public atributes
@@ -90,11 +90,11 @@ class HttpRequest
 		bool										RequestCompleted() const;
 
 		// setters
-		void setUploadPath(const std::string &path);
-		void setUploadSize(size_t size);
-		void setCookies(const std::string& key, const std::string& value);
-		void setChunked(bool stat);
-		void setParseStatus(int status);
+		void	setUploadPath(const std::string &path);
+		void	setUploadSize(size_t size);
+		void	setCookies(const std::string& key, const std::string& value);
+		void	setChunked(bool stat);
+		void	setParseStatus(int status);
 };
 
 #endif

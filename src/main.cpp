@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 17:45:50 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/10 16:07:48 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/22 17:42:13 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,10 +21,10 @@ int	main(int argc, char** argv)
 		case 1:
 			configFile = "default.config";
 			std::cout << YELLOW << "Using default configuration file: " << configFile << RESET << std::endl;
-			break;
+			break ;
 		case 2:
 			configFile = argv[1];
-			break;
+			break ;
 		default:
 			std::cerr << RED << "Wrong input. Usage: ./webserv [configuration_file]" << RESET << std::endl;
 			return (1);

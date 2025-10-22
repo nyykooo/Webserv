@@ -1,29 +1,12 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   HttpRequest.cpp                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/29 14:40:07 by brunhenr          #+#    #+#             */
-/*   Updated: 2025/10/21 15:58:10 by discallow        ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../includes/headers.hpp"
 
-HttpRequest::HttpRequest()
-	: _parseStatus(200),
-	  _uploadSize(0),
-	  _chunked(false),
-	_sessions(NULL),
-	_requestComplete(false),
-	_config(NULL),
-	session(NULL)
-{}
+HttpRequest::HttpRequest() : _parseStatus(200), _uploadSize(0), _chunked(false), _sessions(NULL), _requestComplete(false), _config(NULL), session(NULL) {
 
-HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _contentLength(0), _headersCompleted(false),
-		_uploadSize(0), _chunkedRequestSize(0), _chunked(false),  _sessions(sessions), _requestComplete(false), _headersParsed(false), _config(config)  {
+}
+
+HttpRequest::HttpRequest(const std::string &request_text, Configuration *config, std::vector<SessionData *> *sessions) : _parseStatus(200), _contentLength(0)
+	, _headersCompleted(false), _uploadSize(0), _chunkedRequestSize(0), _chunked(false),  _sessions(sessions)
+	, _requestComplete(false), _headersParsed(false), _config(config) {
 	parse(request_text);
 }
 
@@ -40,19 +23,18 @@ HttpRequest::HttpRequest(const HttpRequest &other)
 	  _config(other._config)
 {}
 
+// ######### VALIDATORS #########
+
 bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
 	_bodyBuffer += str;
 	size_t pos = 0;
 	while (true) {
-
 		// Find the CRLF that terminates the chunk-size line
 		size_t crlf = _bodyBuffer.find("\r\n", pos);
 		if (crlf == std::string::npos)
 			return (false); // incomplete line
 		std::string sizeStr = _bodyBuffer.substr(pos, crlf - pos);
-		
-
-        // Convert hex size to integer
+		// Convert hex size to integer
 		char *endptr = NULL;
 		long chunkSize = strtol(sizeStr.c_str(), &endptr, 16);
 		if (*endptr != '\0' || chunkSize < 0) {
@@ -68,22 +50,19 @@ bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
 		pos = crlf + 2; // move after "\r\n"
 		// Chunk size 0 means end of body
 		if (chunkSize == 0) {
-			
 			// Verify it ends with "\r\n"
-			if (_bodyBuffer.size() < pos + 2) {
-				return false;
-			}
-				
+			if (_bodyBuffer.size() < pos + 2)
+				return (false);
 			if (_bodyBuffer.substr(pos, 2) != "\r\n") {
 				_parseStatus = 400;
-				return true;
+				return (true);
 			}
 			_bodyBuffer.erase(0, pos + 2); // remove parsed part
 			_requestComplete = true;
-			return true; // fully parsed
+			return (true); // fully parsed
 		}
 		if (_bodyBuffer.size() < pos + chunkSize + 2)
-			return false; // wait for rest of chunk
+			return (false); // wait for rest of chunk
 		// Append the actual data to the de-chunked body
 		_body.append(_bodyBuffer, pos, chunkSize);
 		pos += chunkSize;
@@ -103,17 +82,12 @@ bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
 void HttpRequest::checkHeaders(std::string& str) {
 	if (_headersCompleted)
 		return ;
-_headersNotParsed += str;
+	_headersNotParsed += str;
 	size_t pos = _headersNotParsed.find("\r\n\r\n");
-	if (pos == std::string::npos) {
-		
+	if (pos == std::string::npos)
 		return ;
-	}
-/* 	std::cout << RED << pos << RESET << std::endl; */
 	str = _headersNotParsed.substr(pos + 4);
 	_headersNotParsed = _headersNotParsed.substr(0, pos);
-/* 	std::cout << YELLOW << "size: " << str.size() << RESET << std::endl;
-	std::cout << YELLOW << "size now: " << str.size() << RESET << std::endl; */
 	_headersCompleted = true;
 }
 
@@ -129,32 +103,6 @@ void HttpRequest::checkChunkedRequest() {
 	}
 }
 
-void HttpRequest::parse(const std::string &request_text)
-{
-	std::string			request_line;
-	std::string			temp = request_text;
-
-	checkHeaders(temp);
-	if (!_headersCompleted)
-		return ;
-	checkChunkedRequest();
-	if (_parseStatus == 400)
-		return ;
-	//std::cout << YELLOW << request_text << RESET << std::endl;
-	if (_chunked && !chunkedRequestCompleted(temp)) // to keep parsing the chunk request and don't check the other headers that come ONLY in first recv call
-		return ;	
-	parse_headers();
-	if (_parseStatus != 200) {
-		_requestComplete = true;
-		return ;
-	}
-	//std::cout << request_text << std::endl;
-	if (!_chunked) {
-		_body.append(temp);
-		parseBody();
-	}
-}
-
 bool HttpRequest::checkContentLength() {
 	std::map<std::string, std::string>::const_iterator contentLengthIt = _headers.find("Content-Length");
 	std::map<std::string, std::string>::const_iterator transferEnconding = _headers.find("Transfer-Encoding");
@@ -164,7 +112,7 @@ bool HttpRequest::checkContentLength() {
 		_parseStatus = 413;
 		return (false);
 	}
-	if (_body.size() > 0 && contentLengthIt == _headers.end() && transferEnconding == _headers.end()) // validar isto apenas quando ja tiver o body completo
+	if (_body.size() > 0 && contentLengthIt == _headers.end() && transferEnconding == _headers.end())
 	{
 		_parseStatus = 411;
 		return (false);
@@ -197,11 +145,49 @@ bool HttpRequest::checkContentLength() {
 	return (true);
 }
 
+bool HttpRequest::isValidContentLengthFormat(const std::string &value)
+{
+	if (value.empty())
+		return (false);
+	for (size_t i = 0; i < value.length(); ++i)
+	{
+		if (!std::isdigit(value[i]))
+			return (false);
+	}
+	errno = 0;
+	if (std::strtol(value.c_str(), NULL, 10) > LONG_MAX || errno == ERANGE)
+		return (false);
+	return (true);
+}
+
+// ######### PARSERS #########
+
+void HttpRequest::parse(const std::string &request_text)
+{
+	std::string			request_line;
+	std::string			temp = request_text;
+
+	checkHeaders(temp);
+	if (!_headersCompleted)
+		return ;
+	checkChunkedRequest();
+	if (_parseStatus == 400)
+		return ;
+	if (_chunked && !chunkedRequestCompleted(temp)) // to keep parsing the chunk request and don't check the other headers that come ONLY in first recv call
+		return ;	
+	parse_headers();
+	if (_parseStatus != 200) {
+		_requestComplete = true;
+		return ;
+	}
+	if (!_chunked) {
+		_body.append(temp);
+		parseBody();
+	}
+}
+
 void HttpRequest::parseBody()
 {
-	//std::cout << GREEN << _body << std::endl;
-	//std::cout << GREEN << _body << std::endl;
-	//std::cout << CYAN << _contentLength << " " << _body.size() << RESET << std::endl;
 	if (!checkContentLength()) {
 		_requestComplete = true;
 		return ;
@@ -251,7 +237,6 @@ void HttpRequest::parse_headers()
 		return ;
 	std::istringstream	stream(_headersNotParsed);
 	std::string			header_line;
-	//size_t				headersSize = _headersNotParsed.size() + 4; // sum CRLF CRLF
 
 	if (std::getline(stream, header_line) && !header_line.empty()) {
 			parse_requestline(header_line);
@@ -304,22 +289,7 @@ void HttpRequest::parse_headers()
 	_headersParsed = true;	
 }
 
-bool HttpRequest::isValidContentLengthFormat(const std::string &value)
-{
-	if (value.empty())
-		return false;
-
-	for (size_t i = 0; i < value.length(); ++i)
-	{
-		if (!std::isdigit(value[i]))
-			return false;
-	}
-	if (value.length() > 19)
-		return false;
-	if (value.length() == 19 && value > "9223372036854775807")
-		return false;
-	return true;
-}
+// ######### COOKIES && SESSIONS VALIDATORS #########
 
 std::string generateRandomSessionId(size_t index) {
 	std::stringstream ss;
@@ -404,12 +374,10 @@ void HttpRequest::parseCookies() {
 	}
 }
 
+// ######### GETTERS #########
+
 const std::map<std::string, std::string>& HttpRequest::getCookies() const {
 	return (_cookies);
-}
-
-void	HttpRequest::setCookies(const std::string& key, const std::string& value) {
-	_cookies[key] = value;
 }
 
 const std::map<std::string, std::string>&	HttpRequest::getHeaders() const {
@@ -435,17 +403,8 @@ bool HttpRequest::getChunked() const {
 	return _chunked;
 }
 
-void HttpRequest::setChunked(bool stat){
-	_chunked = stat;
-}
-
 bool	HttpRequest::RequestCompleted() const {
 	return (_requestComplete);
-}
-
-void HttpRequest::setParseStatus(int status)
-{
-	_parseStatus = status;
 }
 
 bool HttpRequest::hasParseError() const
@@ -466,6 +425,22 @@ const std::string &HttpRequest::getUploadPath() const
 size_t HttpRequest::getUploadSize() const
 {
 	return _uploadSize;
+}
+
+// ######### SETTERS #########
+
+void	HttpRequest::setCookies(const std::string& key, const std::string& value) {
+	_cookies[key] = value;
+}
+
+
+void HttpRequest::setChunked(bool stat){
+	_chunked = stat;
+}
+
+void HttpRequest::setParseStatus(int status)
+{
+	_parseStatus = status;
 }
 
 void HttpRequest::setUploadPath(const std::string &path)

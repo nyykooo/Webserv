@@ -46,38 +46,6 @@ LocationBlock& LocationBlock::operator=(const LocationBlock& other) {
 	return (*this);
 }
 
-// ######### GETTERS #########
-
-bool	LocationBlock::getExactMatchModifier(void) const {
-	return (_exactMatchModifier);
-}
-
-const std::string&	LocationBlock::getLocation(void) const {
-	return (_location);
-}
-
-int	LocationBlock::getLocationCurlyBracketsCount() {
-	return (_locationCurlyBracketsCount);
-}
-
-const std::map<std::string, std::string>&	LocationBlock::getCgiMap(void) const {
-	return (_cgiMap);
-}
-
-// ######### SETTERS #########
-
-void	LocationBlock::setExactMatchModifier(bool value) {
-	_exactMatchModifier = value;
-}
-
-void	LocationBlock::setLocation(const std::string& location) {
-	_location = location;
-}
-
-void	LocationBlock::setCgiMap(const std::string& extension, const std::string& path) {
-	_cgiMap[extension] = path;
-}
-
 // ######### CURLY BRACKETS #########
 
 void	LocationBlock::incrementLocationCurlyBracketsCount(void) {
@@ -139,10 +107,6 @@ void	parseAllowedMethods(std::string& line, LocationBlock& location) {
 	}
 	if (methods.empty())
 		throw Configuration::WrongConfigFileException("wrong syntax in allowed_methods.");
-	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
-		if (*it != "GET" && *it != "POST" && *it != "DELETE")
-			throw Configuration::WrongConfigFileException(*it + "Invalid method");
-	}
 	location.removeAllowedMethods();
 	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
 		location.setAllowedMethods(*it);
@@ -185,6 +149,7 @@ void	parseAutoIndex(std::string& line, LocationBlock& location) {
 		throw Configuration::WrongConfigFileException("too many arguments when defining autoindex.");
 }
 
+/*This function checks multiple sizes because only the last argument is considered the error_page*/
 static void	parseErrorPage(std::string& line, LocationBlock& location) {
 	std::stringstream 			ss(line);
 	std::string					word;
@@ -324,4 +289,36 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}
+}
+
+// ######### GETTERS #########
+
+bool	LocationBlock::getExactMatchModifier(void) const {
+	return (_exactMatchModifier);
+}
+
+const std::string&	LocationBlock::getLocation(void) const {
+	return (_location);
+}
+
+int	LocationBlock::getLocationCurlyBracketsCount() {
+	return (_locationCurlyBracketsCount);
+}
+
+const std::map<std::string, std::string>&	LocationBlock::getCgiMap(void) const {
+	return (_cgiMap);
+}
+
+// ######### SETTERS #########
+
+void	LocationBlock::setExactMatchModifier(bool value) {
+	_exactMatchModifier = value;
+}
+
+void	LocationBlock::setLocation(const std::string& location) {
+	_location = location;
+}
+
+void	LocationBlock::setCgiMap(const std::string& extension, const std::string& path) {
+	_cgiMap[extension] = path;
 }

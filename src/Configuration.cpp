@@ -11,7 +11,7 @@ Configuration::Configuration(): Block(), _requestSize(1000000) {
 	_allowedMethods.push_back("GET");
 	_allowedMethods.push_back("POST");
 	_allowedMethods.push_back("DELETE");
-} // we need to put here the default files for all the possible errors
+}
 
 Configuration::~Configuration() {}
 
@@ -40,75 +40,14 @@ Configuration&	Configuration::operator=(const Configuration& other) {
 	return (*this);
 }
 
-// ######### GETTERS #########
-
-int	Configuration::getCurlyBracketsCount(void) {
-	return (_curlyBracketsCount);
-}
-
-const std::set<std::pair<std::string, std::string> >&	Configuration::getHost(void) const {
-	return (this->_host);
-}
-
-std::set<std::pair<std::string, std::string> >&	Configuration::getAllHosts(void) {
-	return (_allHosts);
-}
-
-const std::vector<std::string>&	Configuration::getServerName(void) const {
-	return (this->_serverName);
-}
-
-long	Configuration::getRequestSize(void) const {
-	return (this->_requestSize);
-}
-
-const std::map<std::string, std::string>&	Configuration::getCgiMap(void) const {
-	return (_cgiMap);
-}
-
-// ######### SETTERS #########
-
-void	Configuration::setHost(const std::string& host, const std::string& port)
-{
-	_allHosts.insert(std::pair<std::string, std::string>(host, port));
-	this->_host.insert(std::pair<std::string, std::string>(host, port));
-}
-
-void	Configuration::setServerName(const std::string& serverName) {
-	this->_serverName.push_back(serverName);
-}
-
-void	Configuration::setRequestSize(long reqSize) {
-	this->_requestSize = reqSize;
-}
-
-void	Configuration::setCgiMap(const std::string& extension, const std::string& path) {
-	_cgiMap[extension] = path;
-}
-// ######### CURLY BRACKETS METHODS
-
-void	Configuration::incrementCurlyBracketsCount(void) {
-	_curlyBracketsCount++;
-}
-
-void	Configuration::decrementCurlyBracketsCount(void) {
-	_curlyBracketsCount--;
-}
-
-// ######### EXCEPTIONS #########
-
-const char* Configuration::WrongConfigFileException::what() const throw() {
-	return (_message.c_str());
-}
-
-
 // ######### VALIDATORS #########
 
+/*This function is used to check if there are {} between words and misplaced {} as well*/
 void	checkCurlyBrackets(std::string line) {
 	line.erase(line.find_last_not_of(" \t\r\n\f\v") + 1);
 	if (line.find('{') != std::string::npos)
-		throw Configuration::WrongConfigFileException("line shouldn't have \'{\'");
-	if (line.find('}') != std::string::npos) {
+		throw Configuration::WrongConfigFileException("line shouldn't have \'{\'"); // check if there's any { that's not in the end
+	if (line.find('}') != std::string::npos) { // check if there are multiple } and if it's not in the end of the line
 		if (line[line.size() - 1] != '}' || line.find('}') != line.rfind('}'))	
 			throw Configuration::WrongConfigFileException("} should be at the end of the line.");
 		line.erase(line.size() - 1);
@@ -136,8 +75,10 @@ unsigned long long validateRequestSize(std::string word, const char *tmpWord, ch
 	return temp;
 }
 
+/*This function checks if there's only 3 dots between each segment and if between each one it ranges from 0 to 255*/
 bool	isValidIP(const std::string& host) {
 	int					dotNum = 0;
+	errno = 0;
 	std::stringstream 	ss(host);
 	std::string 		segment;
 
@@ -149,7 +90,7 @@ bool	isValidIP(const std::string& host) {
 			if (!std::isdigit(*it))
 				throw Configuration::WrongConfigFileException("invalid host: " + host);
 		}
-		if (segment.size() > 4 || std::strtol(segment.c_str(), NULL, 10) > 255) {
+		if (std::strtol(segment.c_str(), NULL, 10) > 255 || errno == ERANGE) {
 			throw Configuration::WrongConfigFileException("invalid host: " + host);
 		}
 	}
@@ -179,8 +120,9 @@ bool	isOnlyDigit(const std::string& word) {
 bool	isValidPort(const std::string& word) {
 	if (!isOnlyDigit(word))
 		return (false);
+	errno = 0;
 	// check if it's bigger than 65535 which is the max number for the port
-	if (word.size() > 6 || std::strtol(word.c_str(), NULL, 10) > 65535) 
+	if (std::strtol(word.c_str(), NULL, 10) > 65535 || errno == ERANGE) 
 		throw Configuration::WrongConfigFileException("invalid port number: " + word);
 	return (true);
 }
@@ -195,7 +137,6 @@ static long checkNewStatus(std::string word, const std::string& lastWord, Config
 	if (word[0] == '=') {
 		word = word.substr(1, word.size());
 		status = std::strtol(word.c_str(), &endptr, 10);
-		// std::cout << status << std::endl;
 		if (errno == ERANGE || *endptr || status < 0 || word.empty())
 			throw Configuration::WrongConfigFileException("value \"" + word + "\" is invalid");
 		return (status);
@@ -247,6 +188,7 @@ void	parseHost(std::string& line, Configuration& confserv) {
 		throw Configuration::WrongConfigFileException("no host mentioned.");
 }
 
+/*This function checks multiple sizes because only the last argument is considered the error_page*/
 static void	parseErrorPage(std::string& line, Configuration& confserv) {
 	std::stringstream 			ss(line);
 	std::string					word;
@@ -305,7 +247,7 @@ void	parseRequestSize(const std::string& line, Configuration& confserv) {
 	}
 	else
 		throw Configuration::WrongConfigFileException("no request body size defined.");
-	if (ss >> word) // if there's anything after the first word
+	if (ss >> word) // check if there's anything after the first word
 		throw Configuration::WrongConfigFileException("invalid body size defined.");
 	
 }
@@ -320,7 +262,7 @@ void	parseRoot(const std::string& line, Configuration& confserv) {
 		confserv.setRoot(word);
 	else
 		throw Configuration::WrongConfigFileException("no root defined.");
-	if (ss >> word)
+	if (ss >> word) // check if there's anything after the first word
 		throw Configuration::WrongConfigFileException("too many arguments when defining root.");
 }
 
@@ -375,6 +317,7 @@ void	parseRedirect(std::string& line, Configuration& config) {
 		throw Configuration::WrongConfigFileException("too many arguments when defining redirect.");
 }
 
+/*If there any allowed_methods defined, this function first remove all the methods and then add the methods that were set in the .conf file*/
 void	parseAllowedMethods(std::string& line, Configuration& config) {
 	std::stringstream			ss(line);
 	std::string					word;
@@ -387,10 +330,6 @@ void	parseAllowedMethods(std::string& line, Configuration& config) {
 	}
 	if (methods.empty())
 		throw Configuration::WrongConfigFileException("wrong syntax in allowed_methods.");
-	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
-		if (*it != "GET" && *it != "POST" && *it != "DELETE")
-			throw Configuration::WrongConfigFileException(*it + "Invalid method");
-	}
 	config.removeAllowedMethods();
 	for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
 		config.setAllowedMethods(*it);
@@ -507,4 +446,65 @@ void	setup(const char* file, std::vector<Configuration>& confserv) {
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}
+}
+
+// ######### GETTERS #########
+
+int	Configuration::getCurlyBracketsCount(void) {
+	return (_curlyBracketsCount);
+}
+
+const std::set<std::pair<std::string, std::string> >&	Configuration::getHost(void) const {
+	return (this->_host);
+}
+
+std::set<std::pair<std::string, std::string> >&	Configuration::getAllHosts(void) {
+	return (_allHosts);
+}
+
+const std::vector<std::string>&	Configuration::getServerName(void) const {
+	return (this->_serverName);
+}
+
+long	Configuration::getRequestSize(void) const {
+	return (this->_requestSize);
+}
+
+const std::map<std::string, std::string>&	Configuration::getCgiMap(void) const {
+	return (_cgiMap);
+}
+
+// ######### SETTERS #########
+
+void	Configuration::setHost(const std::string& host, const std::string& port)
+{
+	_allHosts.insert(std::pair<std::string, std::string>(host, port));
+	this->_host.insert(std::pair<std::string, std::string>(host, port));
+}
+
+void	Configuration::setServerName(const std::string& serverName) {
+	this->_serverName.push_back(serverName);
+}
+
+void	Configuration::setRequestSize(long reqSize) {
+	this->_requestSize = reqSize;
+}
+
+void	Configuration::setCgiMap(const std::string& extension, const std::string& path) {
+	_cgiMap[extension] = path;
+}
+// ######### CURLY BRACKETS METHODS
+
+void	Configuration::incrementCurlyBracketsCount(void) {
+	_curlyBracketsCount++;
+}
+
+void	Configuration::decrementCurlyBracketsCount(void) {
+	_curlyBracketsCount--;
+}
+
+// ######### EXCEPTIONS #########
+
+const char* Configuration::WrongConfigFileException::what() const throw() {
+	return (_message.c_str());
 }

@@ -16,8 +16,8 @@ class SessionData {
 		
 
 		std::time_t 		getTime() const;
-		const std::string& 							getSessionId() const;
-		const std::string& 							getTheme() const;
+		const std::string& 	getSessionId() const;
+		const std::string& 	getTheme() const;
 
 		bool	checkTimeout() const;
 };

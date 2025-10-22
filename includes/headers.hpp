@@ -6,10 +6,10 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/24 18:00:37 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/11 05:15:28 by discallow        ###   ########.fr       */
-/*   Updated: 2025/10/20 13:28:18 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/22 17:03:48 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #ifndef HEADERS_HPP
 #define HEADERS_HPP
@@ -44,7 +44,6 @@
 
 # include "macros.hpp"
 # include "enums.hpp"
-# include "structs.hpp"
 # include "Socket.hpp"
 # include "Block.hpp"
 # include "Configuration.hpp"

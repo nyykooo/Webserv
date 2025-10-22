@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/21 12:55:15 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/22 17:03:12 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,37 +58,30 @@ class WebServer
 		void								setServersMap(const std::map<int, Server *> &servers_map);
 		void								setClientsVec(const std::vector<Client *> &clients_vec);
 		void								setEvents(struct epoll_event *events);
-		void								setBuffer(const char *buffer);
 
 
 		// ### TESTANDO STARTSERVER DENTRO DA WEBSERVER ###
-		void startServer();
-		void lookForTimeouts();
-		void handleEvents(int event_count);
-		void treatExistingClient(int i);
-		void setClientTime(int client_fd);
-		void sendData(int client_fd);
-		int receiveData(int client_fd);
-		bool tryConnection(int i);
-		void deleteClient(int fd, int event);
+		void	startServer();
+		void	lookForTimeouts();
+		void	handleEvents(int event_count);
+		void	treatExistingClient(int i);
+		void	setClientTime(int client_fd);
+		void	sendData(int client_fd);
+		int		receiveData(int client_fd);
+		bool	tryConnection(int i);
+		void	deleteClient(int fd, int event);
 
 		// ### AFTER REQUEST PARSING ###
 		int									getServerFdForClient(int client_fd);
 		Configuration* 						findConfigForRequestFast(const std::string& rawRequest, int client_fd);
-		bool								startLargeFileStreaming(Client* client);
 		bool								continueLargeFileStreaming(Client* client);
 
 
 		// ### streaming ###
-		bool 								isRequestComplete(const std::string &data);
 		int 								extractContentLength(const std::string& headers);
 		std::string							extractHostHeaderSimple(const std::string &rawRequest);
-		bool								isLargeFileRequest(Client *client);
-		// std::string							getContentType(const std::string& filePath);
 		void								handleClientInput(Client *client, int i);
 		void								handleClientOutput(Client *client, int i);
-		void								logStreamingError(int client_fd, const std::string& operation, const std::string& details = "");
-		void								logStreamingInfo(int client_fd, const std::string& message);
 
 		// ### EXCEPTION ###
 		class WebServerErrorException: public std::exception {

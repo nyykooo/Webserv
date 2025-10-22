@@ -105,40 +105,38 @@ class HttpResponse {
 		int						getStatusCode(void) const;
 		
 		// EXEC METHOD
-		void	startResponse();
-		void	execMethod();
-		void	handleGET();
-		void		handlePOST(); //considerar encapsular?
-		std::string	generateUniqueFilename() const;
-		bool		saveBodyToFile(const std::string& path, const std::string& content) const;
-		bool		createUploadDirectory(const std::string& path) const;
-		void	handleDELETE();
-		void	openReg(std::string path, int methodType, off_t fileSize);
-		void	openDir(std::string path);
-		const std::string checkStatusCode();
-		std::string cgiHeader();
-		std::string	header(int requestType);
-		int		openFile();
-		const std::string httpFileContent(int errorPage);
-		LocationBlock*	checkLocationBlock();
-		void	checkFile(int methodType);
+		void				startResponse();
+		void				execMethod();
+		void				handlePOST(); //considerar encapsular?
+		bool				saveBodyToFile(const std::string& path, const std::string& content) const;
+		bool				createUploadDirectory(const std::string& path) const;
+		void				handleDELETE();
+		void				openReg(std::string path, int methodType, off_t fileSize);
+		void				openDir(std::string path);
+		const std::string	checkStatusCode();
+		std::string			cgiHeader();
+		std::string			header(int requestType);
+		int					openFile();
+		const std::string	httpFileContent(int errorPage);
+		LocationBlock*		checkLocationBlock();
+		void				checkFile(int methodType);
 		const std::string	checkErrorResponse(const std::string& page);
-		void	checkCookies(std::string& body);
-		void	setEnv();
-		void	parsePath();
-		void	parseScriptName(const std::string& str);
+		void				checkCookies(std::string& body);
+		void				setEnv();
+		void				parsePath();
+		void				parseScriptName(const std::string& str);
 		const std::string	parseContentLength(const std::map<std::string, std::string>& headers);
-		bool	checkValidCGI(const std::string& temp);
-		void	buildEnv();
-		void	parseCgiScript();
-		void	parseCgiHeaders();
-		void	parseCgiStatus(const std::string& segment);
-		void	parseContentLength(const std::string& segment);
-		void	buildFullPath();
-		void	extractFileName(const std::string& str);
-		void	cleanUploadDir();
-		bool	isRequestUpload();
-		int		processMultipartFormData();
+		bool				checkValidCGI(const std::string& temp);
+		void				buildEnv();
+		void				parseCgiScript();
+		void				parseCgiHeaders();
+		void				parseCgiStatus(const std::string& segment);
+		void				parseContentLength(const std::string& segment);
+		void				buildFullPath();
+		void				extractFileName(const std::string& str);
+		void				cleanUploadDir();
+		bool				isRequestUpload();
+		int					processMultipartFormData();
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();
@@ -149,11 +147,9 @@ class HttpResponse {
 		HttpResponse operator=(const HttpResponse& other);
 
 		// CGI
-		bool	lookForCgi();
 		void	forkExecCgi(std::string interpreter);
 		void	checkCgiProcess();
 		void 	terminateCgiProcess(void);
-
 		void	streamingFile(off_t fileSize, std::string contentType);
 };
 
