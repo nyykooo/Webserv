@@ -990,6 +990,7 @@ std::string HttpResponse::cgiHeader()
 {
 	parseCgiScript();
 	setHttpStatus(_resStatus);
+	std::string fileType = getMimeType(_fileName);
 	std::ostringstream header;
 	header << "HTTP/1.1 " << _httpStatus << CRLF;
 	header << "Server: WebServer/1.0" << CRLF;
@@ -1002,13 +1003,22 @@ std::string HttpResponse::cgiHeader()
 			header << "; Theme=" << _req->session->getTheme();
 		header << CRLF;
 	}
-	if (_contentType == "text/html")
-		checkCookies(_cgiBody);
 	if (_resStatus == 500) {
 		header << "Content-Length: " << http_error_500_page.size() << CRLF;
 		return (header.str() + CRLF + http_error_500_page);
 	}
-	else if (_resStatus == 204 || _resStatus == 302 || _resStatus == 304) {
+	if (_req != NULL && _req->getParseStatus() == 200)
+	{
+		if (_req->session) {
+			if (fileType == "text/html")
+				checkCookies(_resBody);
+			header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/";
+			if (!_req->session->getTheme().empty())
+				header << "; Theme=" << _req->session->getTheme();
+			header << CRLF;
+		}	
+	}
+	if (_resStatus == 204 || _resStatus == 302 || _resStatus == 304) {
 		header << "Content-Length: 0" << CRLF;
 		return (header.str() + CRLF);
 	}
