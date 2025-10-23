@@ -55,26 +55,6 @@ void	checkCurlyBrackets(std::string line) {
 	}
 }
 
-unsigned long long validateRequestSize(std::string word, const char *tmpWord, char *endptr)
-{
-	long				size = 0;
-	unsigned long long temp;
-
-	size = std::strtol(tmpWord, &endptr, 10);
-	temp = size;
-	if (*endptr == 'b' || *endptr == 'B')
-		;
-	else if (*endptr == 'k' || *endptr == 'K')
-		temp = temp * 1024;
-	else if (*endptr == 'm' || *endptr == 'M')
-		temp = temp * 1024 * 1024;
-	else if (*endptr == 'g' || *endptr == 'G')
-		temp = temp * 1024 * 1024 * 1024;
-	else
-		throw Configuration::WrongConfigFileException(word + " invalid body size number");
-	return temp;
-}
-
 /*This function checks if there's only 3 dots between each segment and if between each one it ranges from 0 to 255*/
 bool	isValidIP(const std::string& host) {
 	int					dotNum = 0;

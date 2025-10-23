@@ -173,7 +173,7 @@ void HttpRequest::parse(const std::string &request_text)
 	checkChunkedRequest();
 	if (_parseStatus == 400)
 		return ;
-	if (_chunked && !chunkedRequestCompleted(temp)) // to keep parsing the chunk request and don't check the other headers that come ONLY in first recv call
+	if (_chunked && !chunkedRequestCompleted(temp)) // to keep parsing the chunk request
 		return ;	
 	parse_headers();
 	if (_parseStatus != 200) {

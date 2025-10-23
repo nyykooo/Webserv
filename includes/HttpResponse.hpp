@@ -109,7 +109,6 @@ class HttpResponse {
 		void				execMethod();
 		void				handlePOST(); //considerar encapsular?
 		bool				saveBodyToFile(const std::string& path, const std::string& content) const;
-		bool				createUploadDirectory(const std::string& path) const;
 		void				handleDELETE();
 		void				openReg(std::string path, int methodType, off_t fileSize);
 		void				openDir(std::string path);
@@ -143,8 +142,6 @@ class HttpResponse {
 		// HttpResponse(HttpRequest *request, Configuration *config);
 		HttpResponse(Client *client);
 		~HttpResponse();
-		HttpResponse(const HttpResponse& other);
-		HttpResponse operator=(const HttpResponse& other);
 
 		// CGI
 		void	forkExecCgi(std::string interpreter);

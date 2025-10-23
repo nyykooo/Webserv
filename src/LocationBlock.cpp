@@ -236,6 +236,35 @@ void	parseCgi(const std::string& line, LocationBlock& location) {
 	location.setCgiMap(word, word2);
 }
 
+void	parseRequestSize(const std::string& line, LocationBlock& location) {
+	std::string			word;
+	const char*			tmpWord;
+	std::stringstream	ss(line);
+	unsigned long long	temp;
+	long				size = 0;
+	char				*endptr = NULL;
+	
+	checkCurlyBrackets(line);
+	errno = 0;
+	ss >> word;
+	if (ss >> word) {
+		tmpWord = word.c_str();
+		if (!std::isdigit(*tmpWord) || tmpWord == endptr || errno == ERANGE)
+			throw Configuration::WrongConfigFileException("invalid body size number");
+		size = std::strtol(tmpWord, &endptr, 10);
+		temp = validateRequestSize(word, tmpWord, endptr);
+		if ((*endptr && *(endptr + 1)) || temp > LONG_MAX)
+			throw Configuration::WrongConfigFileException(word + " invalid body size number");
+		size = static_cast<long>(temp);
+		location.setRequestSize(size);
+	}
+	else
+		throw Configuration::WrongConfigFileException("no request body size defined.");
+	if (ss >> word) // check if there's anything after the first word
+		throw Configuration::WrongConfigFileException("invalid body size defined.");
+	
+}
+
 void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& location) {
 	std::stringstream	ss(line);
 	std::string			word;
@@ -286,6 +315,8 @@ void	parseLocationBlock(std::ifstream& file, std::string& line,  LocationBlock& 
 			parseCgi(line, location);
 		else if (word == "upload_dir")
 			parseUploadDirectory(line, location);
+		else if (word == "client_max_body_size")
+			parseRequestSize(line, location);
 		else
 			throw Configuration::WrongConfigFileException(word + ": invalid keyword in conf file.");
 	}
@@ -309,6 +340,10 @@ const std::map<std::string, std::string>&	LocationBlock::getCgiMap(void) const {
 	return (_cgiMap);
 }
 
+long	LocationBlock::getRequestSize(void) const {
+	return (this->_requestSize);
+}
+
 // ######### SETTERS #########
 
 void	LocationBlock::setExactMatchModifier(bool value) {
@@ -321,4 +356,8 @@ void	LocationBlock::setLocation(const std::string& location) {
 
 void	LocationBlock::setCgiMap(const std::string& extension, const std::string& path) {
 	_cgiMap[extension] = path;
+}
+
+void	LocationBlock::setRequestSize(long reqSize) {
+	this->_requestSize = reqSize;
 }

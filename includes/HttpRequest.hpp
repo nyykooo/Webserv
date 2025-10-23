@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/10/22 17:00:03 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/23 17:44:02 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,6 @@ class HttpRequest
 		HttpRequest();
 		HttpRequest(const std::string& request_text, Configuration* config, std::vector<SessionData *>* sessions);
 		HttpRequest(const HttpRequest& other);
-		HttpRequest& operator=(const HttpRequest& other);
 		~HttpRequest();
 
 		bool	chunkedRequestCompleted(const std::string& str);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:13:55 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/27 21:16:19 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/23 18:02:40 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,4 +153,26 @@ std::string getContentType(const std::string &filePath)
 		return "text/plain";
 
 	return "application/octet-stream";
+}
+
+unsigned long long validateRequestSize(std::string word, const char *tmpWord, char *endptr)
+{
+	long				size = 0;
+	unsigned long long temp;
+
+	size = std::strtol(tmpWord, &endptr, 10);
+	temp = size;
+	if (!*endptr)
+		return (temp);
+	else if (*endptr == 'b' || *endptr == 'B')
+		;
+	else if (*endptr == 'k' || *endptr == 'K')
+		temp = temp * 1024;
+	else if (*endptr == 'm' || *endptr == 'M')
+		temp = temp * 1024 * 1024;
+	else if (*endptr == 'g' || *endptr == 'G')
+		temp = temp * 1024 * 1024 * 1024;
+	else
+		throw Configuration::WrongConfigFileException(word + " invalid body size number");
+	return (temp);
 }

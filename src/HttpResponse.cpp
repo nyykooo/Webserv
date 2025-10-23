@@ -2,19 +2,6 @@
 
 HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL), _filePos(0) {}
 
-HttpResponse::HttpResponse(const HttpResponse &other)
-{
-	*this = other;
-}
-
-HttpResponse HttpResponse::operator=(const HttpResponse &other)
-{
-	if (this != &other)
-	{
-		std::cout << std::endl;
-	}
-	return (*this);
-}
 
 HttpResponse::~HttpResponse() {
 	if (_file.is_open())
@@ -38,7 +25,6 @@ void	HttpResponse::setCgiCookies(const std::string& cookie) {
 }
 
 void	HttpResponse::setCgiContentType(std::string& type) {
-	//std::cout << RED << "type: " << type << RESET << std::endl;
 	if (_cgiContentType == "") {
 		std::stringstream	ss(type);
 		std::string			str;
@@ -224,22 +210,6 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		return; // Retorna para não bloquear o servidor
 	}
 }
-
-/* bool HttpResponse::lookForCgi(void)
-{
-	std::string fileExtension = removeSlashes(_fileName);
-	size_t pos = fileExtension.find_last_of('.');
-	if (pos != std::string::npos) {
-		fileExtension = fileExtension.substr(pos);
-		std::map<std::string, std::string>::const_iterator it = _block->getCgiMap().find(fileExtension);
-		if (it != _block->getCgiMap().end()) {
-			// avaliar se o ficheiro existe, se nao existir retornar 404(?)
-			forkExecCgi(it->second);
-			return true;
-		}
-	}
-	return false;
-} */
 
 // ### EXEC METHOD ###
 
@@ -1460,43 +1430,6 @@ bool HttpResponse::saveBodyToFile(const std::string &path, const std::string &co
 	file.close();
 
 	return !file.fail();
-}
-
-bool HttpResponse::createUploadDirectory(const std::string& path) const
-{
-	struct stat st;
-	if (stat(path.c_str(), &st) == 0)
-	{
-		return S_ISDIR(st.st_mode);
-	}
-	std::string currentPath;
-	std::stringstream pathStream(path);
-	std::string segment;
-
-	if (path[0] == '/')
-	{
-		currentPath = "/";
-	}
-	// Dividir o caminho por segmentos e criar cada diretório
-	while (std::getline(pathStream, segment, '/'))
-	{
-		if (segment.empty())
-			continue; // Ignorar segmentos vazios (como em /home//user)
-		currentPath += segment;
-		if (stat(currentPath.c_str(), &st) == 0)
-		{
-			if (!S_ISDIR(st.st_mode))
-				return false; // Existe mas não é dir
-		}
-		else
-		{
-			if (mkdir(currentPath.c_str(), 0755) != 0)
-				return false;
-		}
-		currentPath += "/";
-	}
-
-	return true;
 }
 
 void HttpResponse::terminateCgiProcess(void)
