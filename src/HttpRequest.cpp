@@ -43,10 +43,6 @@ bool	HttpRequest::chunkedRequestCompleted(const std::string& str) {
             return (true); // invalid hex size
 		}
 		_chunkedRequestSize += chunkSize;
-		if (_chunkedRequestSize > static_cast<size_t>(_config->getRequestSize())) {
-			_parseStatus = 413;
-			return (true);
-		}
 		pos = crlf + 2; // move after "\r\n"
 		// Chunk size 0 means end of body
 		if (chunkSize == 0) {
@@ -107,11 +103,6 @@ bool HttpRequest::checkContentLength() {
 	std::map<std::string, std::string>::const_iterator contentLengthIt = _headers.find("Content-Length");
 	std::map<std::string, std::string>::const_iterator transferEnconding = _headers.find("Transfer-Encoding");
 
-	if (_body.length() > static_cast<size_t>(_config->getRequestSize()))
-	{
-		_parseStatus = 413;
-		return (false);
-	}
 	if (_body.size() > 0 && contentLengthIt == _headers.end() && transferEnconding == _headers.end())
 	{
 		_parseStatus = 411;
@@ -133,10 +124,6 @@ bool HttpRequest::checkContentLength() {
 			_parseStatus = 400;
 			return (false);
 		}	
-		else if (_contentLength > _config->getRequestSize()) {
-			_parseStatus = 413;
-			return (false);
-		}
 		else if (_contentLength == 0) {
 			_requestComplete = true;
 			return (true);
@@ -425,6 +412,10 @@ const std::string &HttpRequest::getUploadPath() const
 size_t HttpRequest::getUploadSize() const
 {
 	return _uploadSize;
+}
+
+long HttpRequest::getContentLength() const {
+	return (_contentLength);
 }
 
 // ######### SETTERS #########

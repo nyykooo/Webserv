@@ -336,14 +336,6 @@ int	LocationBlock::getLocationCurlyBracketsCount() {
 	return (_locationCurlyBracketsCount);
 }
 
-const std::map<std::string, std::string>&	LocationBlock::getCgiMap(void) const {
-	return (_cgiMap);
-}
-
-long	LocationBlock::getRequestSize(void) const {
-	return (this->_requestSize);
-}
-
 // ######### SETTERS #########
 
 void	LocationBlock::setExactMatchModifier(bool value) {
@@ -352,12 +344,4 @@ void	LocationBlock::setExactMatchModifier(bool value) {
 
 void	LocationBlock::setLocation(const std::string& location) {
 	_location = location;
-}
-
-void	LocationBlock::setCgiMap(const std::string& extension, const std::string& path) {
-	_cgiMap[extension] = path;
-}
-
-void	LocationBlock::setRequestSize(long reqSize) {
-	this->_requestSize = reqSize;
 }

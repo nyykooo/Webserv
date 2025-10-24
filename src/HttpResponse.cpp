@@ -95,7 +95,6 @@ void HttpResponse::checkCgiProcess()
 		_response = readFd(_pipeOut); // Lê a saída do CGI
 		if (_response == "")
 			_resStatus = 500; // Internal Server Error
-
 		std::stringstream ss;
 		ss << "CGI process finished:\n\t-PID: " << _cgiPid << ";\n\t-Status: " << _resStatus;
 		printLog(ss.str(), WHITE, std::cout);
@@ -215,7 +214,9 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 
 void HttpResponse::startResponse(void)
 {
-	if (_block->getRedirectStatusCode() != -1)
+	if (_req->hasParseError())
+		return ;
+	else if (_block->getRedirectStatusCode() != -1)
 	{
 		_resStatus = _block->getRedirectStatusCode();
 		_useNewLocation = true;
@@ -777,24 +778,25 @@ void HttpResponse::execMethod()
 	std::string method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
 
-	if (_req->hasParseError())
-		return ;
-	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it)
+	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
-		if (*it != "GET" && *it != "POST" && *it != "DELETE")
-		{
-			_resStatus = 501;
-			return;
-		}
+		_resStatus = 501;
+		return;
+	}
+	for (it = _block->getMethods().begin(); it != _block->getMethods().end(); ++it)
 		if (*it == method)
 			methodFound = true;
-	}
 	if (methodFound == false)
 	{
 		if (_resStatus == 400)
 			return;
 		_resStatus = 405; // Method Not Allowed
 		return;
+	}
+	if (this->_req->getBody().length() > static_cast<size_t>(_block->getRequestSize()))
+	{
+		_resStatus = 413;
+		return ;
 	}
 	root = _block->getRoot();
 	buildFullPath();
@@ -937,7 +939,7 @@ void HttpResponse::parseCgiHeaders() {
 		ss2 << _cgiBody.size();
 		_cgiContentLength = "Content-Length: " + ss2.str() + CRLF;
 	}
-	_cgiParsedHeaders.push_back(_cgiContentLength);
+//_cgiParsedHeaders.push_back(_cgiContentLength);
 	if (!_cgiCookies.empty())
 		for (std::vector<std::string>::iterator it = _cgiCookies.begin(); it != _cgiCookies.end(); it++)
 			_cgiParsedHeaders.push_back(*it + CRLF);
@@ -958,7 +960,8 @@ void HttpResponse::parseCgiScript() {
 
 std::string HttpResponse::cgiHeader()
 {
-	parseCgiScript();
+	if (_resStatus == 200)
+		parseCgiScript();
 	setHttpStatus(_resStatus);
 	std::string fileType = getMimeType(_fileName);
 	std::ostringstream header;
@@ -992,6 +995,7 @@ std::string HttpResponse::cgiHeader()
 		header << "Content-Length: 0" << CRLF;
 		return (header.str() + CRLF);
 	}
+	header << _cgiContentLength + CRLF;
 	return (header.str() + CRLF + _cgiBody);
 }
 
@@ -1199,11 +1203,11 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resCo
 	setMimeTypes();
 	setEnv(); // teste
 	_filePos = 0;
-	if (_req->hasParseError())
-	{
+	if (_req->hasParseError()) {
 		_resStatus = _req->getParseStatus();
-		return;
+		return ;
 	}
+	startResponse();
 }
 
 // ### SETTERS ###

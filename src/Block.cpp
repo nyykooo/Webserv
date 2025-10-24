@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/22 17:04:12 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/24 13:04:07 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 // ######### LIFE CYCLE #########
 
-Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1) {}
+Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1), _requestSize(1000000) {}
 
 Block::Block(const Block& other)
 {
@@ -27,6 +27,7 @@ Block::Block(const Block& other)
 	_cgiMap = other._cgiMap;
 	_uploadDirectory = other._uploadDirectory;
 	_errorPage = other._errorPage;
+	_requestSize = other._requestSize;
 }
 
 Block::~Block() {}
@@ -44,6 +45,7 @@ Block &Block::operator=(const Block &other)
 		_cgiMap = other._cgiMap;
 		_uploadDirectory = other._uploadDirectory;
 		_errorPage = other._errorPage;
+		_requestSize = other._requestSize;
 	}
 	return *this;
 }
@@ -117,6 +119,10 @@ void Block::setCgiMap(const std::string& extension, const std::string& path) {
 	_cgiMap[extension] = path;
 }
 
+void	Block::setRequestSize(long reqSize) {
+	this->_requestSize = reqSize;
+}
+
 // ######### GETTERS #########
 
 const std::string &Block::getRoot(void) const
@@ -154,6 +160,10 @@ const std::map<std::string, std::string>& Block::getCgiMap(void) const {
 
 const std::set<ErrorPageRule>& Block::getErrorPage(void) const {
 	return (this->_errorPage);
+}
+
+long	Block::getRequestSize(void) const {
+	return (this->_requestSize);
 }
 
 // ######### REMOVE #########

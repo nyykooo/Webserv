@@ -7,7 +7,7 @@ std::set<std::pair<std::string, std::string> >	Configuration::_allHosts;
 
 // ######### LIFE CYCLE #########
 
-Configuration::Configuration(): Block(), _requestSize(1000000) {
+Configuration::Configuration(): Block() {
 	_allowedMethods.push_back("GET");
 	_allowedMethods.push_back("POST");
 	_allowedMethods.push_back("DELETE");
@@ -16,7 +16,7 @@ Configuration::Configuration(): Block(), _requestSize(1000000) {
 Configuration::~Configuration() {}
 
 Configuration::Configuration(const Configuration& other): Block(other), _host(other._host), _serverName(other._serverName),
-	_requestSize(other._requestSize), _locations(other._locations) {_root = other.getRoot();
+	_locations(other._locations) {_root = other.getRoot();
 	_defaultFiles = other.getDefaultFiles();
 	_autoIndex = other.getAutoIndex();
 	_redirectStatusCode = other.getRedirectStatusCode();
@@ -446,14 +446,6 @@ const std::vector<std::string>&	Configuration::getServerName(void) const {
 	return (this->_serverName);
 }
 
-long	Configuration::getRequestSize(void) const {
-	return (this->_requestSize);
-}
-
-const std::map<std::string, std::string>&	Configuration::getCgiMap(void) const {
-	return (_cgiMap);
-}
-
 // ######### SETTERS #########
 
 void	Configuration::setHost(const std::string& host, const std::string& port)
@@ -466,13 +458,6 @@ void	Configuration::setServerName(const std::string& serverName) {
 	this->_serverName.push_back(serverName);
 }
 
-void	Configuration::setRequestSize(long reqSize) {
-	this->_requestSize = reqSize;
-}
-
-void	Configuration::setCgiMap(const std::string& extension, const std::string& path) {
-	_cgiMap[extension] = path;
-}
 // ######### CURLY BRACKETS METHODS
 
 void	Configuration::incrementCurlyBracketsCount(void) {

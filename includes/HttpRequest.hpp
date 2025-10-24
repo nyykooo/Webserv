@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/10/23 17:44:02 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/24 14:15:59 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,6 +87,7 @@ class HttpRequest
 		bool 										hasParseError() const;
 		bool										getChunked() const;
 		bool										RequestCompleted() const;
+		long										getContentLength() const;
 
 		// setters
 		void	setUploadPath(const std::string &path);

@@ -8,7 +8,6 @@ class Configuration : public Block
 		static std::set<std::pair<std::string, std::string> >	_allHosts;
 		std::set<std::pair<std::string, std::string> >			_host;
 		std::vector<std::string>								_serverName;
-		long													_requestSize;
 		static int												_curlyBracketsCount;
 		
 
@@ -18,18 +17,14 @@ class Configuration : public Block
 		// SETTERS
 		void								setHost(const std::string& host, const std::string& port);
 		void								setServerName(const std::string& serverName);
-		void								setRequestSize(long reqSize);
 		static void							incrementCurlyBracketsCount(void);
 		static void							decrementCurlyBracketsCount(void);
-		void								setCgiMap(const std::string& extension, const std::string& path);
 
 		// GETTERS
 		static std::set<std::pair<std::string, std::string> >&	getAllHosts(void);
 		const std::set<std::pair<std::string, std::string> >&	getHost(void) const;
 		const std::vector<std::string>&							getServerName(void) const;
-		long													getRequestSize(void) const;
 		static int												getCurlyBracketsCount(void);
-		const std::map<std::string, std::string>&				getCgiMap(void) const;
 
 		// ORTHODOX CANONICAL FORM 
 		

@@ -351,7 +351,6 @@ void WebServer::sendData(int client_fd)
 		delete client->_response;
 
 	client->_response = new HttpResponse(client);
-	client->_response->startResponse();
 }
 
 void WebServer::setClientTime(int client_fd)
