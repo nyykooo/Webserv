@@ -661,14 +661,16 @@ void HttpResponse::parsePath()
 	{
 		_queryString = "QUERY_STRING=" + path.substr(index + 1, (path.size() - index));
 		temp = path.substr(0, index);
-		_pathInfo = "PATH_INFO=" + temp;
 	}
 	else
 	{
 		_queryString = "QUERY_STRING=";
-		temp = path.substr(0, path.size());
-		_pathInfo = "PATH_INFO=" + temp;
+		temp = path;
 	}
+	if (temp.size() > _scriptName.size())
+		_pathInfo = "PATH_INFO=" + temp.substr(_scriptName.size());
+	else
+		_pathInfo = "PATH_INFO=";
 	parseScriptName(temp);
 }
 
@@ -778,6 +780,8 @@ void HttpResponse::execMethod()
 	std::string method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
 
+	if (_resStatus == 400)
+		return;
 	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
 		_resStatus = 501;
@@ -788,8 +792,6 @@ void HttpResponse::execMethod()
 			methodFound = true;
 	if (methodFound == false)
 	{
-		if (_resStatus == 400)
-			return;
 		_resStatus = 405; // Method Not Allowed
 		return;
 	}
