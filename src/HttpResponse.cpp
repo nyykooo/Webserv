@@ -667,11 +667,11 @@ void HttpResponse::parsePath()
 		_queryString = "QUERY_STRING=";
 		temp = path;
 	}
+	parseScriptName(temp);
 	if (temp.size() > _scriptName.size())
 		_pathInfo = "PATH_INFO=" + temp.substr(_scriptName.size());
 	else
 		_pathInfo = "PATH_INFO=";
-	parseScriptName(temp);
 }
 
 const std::string HttpResponse::parseContentLength(const std::map<std::string, std::string> &headers)
