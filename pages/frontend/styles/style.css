@@ -168,3 +168,77 @@ body {
     overflow-x: auto; /* Adiciona barra de rolagem horizontal, se necessário */
     font-family: "Courier New", Courier, monospace;
   }
+
+  .method-struct {
+	display: flex;
+	flex-direction: row;
+  }
+
+  .method-tester {
+	display: flex;
+	flex-direction: column;
+  }
+
+  .method-button {
+	height: 30px;
+	width: 33vw;
+	border-radius: 10px;
+	background-color: #082C36;
+	color: white;
+	font-weight: bold;
+  }
+
+  .method-textarea {
+	width: 33vw;
+	border-radius: 10px;
+	background-color: #ddd;
+	color: #082C36;
+	font-weight: bold;
+  }
+
+/* BY ID */
+
+#upload_button {
+    width: 30%;
+    max-width: 10%;
+    margin-bottom: 24px;
+    cursor: pointer;
+    transition: 0.4s;
+}
+
+#upload_button:hover {
+    transform: scale(1.2);
+    opacity: 1.2;
+}
+
+#submitBtn {
+	height: 30px;
+	width: 33vw;
+	border-radius: 10px;
+	background-color: #082C36;
+	color: white;
+	font-weight: bold;
+}
+
+#submitBtn:hover {
+    cursor: pointer;
+    color: white;
+    background-color: #082C36;
+    transition: 0.4s;
+}
+
+#file_upload_form {
+    display: flex;
+    flex-flow: column;
+    margin-top: 60px;
+    max-width: 400px;
+    align-items: center;
+    width: 90%;
+    border: 4px dotted #082C36;
+    border-radius: 15px;
+    text-align: center;
+}
+
+#file {
+    display: none;
+}

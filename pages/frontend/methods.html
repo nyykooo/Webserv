@@ -27,8 +27,6 @@
 		</div>
 	</head>
 	<body>
-		<script src="./script.js"></script>
-
 		<div class="main-title-struct">
 			<h1 class="main-title">HTTP METHODS</h1>
 		</div>
@@ -37,27 +35,57 @@
 			<p class="main-text">
 				HTTP defines special words called <strong>methods</strong> to describe what the client wants:
 			</p>
-			<p class="main-text">
-				<strong>GET</strong>: <br>
-				The <strong>client</strong> sends a request line like: <br>
-				<div class="code-box">
-					<pre><code>
-						function helloWorld() {
-							console.log("Hello, world!");
-						}
-					</code></pre>
+			<div class="method-struct">
+				<div class="method">
+					<p class="main-text">
+						<strong>GET</strong>: <br>
+						The <strong>client</strong> sends a request line like: <br>
+		
+					</p>
+					<div class="code-box">
+						<code>
+							GET /path/to/file.txt HTTP/1.1 <br>
+							Host: hostname<br>
+							Content-Length: 32<br><br>
+							This is the body of the request!
+						</code>
+					</div>
+					<p class="main-text">
+						And the <strong>server</strong> search for the file requested, read it's content and send it to the <strong>client</strong>.
+					</p>
+					<div class="method-tester">
+						<p id="test_response_status"></p>
+						<p>You can test an GET request to any page you want by typing the name of the file on the <strong>textarea</strong> bellow and clicking the button <strong>GET</strong></p>
+						<textarea class="method-textarea" name="GET-file" id="GET_file"></textarea>
+						<button id="submitBtn" onclick="testGET()">GET</button>
+					</div>
 				</div>
-			</p>
-			<p class="main-text">
-				<strong>POST</strong>: Used to send data to the server.<br>
-				Example: submitting a form, uploading a file, creating a new record in a database.<br>
-				Not idempotent (repeating may cause duplicates).
-			</p>
-			<p class="main-text">
-				<strong>DELETE</strong>: Used to remove data on the server.<br>
-				Example: deleting a user account or removing a file.<br>
-				Idempotent (deleting the same resource twice still results in "gone").
-			</p>
+				<div class="method">
+					<p class="main-text">
+						<strong>POST</strong>: Used to send data to the server.<br>
+						Example: submitting a form, uploading a file, creating a new record in a database.<br>
+						Not idempotent (repeating may cause duplicates).
+					</p>
+					<div class="method-tester">
+						<p id="test_response_status"></p>
+						<p>You can test an POST request by selecting the file when clicking the select <strong>select file</select> button bellow and clicking the button <strong>POST</strong></p>
+						<div id="file_upload_form">
+							<label id="file_name" for="file">No file selected</label>
+							<input type="file" id="file" name="file">
+							<img src="./media/icons/material-symbols-light--upload-rounded.png" id="upload_button" alt="Upload Icon">
+							<button class="method-button" type="submit" id="submitBtn" name="submit" onclick="testPOST(event)">POST</button>
+						</div>
+					</div>
+				</div>
+				<div class="method">
+					<p class="main-text">
+						<strong>DELETE</strong>: Used to remove data on the server.<br>
+						Example: deleting a user account or removing a file.<br>
+						Idempotent (deleting the same resource twice still results in "gone").
+					</p>
+				</div>
+			</div>
 		</div>
+		<script src="./script.js"></script>
 	</body>
 </html>
