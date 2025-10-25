@@ -878,15 +878,16 @@ void	HttpResponse::parseCgiStatus(const std::string& segment) {
 	
 	ss >> str;
 	if (!(ss >> str)) {
-		_resStatus = 200;
+		_cgiStatusCode = 200;
 		return ;
 	}
+	errno = 0;
 	num = std::strtol(str.c_str(), &endptr, 10);
 	if (str.size() != 3 || *endptr || num < 0) {
-		_resStatus = 200;
+		_cgiStatusCode = 200;
 		return ;
 	}
-	_resStatus = num;
+	_cgiStatusCode = num;
 }
 
 void	HttpResponse::parseContentLength(const std::string& segment) {
@@ -965,7 +966,12 @@ std::string HttpResponse::cgiHeader()
 {
 	if (_resStatus == 200)
 		parseCgiScript();
-	setHttpStatus(_resStatus);
+	if (_cgiStatusCode != 0) {
+		_resStatus = 0;
+		setHttpStatus(_cgiStatusCode);
+	}
+	else
+		setHttpStatus(_resStatus);
 	std::string fileType = getMimeType(_fileName);
 	std::ostringstream header;
 	header << "HTTP/1.1 " << _httpStatus << CRLF;
@@ -1192,7 +1198,7 @@ const std::string HttpResponse::checkStatusCode()
 	return _resBody;
 }
 
-HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resContentLength(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0)
+HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resContentLength(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0), _cgiStatusCode(0)
 {
 	_client = client;
 	_conf = client->_request->_config;
