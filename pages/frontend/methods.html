@@ -40,13 +40,17 @@
 			<p class="main-text">
 				<strong>GET</strong>: <br>
 				The <strong>client</strong> sends a request line like: <br>
+
 				<div class="code-box">
-					<pre><code>
-						function helloWorld() {
-							console.log("Hello, world!");
-						}
-					</code></pre>
+					<code>
+						GET /path/to/file.txt HTTP/1.1 <br>
+						Host: hostname<br>
+						Content-Length: 32<br><br>
+						This is the body of the request!
+					</code>
 				</div>
+
+				And the <strong>server</strong> search for the file requested, read it's content and send it to the <strong>client</strong>.
 			</p>
 			<p class="main-text">
 				<strong>POST</strong>: Used to send data to the server.<br>
