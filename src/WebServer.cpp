@@ -269,6 +269,7 @@ int WebServer::receiveData(int client_fd)
 	newData = buffer;
 	if (newData.empty())
 		return -1;
+	std::cout << "DATA RECEIVED: \n" << newData << std::endl;
 	Configuration *config = findConfigForRequestFast(newData, client_fd);
 	if (!config)
 	{
