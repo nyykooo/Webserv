@@ -93,6 +93,7 @@ void HttpResponse::checkCgiProcess()
 		else if (exitStatus == 0)
 			_resStatus = 200; // OK
 		_response = readFd(_pipeOut); // Lê a saída do CGI
+		std::cout << "CGI RESPONSE --> \n" << _response << std::endl;
 		if (_response == "")
 			_resStatus = 500; // Internal Server Error
 		std::stringstream ss;

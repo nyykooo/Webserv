@@ -324,6 +324,7 @@ static bool sendResponseToClient(Client *client)
 	size_t size = client->_response->getResponse().size();
 	size_t totalSent = client->_response->getFilePos();
 	int bytesToSend = size - totalSent;
+	std::cout << "RESPONSE STATUS >> " << client->_response->getResponse() << std::endl;
 	int sentBytes = send(client->getSocketFd(), buf + totalSent, bytesToSend, 0);
 	if (sentBytes < 0)
 	{
