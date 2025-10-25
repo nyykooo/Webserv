@@ -35,3 +35,4 @@ Legenda:
 [x] The method HEAD is returning a indefined response
 [x] File directory/youpi.bla not being located/identified ss << "CGI Execution error: " << strerror(errno);
 [x] Fix PATH_INFO behaviour related to the RFC
+

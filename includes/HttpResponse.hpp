@@ -73,9 +73,12 @@ class HttpResponse {
 
 		std::ifstream						_file;
 		std::size_t							_filePos;
+		bool								_rawUpload;
 
 		std::string							_newUploadDir;
 		std::string							_boundary;
+		std::string							_relativePath;
+		std::string							_fileAfterRelativePath;
 		
 		public:
 		
@@ -137,6 +140,7 @@ class HttpResponse {
 		void				cleanUploadDir();
 		bool				isRequestUpload();
 		int					processMultipartFormData();
+		void				doRawUpload();
 
 		//ORTHODOX CANONICAL FORM
 		HttpResponse();

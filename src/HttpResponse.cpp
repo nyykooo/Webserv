@@ -1,6 +1,6 @@
 #include "../includes/headers.hpp"
 
-HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL), _filePos(0) {}
+HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL), _filePos(0), _rawUpload(false) {}
 
 
 HttpResponse::~HttpResponse() {
@@ -979,12 +979,6 @@ std::string HttpResponse::cgiHeader()
 	header << "Date: " << get_http_date() << CRLF;
 	for (size_t i = 0; i < _cgiParsedHeaders.size(); i++)
 		header << _cgiParsedHeaders[i];
-	if (_req->session) {
-		header << "Set-Cookie: " << "session_id=" + _req->session->getSessionId() << "; Path=/";
-		if (!_req->session->getTheme().empty())
-			header << "; Theme=" << _req->session->getTheme();
-		header << CRLF;
-	}
 	if (_resStatus == 500) {
 		header << "Content-Length: " << http_error_500_page.size() << CRLF;
 		return (header.str() + CRLF + http_error_500_page);
@@ -1213,6 +1207,7 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resCo
 	setEnv(); // teste
 	_filePos = 0;
 	if (_req->hasParseError()) {
+		std::cout << RED << "aquiiiiii" << RESET << std::endl;
 		_resStatus = _req->getParseStatus();
 		return ;
 	}
@@ -1274,7 +1269,6 @@ void	HttpResponse::cleanUploadDir() {
 	for (size_t i = 0; i < str.size(); i++) {
 		if (str[i] != '.' && str[i] != '/')
 			clean += str[i];
-		//std::cout << clean << std::endl;
 	}
 	size_t	end = clean.find_last_not_of('/');
 	if (end != std::string::npos)
@@ -1282,17 +1276,45 @@ void	HttpResponse::cleanUploadDir() {
 	_block->setUploadDirectory(clean);
 }
 
+void	HttpResponse::doRawUpload() {
+        _fileName = _newUploadDir + _fileAfterRelativePath;
+
+        // Save file content
+        if (!saveBodyToFile(_fileName, _req->getBody()))
+			_resStatus = 500;
+		else 
+			_resStatus = 201;
+}
+
 bool	HttpResponse::isRequestUpload() {
 	_contentType = parseContentType(_req->getHeaders());
 	size_t	pos = _contentType.find("multipart/form-data");
-	if (pos == std::string::npos)
-		return (false);
-	size_t pos2 = _contentType.find("boundary=");
-	if (pos2 == std::string::npos)
-		return (false);
-	_boundary = _contentType.substr(pos2 + 9, _contentType.size()); // +9 to skip 'boundary='
-	_contentType = "multipart/form-data";
-	return (true);
+	std::string location = _block->getLocation();
+	//std::cout << RED << location << RESET << std::endl;
+	_relativePath = _req->getPath().substr(location.size());
+	if (_relativePath[0] == '/')
+		_relativePath.erase(0, 1);
+	//std::cout << GREEN << _relativePath << RESET << std::endl;
+	size_t pos2 = _relativePath.find("/");
+	if (pos2 != std::string::npos) {
+		_fileAfterRelativePath = _relativePath.substr(pos2 + 1);
+		_relativePath = _relativePath.substr(0, pos2);
+		//std::cout << GREEN << "aqui: " << _relativePath << " " << _fileAfterRelativePath << RESET << std::endl;
+	}
+
+	if (pos != std::string::npos) {
+		size_t pos2 = _contentType.find("boundary=");
+		if (pos2 == std::string::npos)
+			return (false);
+		_boundary = _contentType.substr(pos2 + 9, _contentType.size()); // +9 to skip 'boundary='
+		_contentType = "multipart/form-data";
+		return (true);
+	}
+	if (_fileAfterRelativePath != "") {
+		_rawUpload = true;
+		return (true);
+	}
+	return (false);
 }
 
 int HttpResponse::processMultipartFormData()
@@ -1374,6 +1396,8 @@ void	HttpResponse::setNewUploadDir() {
 			_newUploadDir = _newRoot + "/" + _block->getUploadDirectory();
 		else
 			_newUploadDir = _newRoot + "/" + _block->getUploadDirectory() + "/";
+		if (_relativePath != "")
+			_newUploadDir += _relativePath + "/";
 	}
 }
 
@@ -1395,9 +1419,9 @@ void HttpResponse::handlePOST()
 	std::string uploadDir = _block->getUploadDirectory();
 	if (uploadDir == "" || !isRequestUpload())
 	{
-		std::cout << uploadDir << std::endl;
-		_resStatus = 400;
-		_resBody = http_error_400_page;
+		//std::cout << uploadDir << std::endl;
+		_resStatus = 405;
+		_resBody = http_error_405_page;
 		_resContentLength = _resBody.size();
 		return ;
 	}
@@ -1405,12 +1429,16 @@ void HttpResponse::handlePOST()
 	//std::cout << "_newRoot = " << _newRoot << std::endl;
 	setNewUploadDir(); // this sets the Upload Directory with the root
 	//std::cout << "uploadDir: " << _newUploadDir << std::endl;
-	if (/* !createUploadDirectory(uploadDir) ||  */access(uploadDir.c_str(), W_OK) != 0)
+	if (access(uploadDir.c_str(), W_OK) != 0)
 	{
 		_resStatus = 500; // Internal Server Error
 		_resBody = http_error_500_page;
 		_resContentLength = _resBody.size();
 		//std::cout << RED << "Failed to access upload directory: " << uploadDir << RESET << std::endl;
+		return ;
+	}
+	if (_rawUpload == true) {
+		doRawUpload();
 		return ;
 	}
 	_resStatus = processMultipartFormData();

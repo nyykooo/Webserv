@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:26 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/24 11:46:38 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/25 16:33:01 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ class Block
 		std::string							_uploadDirectory;
 		std::set<ErrorPageRule>				_errorPage;
 		long								_requestSize;
+		std::string							_location;
 		
 	public:
 		// ORTHODOX CANONICAL FORM
@@ -50,6 +51,7 @@ class Block
 		void	setUploadDirectory(const std::string& str);
 		void	setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
 		void	setRequestSize(long reqSize);
+		void	setLocation(const std::string& location);
 		
 		// GETTERS
 		const std::string&							getRoot(void) const;
@@ -63,6 +65,7 @@ class Block
 		const std::string&							getUploadDirectory(void) const;
 		const std::set<ErrorPageRule>&				getErrorPage(void) const;
 		long										getRequestSize(void) const;
+		const std::string&							getLocation(void) const;
 };
 
 

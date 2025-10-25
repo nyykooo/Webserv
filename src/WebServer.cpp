@@ -267,6 +267,7 @@ int WebServer::receiveData(int client_fd)
 		return (-1);
 	buffer[bytes] = '\0';
 	newData = buffer;
+	std::cout << GREEN << newData << RESET << std::endl;
 	if (newData.empty())
 		return -1;
 	Configuration *config = findConfigForRequestFast(newData, client_fd);
@@ -326,6 +327,7 @@ static bool sendResponseToClient(Client *client)
 	int bytesToSend = size - totalSent;
 	std::cout << "RESPONSE STATUS >> " << client->_response->getResponse() << std::endl;
 	int sentBytes = send(client->getSocketFd(), buf + totalSent, bytesToSend, 0);
+	std::cout << YELLOW << "A ENVIAR: " << buf << RESET << std::endl;
 	if (sentBytes < 0)
 	{
 		_logger << "Erro ao enviar corpo ao cliente - client_fd: " << client->getSocketFd();

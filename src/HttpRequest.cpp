@@ -157,12 +157,12 @@ void HttpRequest::parse(const std::string &request_text)
 	checkHeaders(temp);
 	if (!_headersCompleted)
 		return ;
+	parse_headers();
 	checkChunkedRequest();
 	if (_parseStatus == 400)
 		return ;
 	if (_chunked && !chunkedRequestCompleted(temp)) // to keep parsing the chunk request
-		return ;	
-	parse_headers();
+		return ;
 	if (_parseStatus != 200) {
 		_requestComplete = true;
 		return ;
@@ -195,12 +195,8 @@ void HttpRequest::parse_requestline(const std::string &request_line)
 	stream >> method >> path >> version >> further;
 	if (method.empty() || path.empty() || version.empty() || !further.empty())
 	{
+		std::cout << RED << "aqui: " << further << RESET << std::endl;
 		_parseStatus = 400;
-		return;
-	}
-	if (method != "GET" && method != "POST" && method != "DELETE")
-	{
-		_parseStatus = 405;
 		return;
 	}
 	if (version != "HTTP/1.1")
@@ -225,6 +221,7 @@ void HttpRequest::parse_headers()
 	std::istringstream	stream(_headersNotParsed);
 	std::string			header_line;
 
+	std::cout << "----------------------"  << GREEN << _headersNotParsed << RESET << std::endl << "----------------------"  << std::endl;;
 	if (std::getline(stream, header_line) && !header_line.empty()) {
 			parse_requestline(header_line);
 			std::stringstream ss;

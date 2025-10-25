@@ -6,7 +6,6 @@ class LocationBlock : public Block
 {
 	private:
 		bool													_exactMatchModifier;
-		std::string												_location;
 		static int												_locationCurlyBracketsCount;
 		std::string												_uploadDirectory;
 	public:
@@ -14,14 +13,12 @@ class LocationBlock : public Block
 		// SETTERS
 
 		void			setExactMatchModifier(bool value);
-		void			setLocation(const std::string& location);
 		static void		incrementLocationCurlyBracketsCount(void);
 		static void		decrementLocationCurlyBracketsCount(void);
 
 		// GETTERS
 
 		bool										getExactMatchModifier(void) const;
-		const std::string&							getLocation(void) const;
 		static int									getLocationCurlyBracketsCount(void);
 
 		// ORTHODOX CANONICAL FORM
