@@ -69,6 +69,7 @@ class HttpResponse {
 		std::string							_cgiLocation;
 		std::string							_cgiContentLength;
 		int									_cgiHeadersFound;
+		int									_cgiStatusCode;
 
 		std::ifstream						_file;
 		std::size_t							_filePos;
