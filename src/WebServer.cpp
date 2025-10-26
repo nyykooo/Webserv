@@ -226,7 +226,7 @@ bool WebServer::tryConnection(int i)
 		}
 		catch (const std::exception &e)
 		{
-			_logger << "Error parsing HTTP request: " << e.what();
+			_logger << "Error creating new client: " << e.what();
 			printLogNew(_logger, RED, std::cerr, true);
 			return true;
 		}

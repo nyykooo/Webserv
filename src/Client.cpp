@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/20 13:37:03 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/26 11:49:54 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,10 +88,7 @@ Client *Client::initClientSocket(int server_fd)
 	// Aceita a conexão
 	_socket_fd = accept(server_fd, (sockaddr *)&addr, &addr_len);
 	if (_socket_fd == -1)
-	{
-		std::cerr << "Erro ao aceitar nova conexão" << std::endl;
-		return NULL;
-	}
+		throw Socket::SocketErrorException("Client >> initClientSocket >> Error accepting new client - invalid fd");
 
 	int events = EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR; // Monitorar leitura, fechamento e erros
 	setEvent(events, _socket_fd);
@@ -106,9 +103,8 @@ Client *Client::initClientSocket(int server_fd)
 		_res->ai_family = AF_INET6; // IPv6
 	else
 	{
-		std::cerr << "Família de endereços desconhecida ao aceitar conexão" << std::endl;
 		delete _res;
-		return NULL;
+		throw Socket::SocketErrorException("Client >> initClientSocket >> address family unknown while accepting connection");
 	}
 
 	int flags = fcntl(_socket_fd, F_GETFL, 0);
