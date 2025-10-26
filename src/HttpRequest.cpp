@@ -195,7 +195,6 @@ void HttpRequest::parse_requestline(const std::string &request_line)
 	stream >> method >> path >> version >> further;
 	if (method.empty() || path.empty() || version.empty() || !further.empty())
 	{
-		std::cout << RED << "aqui: " << further << RESET << std::endl;
 		_parseStatus = 400;
 		return;
 	}
@@ -221,11 +220,9 @@ void HttpRequest::parse_headers()
 	std::istringstream	stream(_headersNotParsed);
 	std::string			header_line;
 
-	std::cout << "----------------------"  << GREEN << _headersNotParsed << RESET << std::endl << "----------------------"  << std::endl;;
 	if (std::getline(stream, header_line) && !header_line.empty()) {
 			parse_requestline(header_line);
 			std::stringstream ss;
-			ss << "HTTP Request line parsed: " << _method << " " << _path << " " << _version;
 			printLog(ss.str(), WHITE, std::cout);
 			if (_parseStatus != 200)
 				return ;
@@ -303,6 +300,7 @@ void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
 			}
 		}
 	}
+	
 	// check if session already exists or create a new one
 	std::map<std::string, std::string>::iterator sidIt = _cookies.find("session_id");
 	std::map<std::string, std::string>::iterator themeIt = _cookies.find("theme");

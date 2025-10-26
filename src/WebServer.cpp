@@ -267,7 +267,6 @@ int WebServer::receiveData(int client_fd)
 		return (-1);
 	buffer[bytes] = '\0';
 	newData = buffer;
-	std::cout << GREEN << newData << RESET << std::endl;
 	if (newData.empty())
 		return -1;
 	std::cout << "DATA RECEIVED: \n" << newData << std::endl;
@@ -326,9 +325,7 @@ static bool sendResponseToClient(Client *client)
 	size_t size = client->_response->getResponse().size();
 	size_t totalSent = client->_response->getFilePos();
 	int bytesToSend = size - totalSent;
-	std::cout << "RESPONSE STATUS >> " << client->_response->getResponse() << std::endl;
 	int sentBytes = send(client->getSocketFd(), buf + totalSent, bytesToSend, 0);
-	std::cout << YELLOW << "A ENVIAR: " << buf << RESET << std::endl;
 	if (sentBytes < 0)
 	{
 		_logger << "Erro ao enviar corpo ao cliente - client_fd: " << client->getSocketFd();
@@ -519,13 +516,8 @@ static bool checkHostType(const std::string &host)
 static bool checkForServerName(const std::vector<std::string> &server_names, std::string host)
 {
 	for (std::vector<std::string>::const_iterator name_it = server_names.begin(); name_it != server_names.end(); ++name_it)
-	{
 		if (host == *name_it)
-		{
-			std::cout << "Server name encontrado: " << *name_it << std::endl;
-			return true;
-		}
-	}
+			return (true);
 	return false;
 }
 
