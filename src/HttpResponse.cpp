@@ -88,10 +88,10 @@ void HttpResponse::checkCgiProcess()
 		// filho terminou
 		_client->setProcessingState(CGI_COMPLETED);
 		int exitStatus = WEXITSTATUS(childrenStatus);
-		if (exitStatus == 1)
+		if (exitStatus == 0)
+		_resStatus = 200; // OK
+		else
 			_resStatus = 500; // Internal Server Error
-		else if (exitStatus == 0)
-			_resStatus = 200; // OK
 		_response = readFd(_pipeOut); // Lê a saída do CGI
 		if (_response == "")
 			_resStatus = 500; // Internal Server Error
@@ -177,6 +177,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		close(debugFd);
 
 		// Change directory to the CGI directory
+		_fullPath += "/";
 		size_t found = _fullPath.find_last_of("/");
 		std::string path = _fullPath.substr(0, found);
 		if (chdir(path.c_str()) == -1)
@@ -830,7 +831,7 @@ const std::string HttpResponse::httpFileContent(int errorPage)
 
 int HttpResponse::openFile()
 {
-	if (_block->getErrorPage() == NULL)
+	if (!_block || _block->getErrorPage() == NULL)
 		return (0);
 	std::set<ErrorPageRule>::const_iterator it = _block->getErrorPage()->begin();
 
@@ -941,7 +942,8 @@ void HttpResponse::parseCgiScript() {
 	pos  = _response.find("\r\n\r\n");
 	if (pos != std::string::npos) {
 		_cgiHeaders = _response.substr(0, pos);
-		_cgiBody = _response.substr(pos + 4, _response.size());
+		_cgiBody = _response.substr(pos + 4);
+		std::cout << RED << "aqui: " << _cgiHeaders << std::endl << _cgiBody << RESET << std::endl;
 	}
 	else
 		_cgiHeaders = _response;
@@ -1187,9 +1189,9 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resCo
 	_loc = checkLocationBlock();
 	setStatusTexts();
 	if (_loc != NULL)
-	_block = _loc;
+		_block = _loc;
 	else
-	_block = _conf;
+		_block = _conf;
 	setMimeTypes();
 	setEnv();
 	_filePos = 0;

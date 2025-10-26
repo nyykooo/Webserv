@@ -59,8 +59,6 @@
 # include "ErrorPages.hpp"
 
 // remover depois!!!! servem para printar o hyperlink no terminal
-# include <netdb.h>
-# include <arpa/inet.h>
 
 // utils 
 std::string toLower(const std::string &str);

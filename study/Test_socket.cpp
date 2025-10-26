@@ -54,11 +54,7 @@ int main()
 	char buffer[4096];
 	ssize_t received;
 	while ((received = recv(socket_fd, buffer, sizeof(buffer) - 1, 0)) > 0)
-	{
 		buffer[received] = '\0';
-		std::cout << buffer;
-	}
-
 	freeaddrinfo(res);
 	close(socket_fd);
 

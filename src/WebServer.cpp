@@ -502,7 +502,7 @@ void WebServer::startServer()
 		try
 		{
 			handleEvents(event_count);
-			//lookForTimeouts();
+			lookForTimeouts();
 		}
 		catch (const std::exception &e) {
 			std::cerr << e.what() << '\n';
