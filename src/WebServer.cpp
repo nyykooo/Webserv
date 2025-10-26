@@ -400,17 +400,38 @@ void WebServer::treatExistingClient(int i)
 	if (!client)
 		return ;
 
-	if (_events[i].events == EPOLLIN)
-		handleClientInput(client, i);
-	else if (_events[i].events == EPOLLOUT)
-		handleClientOutput(client, i);
-	else if (_events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
+	int flags = _events[i].events;
+	if (flags & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
+	{
 		// Cliente desconectou ou houve erro
-		_logger << "Conexão fechada ou erro na conexão com o cliente - client_fd: " << client->getSocketFd();
+		_logger << "Client disconnected or connection error - client socket fd: " << client->getSocketFd();
 		printLog(_logger.str(), RED, std::cout);
 		_logger.str("");
 		_logger.clear();
 		deleteClient(_events[i].data.fd, 1);
+		return ;
+	}
+
+	bool hasEpollIn = flags & EPOLLIN;
+	bool hasEpollOut = flags & EPOLLOUT;
+	bool alreadyDidOperation = false;
+
+	if (hasEpollIn && !alreadyDidOperation)
+	{
+		handleClientInput(client, i);
+		alreadyDidOperation = true;
+	}
+	if (hasEpollOut && !alreadyDidOperation)
+	{
+		handleClientOutput(client, i);
+		alreadyDidOperation = true;
+	}
+	if (!alreadyDidOperation)
+	{
+		_logger << "No Operation executed. No EPOLLIN or EPOLLOUT - client socket fd: " << client->getSocketFd();
+		printLog(_logger.str(), YELLOW, std::cout);
+		_logger.str("");
+		_logger.clear();
 	}
 }
 void WebServer::handleEvents(int event_count)
