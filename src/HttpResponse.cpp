@@ -1096,6 +1096,7 @@ const std::string HttpResponse::checkErrorResponse(const std::string &page)
 		std::cout << RED << page << RESET << std::endl;
 		_resBody = page;
 		_resContentLength = _resBody.size();
+		_fileName = ".html";
 	}
 	else
 	{
