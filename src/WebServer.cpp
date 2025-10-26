@@ -150,21 +150,26 @@ void WebServer::registerEpollSocket(Socket *socket)
 // ### HANDLE NEW CLIENT ###
 void WebServer::handleNewClient(int server_fd)
 {
-	Client *client_socket = new Client(server_fd);
-	if (!client_socket)
+	Client *client_socket = NULL;
+	try
 	{
-		_logger << "Erro ao inicializar o socket do cliente";
+		client_socket = new Client(server_fd);
+		_clients_vec.push_back(client_socket);
+
+		Server *server = _servers_map.find(server_fd)->second;
+		_client_to_server_map[client_socket->getSocketFd()] = std::make_pair(server->getIp(), server->getPort()); // novidade, possível approach
+		client_socket->_server = server;
+		_logger << "Novo cliente conectado - client_fd: " << client_socket->getSocketFd();
+		printLogNew(_logger, WHITE, std::cout, true);
+		registerEpollSocket(client_socket);
+	}
+	catch (const std::exception &e)
+	{
+		delete client_socket;
+		_logger << "Error creating new client: " << e.what();
 		printLogNew(_logger, RED, std::cerr, true);
 		return;
 	}
-	_clients_vec.push_back(client_socket);
-
-	Server *server = _servers_map.find(server_fd)->second;
-	_client_to_server_map[client_socket->getSocketFd()] = std::make_pair(server->getIp(), server->getPort()); // novidade, possível approach
-	client_socket->_server = server;
-	_logger << "Novo cliente conectado - client_fd: " << client_socket->getSocketFd();
-	printLogNew(_logger, WHITE, std::cout, true);
-	registerEpollSocket(client_socket);
 }
 
 // ### GETTERS ###
@@ -219,17 +224,8 @@ bool WebServer::tryConnection(int i)
 {
 	if (_servers_map.find(_events[i].data.fd) != _servers_map.end())
 	{
-		try
-		{
 			handleNewClient(_events[i].data.fd);
 			return true; // Conexão aceita com sucesso
-		}
-		catch (const std::exception &e)
-		{
-			_logger << "Error creating new client: " << e.what();
-			printLogNew(_logger, RED, std::cerr, true);
-			return true;
-		}
 	}
 	return false;
 }
