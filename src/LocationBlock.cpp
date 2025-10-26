@@ -21,7 +21,7 @@ LocationBlock::LocationBlock(const Configuration& other): _exactMatchModifier(fa
 
 LocationBlock::~LocationBlock() {}
 
-LocationBlock::LocationBlock(const LocationBlock& other): Block(other), _exactMatchModifier(other._exactMatchModifier), _location(other._location) {
+LocationBlock::LocationBlock(const LocationBlock& other): Block(other), _exactMatchModifier(other._exactMatchModifier) {
 	_root = other.getRoot();
 	_allowedMethods = other.getMethods();
 	_autoIndex = other.getAutoIndex();
@@ -328,10 +328,6 @@ bool	LocationBlock::getExactMatchModifier(void) const {
 	return (_exactMatchModifier);
 }
 
-const std::string&	LocationBlock::getLocation(void) const {
-	return (_location);
-}
-
 int	LocationBlock::getLocationCurlyBracketsCount() {
 	return (_locationCurlyBracketsCount);
 }
@@ -342,6 +338,4 @@ void	LocationBlock::setExactMatchModifier(bool value) {
 	_exactMatchModifier = value;
 }
 
-void	LocationBlock::setLocation(const std::string& location) {
-	_location = location;
-}
+

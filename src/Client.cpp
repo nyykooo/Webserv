@@ -82,7 +82,7 @@ Client::~Client()
 
 Client *Client::initClientSocket(int server_fd)
 {
-	sockaddr_storage addr; // Usando sockaddr_storage para suportar IPv4 e IPv6
+	sockaddr_storage addr;
 	socklen_t addr_len = sizeof(addr);
 
 	// Aceita a conexão
@@ -90,7 +90,7 @@ Client *Client::initClientSocket(int server_fd)
 	if (_socket_fd == -1)
 		throw Socket::SocketErrorException("Client >> initClientSocket >> Error accepting new client - invalid fd");
 
-	int events = EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR; // Monitorar leitura, fechamento e erros
+	int events = EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR; // Monitor read, closing and error events
 	setEvent(events, _socket_fd);
 
 	addrinfo *_res = new addrinfo();
@@ -139,6 +139,7 @@ bool Client::isFileStreaming() const
 {
 	return (_fileFd != -1 && _state == STREAMING);
 }
+
 double Client::getStreamingProgress() const
 {
 	if (_fileSize == 0)

@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/24 13:04:07 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/25 16:32:37 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ Block::Block(const Block& other)
 	_uploadDirectory = other._uploadDirectory;
 	_errorPage = other._errorPage;
 	_requestSize = other._requestSize;
+	_location = other._location;
 }
 
 Block::~Block() {}
@@ -46,6 +47,7 @@ Block &Block::operator=(const Block &other)
 		_uploadDirectory = other._uploadDirectory;
 		_errorPage = other._errorPage;
 		_requestSize = other._requestSize;
+		_location = other._location;
 	}
 	return *this;
 }
@@ -123,6 +125,10 @@ void	Block::setRequestSize(long reqSize) {
 	this->_requestSize = reqSize;
 }
 
+void	Block::setLocation(const std::string& location) {
+	_location = location;
+}
+
 // ######### GETTERS #########
 
 const std::string &Block::getRoot(void) const
@@ -164,6 +170,10 @@ const std::set<ErrorPageRule>& Block::getErrorPage(void) const {
 
 long	Block::getRequestSize(void) const {
 	return (this->_requestSize);
+}
+
+const std::string&	Block::getLocation(void) const {
+	return (_location);
 }
 
 // ######### REMOVE #########

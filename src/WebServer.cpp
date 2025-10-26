@@ -321,7 +321,6 @@ static bool sendResponseToClient(Client *client)
 	size_t size = client->_response->getResponse().size();
 	size_t totalSent = client->_response->getFilePos();
 	int bytesToSend = size - totalSent;
-	std::cout << "RESPONSE STATUS >> " << client->_response->getResponse() << std::endl;
 	int sentBytes = send(client->getSocketFd(), buf + totalSent, bytesToSend, 0);
 	if (sentBytes < 0)
 	{
@@ -513,13 +512,8 @@ static bool checkHostType(const std::string &host)
 static bool checkForServerName(const std::vector<std::string> &server_names, std::string host)
 {
 	for (std::vector<std::string>::const_iterator name_it = server_names.begin(); name_it != server_names.end(); ++name_it)
-	{
 		if (host == *name_it)
-		{
-			std::cout << "Server name encontrado: " << *name_it << std::endl;
-			return true;
-		}
-	}
+			return (true);
 	return false;
 }
 

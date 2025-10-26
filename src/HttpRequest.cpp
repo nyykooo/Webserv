@@ -157,12 +157,12 @@ void HttpRequest::parse(const std::string &request_text)
 	checkHeaders(temp);
 	if (!_headersCompleted)
 		return ;
+	parse_headers();
 	checkChunkedRequest();
 	if (_parseStatus == 400)
 		return ;
 	if (_chunked && !chunkedRequestCompleted(temp)) // to keep parsing the chunk request
-		return ;	
-	parse_headers();
+		return ;
 	if (_parseStatus != 200) {
 		_requestComplete = true;
 		return ;
@@ -198,11 +198,6 @@ void HttpRequest::parse_requestline(const std::string &request_line)
 		_parseStatus = 400;
 		return;
 	}
-	if (method != "GET" && method != "POST" && method != "DELETE")
-	{
-		_parseStatus = 405;
-		return;
-	}
 	if (version != "HTTP/1.1")
 	{
 		_parseStatus = 505;
@@ -228,7 +223,6 @@ void HttpRequest::parse_headers()
 	if (std::getline(stream, header_line) && !header_line.empty()) {
 			parse_requestline(header_line);
 			std::stringstream ss;
-			ss << "HTTP Request line parsed: " << _method << " " << _path << " " << _version;
 			printLog(ss.str(), WHITE, std::cout);
 			if (_parseStatus != 200)
 				return ;
@@ -306,6 +300,7 @@ void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
 			}
 		}
 	}
+	
 	// check if session already exists or create a new one
 	std::map<std::string, std::string>::iterator sidIt = _cookies.find("session_id");
 	std::map<std::string, std::string>::iterator themeIt = _cookies.find("theme");
