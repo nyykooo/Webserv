@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Server.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/26 18:57:04 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/08/27 21:21:13 by ncampbel         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../includes/headers.hpp"
 
 // ######### LIFE CYCLE #########
@@ -56,7 +44,7 @@ void	Server::initServerSocket(std::string ip, std::string port)
 	_hints = hints;
 
     if (getaddrinfo(ip.c_str(), port.c_str(), &hints, &res) != 0) {
-        std::cerr << "Erro em getaddrinfo" << std::endl;
+        std::cerr << "Error in getaddrinfo" << std::endl;
     }
 	_res = res;
 

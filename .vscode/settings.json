@@ -68,7 +68,8 @@
 		"mutex": "cpp",
 		"semaphore": "cpp",
 		"stop_token": "cpp",
-		"thread": "cpp"
+		"thread": "cpp",
+		"*.tcc": "cpp"
 	},
 	"C_Cpp.default.compilerPath": "/usr/bin/g++"
 }

@@ -44,7 +44,7 @@ void	HttpResponse::setCgiLocation(const std::string& location) {
 
 static std::string readFd(int fd)
 {
-	const size_t bufSize = 4096; // usa-se 4KB pois eh um meio termo entre chamadas pequenas e muito longas
+	const size_t bufSize = 4096;
 	char buffer[bufSize];
 	std::string result;
 	ssize_t bytesRead;
@@ -63,7 +63,7 @@ static std::string readFd(int fd)
 		else
 		{
 			std::stringstream ss;
-			ss << "Erro ao ler ficheiro de saida do CGI fd (" << fd << ")";
+			ss << "Error reading fd: (" << fd << ")";
 			printLog(ss.str(), RED, std::cout);
 			return "";
 		}
@@ -107,109 +107,128 @@ void HttpResponse::checkCgiProcess()
 	}
 }
 
-// ### CGI ###
 void HttpResponse::forkExecCgi(std::string interpreter)
 {
 	_fileName = removeSlashes(_fileName);
+
 	char *args[3];
 	int pipeInput[2];
 	int pipeOutput[2];
-	std::string _script_name = _scriptNameNico.find_last_of('?') != std::string::npos ? _scriptNameNico.substr(0, _scriptNameNico.find_last_of('?')).c_str() : _scriptNameNico.c_str();
+
+	std::string _script_name = _scriptNameNico.find_last_of('?') != std::string::npos
+									? _scriptNameNico.substr(0, _scriptNameNico.find_last_of('?'))
+									: _scriptNameNico;
+
 	args[0] = const_cast<char *>(interpreter.c_str());
 	args[1] = const_cast<char *>(_script_name.c_str());
-	args[2] = NULL; // Terminate the args array with NULL
+	args[2] = NULL;
 
-	pipeInput[0] = _pipeIn;
-	pipeInput[1] = STDIN_FILENO;
-
-	pipeOutput[0] = STDOUT_FILENO;
-	pipeOutput[1] = _pipeOut;
-
-	if (_cgiPid > 0)
-		checkCgiProcess();
-
-	// Create pipes for input and output
+	// Create pipes for input (to CGI) and output (from CGI)
 	if (pipe(pipeInput) == -1 || pipe(pipeOutput) == -1)
 	{
 		std::cerr << "Pipe error: " << strerror(errno) << std::endl;
-		_resStatus = 500; // Internal Server Error
+		_resStatus = 500;
 		return;
 	}
 
 	std::stringstream ss;
-	ss << "CGI execution: \n\t-interpreter: " << interpreter << ";\n\t-args: " << _fileName; // adicionar variaveis de ambiente depois
+	ss << "CGI execution:\n\t-interpreter: " << interpreter
+	   << ";\n\t-script: " << _script_name;
 	printLog(ss.str(), WHITE, std::cout);
 
+	// Fork the process
 	pid_t pid = fork();
 	if (pid < 0)
 	{
 		std::cerr << "Fork error: " << strerror(errno) << std::endl;
-		_resStatus = 500; // Internal Server Error
+		_resStatus = 500;
+		close(pipeInput[0]); close(pipeInput[1]);
+		close(pipeOutput[0]); close(pipeOutput[1]);
 		return;
 	}
+
+	// ------------------- CHILD PROCESS -------------------
 	if (pid == 0)
 	{
-		std::stringstream ss;
-		// processo filho
-		dup2(pipeInput[0], STDIN_FILENO);	// Redirect stdin to pipe input
-		if (_req->getBody().size() > 0) // Se houver corpo na requisicao, escreve no stdin do CGI
-		{
-			ssize_t bytesWritten = write(pipeInput[1], _req->getBody().c_str(), _req->getBody().size());
-			if (bytesWritten == -1 || static_cast<size_t>(bytesWritten) != _req->getBody().size())
-			{
-				ss << "CGI Write to stdin error: " << strerror(errno) << std::endl;
-				printLog(ss.str(), RED, std::cerr);
-				exit(1); // Internal Server Error
-			}
-		}
-		dup2(pipeOutput[1], STDOUT_FILENO); // Redirect stdout to pipe output
+		// Close unused ends
+		close(pipeInput[1]);
+		close(pipeOutput[0]);
 
-		// Abrir um arquivo para redirecionar o stderr
+		// Redirect stdin and stdout
+		if (dup2(pipeInput[0], STDIN_FILENO) == -1 ||
+			dup2(pipeOutput[1], STDOUT_FILENO) == -1)
+		{
+			std::cerr << "dup2 error: " << strerror(errno) << std::endl;
+			exit(1);
+		}
+
+		// Close originals after dup2
+		close(pipeInput[0]);
+		close(pipeOutput[1]);
+
+		// Redirect stderr to debug log
 		int debugFd = open("./cgi_debug.log", O_WRONLY | O_CREAT | O_APPEND, 0644);
 		if (debugFd == -1)
 		{
 			std::cerr << "Failed to open debug log file: " << strerror(errno) << std::endl;
-			exit(1); // Internal Server Error
+			exit(1);
 		}
-		dup2(debugFd, STDERR_FILENO); // Redirect stderr to the debug file
-		close(debugFd);				  // Fechar o descritor original
+		dup2(debugFd, STDERR_FILENO);
+		close(debugFd);
 
-		// mudar de diretorio para o diretorio do CGI
-		size_t found;
-		found = _fullPath.find_last_of("/");
+		// Change directory to the CGI directory
+		size_t found = _fullPath.find_last_of("/");
 		std::string path = _fullPath.substr(0, found);
-
 		if (chdir(path.c_str()) == -1)
 		{
-			ss << "CGI Chdir error: " << strerror(errno) << path << std::endl;
-			printLog(ss.str(), RED, std::cerr);
-			exit(1); // Internal Server Error
+			std::cerr << "CGI Chdir error: " << strerror(errno) << " " << path << std::endl;
+			exit(1);
 		}
-		// Preparar variaveis de ambiente futuramente (pesquisar melhor sobre elas e sobre como o CGI as usa)
 
-		// Execve interpretador do cgi, passando como arg o path para cgi e as envps
+		// Execute the CGI
 		execve(interpreter.c_str(), const_cast<char **>(args), const_cast<char **>(_envp));
-		ss << "CGI Execution error: " << strerror(errno);
-		printLog(ss.str(), RED, std::cerr);
-		exit(1); // Internal Server Error
+
+		std::cerr << "CGI Execution error: " << strerror(errno) << std::endl;
+		exit(1);
 	}
+	// ------------------- PARENT PROCESS -------------------
 	else
 	{
-		// processo pai
 		_cgiPid = pid;
 		std::stringstream ss;
 		ss << "CGI process started:\n\t-PID: " << _cgiPid;
 		printLog(ss.str(), WHITE, std::cout);
-		_client->setProcessingState(CGI_PROCESSING);
-		close(pipeInput[0]); // entender melhor a ordem de fechamento dos fds aqui
-		close(pipeOutput[1]);
-		_pipeIn = pipeInput[1];	  // lado de escrita (pai -> CGI stdin)
-		_pipeOut = pipeOutput[0]; // lado de leitura (pai <- CGI stdout)
 
-		return; // Retorna para não bloquear o servidor
+		_client->setProcessingState(CGI_PROCESSING);
+
+		// Close unused ends in the parent
+		close(pipeInput[0]);
+		close(pipeOutput[1]);
+
+		// Store relevant ends
+		_pipeIn = pipeInput[1];
+		_pipeOut = pipeOutput[0];
+
+		if (_req->getBody().size() > 0)
+		{
+			ssize_t bytesWritten = write(_pipeIn, _req->getBody().c_str(), _req->getBody().size());
+			if (bytesWritten == -1 || static_cast<size_t>(bytesWritten) != _req->getBody().size())
+			{
+				std::cerr << "Error writing request body to CGI stdin: " << strerror(errno) << std::endl;
+				close(_pipeIn);
+				close(_pipeOut);
+				_resStatus = 500;
+				return;
+			}
+			// Important: close stdin after sending body, so CGI knows EOF
+			close(_pipeIn);
+			_pipeIn = -1;
+		}
+
+		// Parent returns immediately (non-blocking)
+		return;
 	}
 }
-
 // ### EXEC METHOD ###
 
 void HttpResponse::startResponse(void)
@@ -258,11 +277,9 @@ void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
 	_file.open(path.c_str());
 	if (!_file.is_open())
 	{
-		std::cerr << "ERRO AO ABRIR FICHEIRO: " << strerror(errno) << std::endl;
 		_resStatus = 404;
 		return;
 	}
-	
 	_resStatus = 200;
 	// streaming logic
 	if (fileSize > MAX_MEMORY_FILE_SIZE)
@@ -499,12 +516,11 @@ void HttpResponse::openDir(std::string path)
 		_resStatus = 200;
 	}
 	else {
-		_resStatus = 403; // mudar para 403
+		_resStatus = 403;
 		return;
 	}
 }
 
-// pensar se uma exact match interferiria definicao dessa fullpath (redirecao)
 std::string HttpResponse::getFullPath()
 {
 	std::string locPath = _req->getPath();
@@ -529,7 +545,6 @@ void HttpResponse::checkFile(int methodType)
 	struct stat st;
 	std::stringstream ss;
 
-	// procurar '?' e apagar para fazer o stat REMOVER ESSA SEQUENCIA DE CODIGO POS IMPLEMENTACAO DA QUERY STRING DO DIOGO
 	std::size_t pos = _fileName.find_last_of("?");
 	if (pos != std::string::npos)
 		_fileName = _fileName.substr(0, pos);
@@ -546,7 +561,7 @@ void HttpResponse::checkFile(int methodType)
 	if (_cgiRequest == true)
 	{
 		forkExecCgi(_cgiPath);
-		return; // mudar status do HttpResponse/Client Bruno feature e retorna para nao bloquear o server
+		return;
 	}
 	if (methodType == GET && S_ISREG(st.st_mode))
 			openReg(_fileName, methodType, st.st_size);
@@ -697,9 +712,6 @@ void HttpResponse::buildEnv()
 
 void HttpResponse::setEnv()
 {
-	// CONTENT_LENGTH - já está definido, mas antes de colocar nas envs é necessario verificar se é igual a "", porque se for não se coloca nas ENV
-	// CONTENT_TYPE - já está definido, mas antes de colocar nas envs é necessario verificar se é igual a "", porque se for não se coloca nas ENV
-	// SCRIPT_NAME
 
 	_serverSoftware = "SERVER_SOFTWARE=WebServer/1.0";
 	_serverProtocol = "SERVER_PROTOCOL=" + this->_req->getVersion();
@@ -713,8 +725,6 @@ void HttpResponse::setEnv()
 	setTempEnv(_requestMethod);
 	setTempEnv(_remoteAddress);
 	setTempEnv(_gatewayInterface);
-	/* 	if (this->_req->getBody().size() > 0)
-			_contentLength = "CONTENT_LENGTH=" + this->_req->g */
 	if (this->_req->getHeaders().find("Host") != this->_req->getHeaders().end())
 	{
 		_serverName = "SERVER_NAME=" + parseHostHeader(this->_req->getHeaders().find("Host")->second);
@@ -735,21 +745,6 @@ void HttpResponse::setEnv()
 		_contentLength = parseContentLength(this->_req->getHeaders());
 		setTempEnv(_contentLength);
 	}
-	std::stringstream ss;
-	ss << "CGI-URI parsed meta-variables:";
-	ss << "\n\t" << _serverSoftware;
-	ss << "\n\t" << _serverProtocol;
-	ss << "\n\t" << _serverPort;
-	ss << "\n\t" << _requestMethod;
-	ss << "\n\t" << _remoteAddress;
-	ss << "\n\t" << _gatewayInterface;
-	ss << "\n\t" << _cgiContentType;
-	ss << "\n\t" << _scriptName;
-	ss << "\n\t" << _serverName;
-	ss << "\n\t" << _queryString;
-	ss << "\n\t" << _pathInfo;
-	printLog(ss.str(), GREEN, std::cout);
-
 	buildEnv();
 }
 
@@ -761,7 +756,7 @@ void	HttpResponse::buildFullPath() {
 	if (pos != std::string::npos)
 		_fullPath = _newRoot + "/" + locPath.substr(0, pos);
 	else
-		_fullPath = _newRoot + "/" + locPath; // se não tem '/', usa a string inteira
+		_fullPath = _newRoot + "/" + locPath;
 	locPath = removeSlashes(this->getFullPath());
 	_fileName = _newRoot + "/" + locPath;
 }
@@ -835,11 +830,11 @@ const std::string HttpResponse::httpFileContent(int errorPage)
 
 int HttpResponse::openFile()
 {
-	if (_block->getErrorPage().empty())
+	if (_block->getErrorPage() == NULL)
 		return (0);
-	std::set<ErrorPageRule>::const_iterator it = _block->getErrorPage().begin();
+	std::set<ErrorPageRule>::const_iterator it = _block->getErrorPage()->begin();
 
-	while (it != _block->getErrorPage().end())
+	while (it != _block->getErrorPage()->end())
 	{
 		if ((*it).error == _resStatus)
 		{
@@ -850,7 +845,7 @@ int HttpResponse::openFile()
 
 		it++;
 	}
-	if (it == _block->getErrorPage().end())
+	if (it == _block->getErrorPage()->end())
 	{
 		_fileName = ".html";
 		return (0);
@@ -1039,12 +1034,6 @@ std::string HttpResponse::header(int requestType)
 	header << "Server: WebServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
 	header << "Content-Type: " << fileType << CRLF;
-	if (_resStatus == 204 || _resStatus == 201 || _resStatus == 304)
-		header << "Content-Length: 0" << CRLF;
-	else
-		header << "Content-Length: " << _resContentLength << CRLF;
-	if (requestType == REDIRECT)
-		header << "Location: " << _block->getNewLocation() << CRLF;
 	if (_req != NULL && _req->getParseStatus() == 200)
 	{
 		if (_req->session) {
@@ -1056,6 +1045,12 @@ std::string HttpResponse::header(int requestType)
 			header << CRLF;
 		}	
 	}
+	if (_resStatus == 204 || _resStatus == 201 || _resStatus == 304)
+		header << "Content-Length: 0" << CRLF;
+	else
+		header << "Content-Length: " << _resContentLength << CRLF;
+	if (requestType == REDIRECT)
+		header << "Location: " << _block->getNewLocation() << CRLF;
 	header << CRLF;
 	return (header.str());
 }
@@ -1080,6 +1075,7 @@ void HttpResponse::checkCookies(std::string& body)
 		if (headPos != std::string::npos)
 		{
 			body.insert(headPos, styleInjection);
+			_resContentLength += styleInjection.size();
 		}
 	}
 }
@@ -1097,6 +1093,7 @@ const std::string HttpResponse::checkErrorResponse(const std::string &page)
 	}
 	else if (errorPage == 0)
 	{
+		std::cout << RED << page << RESET << std::endl;
 		_resBody = page;
 		_resContentLength = _resBody.size();
 	}
@@ -1115,12 +1112,11 @@ const std::string HttpResponse::checkStatusCode()
 	std::string fileContent;
 
 
-	// esta função so valida caso o error_page esteja definido no .config file. tem de ser ajustada para caso não exista.
 	switch (_resStatus)
 	{
 	case 200:
 		if (_cgiRequest)
-			return (cgiHeader()); // nao usa header pois a _response eh toda montada pelo cgi
+			return (cgiHeader());
 		else if (_method == DELETE || _method == POST)
 			return (header(OK));
 		return (header(OK) + _resBody);
@@ -1128,12 +1124,12 @@ const std::string HttpResponse::checkStatusCode()
 		if (_method == DELETE || _method == POST)
 			return (header(OK));
 		return (header(OK) + _resBody);
-	case 201:				// [NCC] pelo que entendi o 201 so sera gerado pelo POST, por isso podemos garantir que o CGI atuara sempre
-		return (header(OK)); // nao usa header pois a _response eh toda montada pelo cgi
+	case 201:
+		return (header(OK));
 	case 202:
-		return ("HTTP/1.1 202 Accepted");
+		return (header(OK));
 	case 204:
-		return (header( OK));
+		return (header(OK));
 	case 301:
 		return (header(REDIRECT));
 	case 302:
@@ -1194,7 +1190,7 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resCo
 	else
 	_block = _conf;
 	setMimeTypes();
-	setEnv(); // teste
+	setEnv();
 	_filePos = 0;
 	if (_req->hasParseError()) {
 		_resStatus = _req->getParseStatus();
@@ -1307,73 +1303,73 @@ int HttpResponse::processMultipartFormData()
 {
 	if (_boundary.empty())
 		return 400; // Bad Request
-    std::string boundaryMarker = "--" + _boundary;
-    std::string endBoundary = boundaryMarker + "--";
-    size_t pos = 0;
-    size_t next = 0;
-    bool allSuccess = true;
-    bool anySuccess = false;
+	std::string boundaryMarker = "--" + _boundary;
+	std::string endBoundary = boundaryMarker + "--";
+	size_t pos = 0;
+	size_t next = 0;
+	bool allSuccess = true;
+	bool anySuccess = false;
 
-    while (true)
-    {
-        // Find start of next part
-        pos = _req->getBody().find(boundaryMarker, pos);
-        if (pos == std::string::npos)
-            break;
+	while (true)
+	{
+		// Find start of next part
+		pos = _req->getBody().find(boundaryMarker, pos);
+		if (pos == std::string::npos)
+			break;
 
-        pos += boundaryMarker.size();
+		pos += boundaryMarker.size();
 
-        // End of body reached?
-        if (_req->getBody().compare(pos, 2, "--") == 0)
-            break; // reached final boundary
+		// End of body reached?
+		if (_req->getBody().compare(pos, 2, "--") == 0)
+			break; // reached final boundary
 
-        // Skip CRLF
-        if (_req->getBody().compare(pos, 2, "\r\n") == 0)
-            pos += 2;
+		// Skip CRLF
+		if (_req->getBody().compare(pos, 2, "\r\n") == 0)
+			pos += 2;
 
-        // Find next boundary or end of body
-        next = _req->getBody().find(boundaryMarker, pos);
-        if (next == std::string::npos) {
-            // This is the last part — take until endBoundary or end of body
-            next = _req->getBody().find(endBoundary, pos);
-            if (next == std::string::npos)
-                next = _req->getBody().size();
-        }
+		// Find next boundary or end of body
+		next = _req->getBody().find(boundaryMarker, pos);
+		if (next == std::string::npos) {
+			// This is the last part — take until endBoundary or end of body
+			next = _req->getBody().find(endBoundary, pos);
+			if (next == std::string::npos)
+				next = _req->getBody().size();
+		}
 
-        std::string part = _req->getBody().substr(pos, next - pos);
+		std::string part = _req->getBody().substr(pos, next - pos);
 
-        // Split headers and content
-        size_t headerEnd = part.find("\r\n\r\n");
-        if (headerEnd == std::string::npos)
-            return 400; // invalid part (missing header separator)
+		// Split headers and content
+		size_t headerEnd = part.find("\r\n\r\n");
+		if (headerEnd == std::string::npos)
+			return 400; // invalid part (missing header separator)
 
-        std::string headers = part.substr(0, headerEnd);
-        std::string content = part.substr(headerEnd + 4); // skip CRLFCRLF
+		std::string headers = part.substr(0, headerEnd);
+		std::string content = part.substr(headerEnd + 4); // skip CRLFCRLF
 
-        // Extract filename from this part's headers
-        extractFileName(headers);
-        if (_fileName.empty()) {
-            allSuccess = false;
-            continue; // skip this part (no filename)
-        }
+		// Extract filename from this part's headers
+		extractFileName(headers);
+		if (_fileName.empty()) {
+			allSuccess = false;
+			continue; // skip this part (no filename)
+		}
 
-        _fileName = _newUploadDir + _fileName;
+		_fileName = _newUploadDir + _fileName;
 
-        // Save file content
-        if (saveBodyToFile(_fileName, content))
-            anySuccess = true;
-        else
-            allSuccess = false;
+		// Save file content
+		if (saveBodyToFile(_fileName, content))
+			anySuccess = true;
+		else
+			allSuccess = false;
 
-        // Advance to after next boundary marker
-        pos = next;
+		// Advance to after next boundary marker
+		pos = next;
     }
 
-    if (!anySuccess)
-        return 400; // all failed (Bad Request)
-    if (!allSuccess)
-        return 200; // some failed
-    return 201;     // all succeeded (Created)
+	if (!anySuccess)
+		return 400; // all failed (Bad Request)
+	if (!allSuccess)
+		return 200; // some failed
+	return 201;     // all succeeded (Created)
 }
 
 void	HttpResponse::setNewUploadDir() {

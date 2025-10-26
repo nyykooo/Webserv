@@ -14,7 +14,7 @@
 
 // ######### LIFE CYCLE #########
 
-Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1), _requestSize(1000000) {}
+Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1),  _errorPage(NULL), _requestSize(1000000) {}
 
 Block::Block(const Block& other)
 {
@@ -31,7 +31,10 @@ Block::Block(const Block& other)
 	_location = other._location;
 }
 
-Block::~Block() {}
+Block::~Block() {
+	if (_errorPage != NULL)
+		delete _errorPage;
+}
 
 Block &Block::operator=(const Block &other)
 {
@@ -110,7 +113,9 @@ void	Block::setErrorPage(int errorPage, const std::string& errorPagePath, int ne
 	rule.error = errorPage;
 	rule.errorPath = errorPagePath;
 	rule.newError = newStatus;
-	this->_errorPage.insert(rule);
+	if (this->_errorPage == NULL)
+		this->_errorPage = new std::set<ErrorPageRule>;
+	this->_errorPage->insert(rule);
 }
 
 void	Block::setRedirectStatusCode(int statusCode) {
@@ -164,8 +169,8 @@ const std::map<std::string, std::string>& Block::getCgiMap(void) const {
 	return (_cgiMap);
 }
 
-const std::set<ErrorPageRule>& Block::getErrorPage(void) const {
-	return (this->_errorPage);
+const std::set<ErrorPageRule>* Block::getErrorPage(void) const {
+	return (_errorPage);
 }
 
 long	Block::getRequestSize(void) const {

@@ -28,7 +28,7 @@ class Block
 		int									_redirectStatusCode; // block
 		std::map<std::string, std::string>	_cgiMap; // block
 		std::string							_uploadDirectory;
-		std::set<ErrorPageRule>				_errorPage;
+		std::set<ErrorPageRule>				*_errorPage;
 		long								_requestSize;
 		std::string							_location;
 		
@@ -63,7 +63,7 @@ class Block
 		int											getRedirectStatusCode(void) const;
 		const std::map<std::string, std::string>&	getCgiMap(void) const;
 		const std::string&							getUploadDirectory(void) const;
-		const std::set<ErrorPageRule>&				getErrorPage(void) const;
+		const std::set<ErrorPageRule>*				getErrorPage(void) const;
 		long										getRequestSize(void) const;
 		const std::string&							getLocation(void) const;
 };

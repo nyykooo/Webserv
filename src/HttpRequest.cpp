@@ -300,7 +300,7 @@ void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
 			}
 		}
 	}
-	
+
 	// check if session already exists or create a new one
 	std::map<std::string, std::string>::iterator sidIt = _cookies.find("session_id");
 	std::map<std::string, std::string>::iterator themeIt = _cookies.find("theme");
@@ -327,7 +327,7 @@ void HttpRequest::checkCreatedSessions(const std::string& cookiesLine) {
 			session = (_sessions->back());
 		}
 	} else if (themeIt != _cookies.end()) {
-		// No session_id, but theme present → create new session with generated ID
+		// No session_id, but theme present :create new session with generated ID
 		SessionData *newSession = new SessionData();
 		newSession->setSessionId(generateRandomSessionId(_sessions->size()));
 		_cookies["session_id"] = newSession->getSessionId();
