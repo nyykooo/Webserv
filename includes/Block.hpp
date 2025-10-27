@@ -59,7 +59,6 @@ class Block
 		const std::string&							getNewLocation(void) const;
 		const std::vector<std::string>&				getDefaultFiles(void) const;
 		const std::vector<std::string>&				getMethods(void) const;
-		const std::string&							getStatusCode(void) const;
 		int											getRedirectStatusCode(void) const;
 		const std::map<std::string, std::string>&	getCgiMap(void) const;
 		const std::string&							getUploadDirectory(void) const;

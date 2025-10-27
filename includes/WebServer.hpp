@@ -25,13 +25,13 @@ class WebServer
 {
 	private:
 		std::stringstream									_logger;
-		std::map<int, std::string>							_partial_requests; // Eh um buffer universal, que todas as requisicoes passarao, feito para armazenar requisições parciais
-		int													_epoll_fd; // armazena o fd do epoll para usar nas funcoes
-		std::map<int, Server *>								_servers_map; // mapeia uma porta especifica para servidores (pensar em vecrtor de servers depois)
+		std::map<int, std::string>							_partial_requests;
+		int													_epoll_fd;
+		std::map<int, Server *>								_servers_map;
 		std::vector<Client *>								_clients_vec;
-		std::map<int, std::pair<std::string, std::string> >	_client_to_server_map; // mapeia o fd do cliente para o ip:port do servidor
-		std::vector<Configuration>							_configurations; // armazena as configurações do servidor
-		struct epoll_event									*_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
+		std::map<int, std::pair<std::string, std::string> >	_client_to_server_map;
+		std::vector<Configuration>							_configurations;
+		struct epoll_event									*_events;
 		std::vector<SessionData *>							*_sessions;
 
 	public:
@@ -72,7 +72,6 @@ class WebServer
 		void	deleteClient(int fd, int event);
 
 		// ### AFTER REQUEST PARSING ###
-		int									getServerFdForClient(int client_fd);
 		Configuration* 						findConfigForRequestFast(const std::string& rawRequest, int client_fd);
 		bool								continueLargeFileStreaming(Client* client);
 

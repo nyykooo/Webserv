@@ -58,8 +58,6 @@
 # include "SessionData.hpp"
 # include "ErrorPages.hpp"
 
-// remover depois!!!! servem para printar o hyperlink no terminal
-
 // utils 
 std::string toLower(const std::string &str);
 std::string removeSlashes(std::string path);

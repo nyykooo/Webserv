@@ -30,10 +30,10 @@ class HttpResponse {
 		std::size_t							_resContentLength;
 		std::string							_resContentType;
 		std::string							_fileName;
-		Configuration						*_conf; // pensar sobre manter ou colocar dentro do client
-		HttpRequest							*_req; // pensar sobre manter ou colocar dentro do client
-		LocationBlock						*_loc; // pensar sobre manter ou colocar dentro do client
-		Client 								*_client; // se passar na hora de construir o HttpResponse podemos manipular o _status diretamente sem precisar retornar nada especifico
+		Configuration						*_conf;
+		HttpRequest							*_req;
+		LocationBlock						*_loc;
+		Client 								*_client;
 		Block								*_block;
 		int									_method;
 		std::map<std::string, std::string>	_mimeTypes;
@@ -71,7 +71,7 @@ class HttpResponse {
 		int									_cgiHeadersFound;
 		int									_cgiStatusCode;
 
-		std::ifstream						_file;
+		int									_file;
 		std::size_t							_filePos;
 		bool								_rawUpload;
 
@@ -103,7 +103,7 @@ class HttpResponse {
 		const std::string		getMimeType(const std::string& fileExtension);
 		const Configuration&	getConfig(void) const;
 		int						getCgiPid(void) const;
-		std::ifstream			&getFileStream(void);
+		int						getFileStream(void);
 		std::size_t				getFilePos(void) const;
 		std::size_t				getContentLength(void) const;
 		int						getStatusCode(void) const;
@@ -111,7 +111,7 @@ class HttpResponse {
 		// EXEC METHOD
 		void				startResponse();
 		void				execMethod();
-		void				handlePOST(); //considerar encapsular?
+		void				handlePOST();
 		bool				saveBodyToFile(const std::string& path, const std::string& content) const;
 		void				handleDELETE();
 		void				openReg(std::string path, int methodType, off_t fileSize);

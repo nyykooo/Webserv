@@ -673,27 +673,23 @@ bool WebServer::continueLargeFileStreaming(Client *client)
 	const size_t CHUNK_SIZE = 8192;
 	char buffer[CHUNK_SIZE];
 
-	std::ifstream &file = client->_response->getFileStream();
+	int file = client->_response->getFileStream();
 
-	if (!file.is_open()) {
+	if (file < 0) {
 		_logger << "WebServer >> continueLargeFileStreaming >> Error while openning file for client_fd: " << client->getSocketFd() ;
 		printLogNew(_logger, RED, std::cerr, true);
 		return false;
 	}
 
-	file.read(buffer, CHUNK_SIZE);
-	std::streamsize bytesRead = file.gcount();
-
-	if (bytesRead <= 0) {
-		if (file.bad())
-		{
-			_logger << "WebServer >> continueLargeFileStreaming >> Error while reading file for client_fd: " << client->getSocketFd() ;
-			printLogNew(_logger, RED, std::cerr, true);
-		}
+	ssize_t bytesRead = read(file, buffer, CHUNK_SIZE);
+	if (bytesRead > 0) {
+		// send buffer to client
+	} else {
+		if (bytesRead < 0)
+			_logger << "Error reading file: " << strerror(errno);
+		close(file);
 		client->resetFileStreaming();
-		return false;
 	}
-
 	ssize_t bytesSent = send(client->getSocketFd(), buffer, bytesRead, 0);
 	if (bytesSent <= 0) {
 		_logger << "WebServer >> continueLargeFileStreaming >> Error while sending data for client_fd: " << client->getSocketFd() ;
