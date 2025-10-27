@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/26 11:49:54 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/27 17:38:38 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ Client::Client() : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0)
 	_time = std::time(NULL);
 }
 
-Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0), _firstRequest(true)
+Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0), _firstRequest(true), _epoll_fd(-1)
 {
 	_uploadFd = -1;
 	_uploadSize = 0;
@@ -30,7 +30,7 @@ Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _b
 	initClientSocket(server_fd);
 }
 
-Client::Client(const Client &other) : Socket(other), _time(other.getTime()), _fileFd(-1), _fileSize(0), _bytesSent(0)
+Client::Client(const Client &other) : Socket(other), _time(other.getTime()), _fileFd(-1), _fileSize(0), _bytesSent(0), _epoll_fd(-1)
 {
 	_response = NULL;
 	_request = NULL;
@@ -202,6 +202,12 @@ const std::string &Client::getOriginalHeaders() const
 bool Client::getFirstRequest() {
 	return (_firstRequest);
 }
+
+int Client::getEpollFd() const 
+{
+	return _epoll_fd;
+}
+
 // ######### SETTERS #########
 
 void Client::setProcessingState(RequestProcessingState state)
@@ -253,4 +259,9 @@ void Client::setOriginalHeaders(const std::string &headers)
 
 void Client::setFirstRequest(bool value) {
 	_firstRequest = value;
+}
+
+void Client::setEpollFd(int fd) 
+{
+	_epoll_fd = fd;
 }

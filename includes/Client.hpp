@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:45:14 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/26 11:43:39 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/10/27 17:36:39 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ class Client : public Socket {
 		size_t 							_uploadReceived;
 		std::string						_uploadPath;
 		bool							_firstRequest;
+		int								_epoll_fd;
 
 	public:
 		// ### ATRIBUTES ###
@@ -61,6 +62,7 @@ class Client : public Socket {
 		const std::string 				&getUploadPath() const;
 		const std::string 				&getOriginalHeaders() const;
 		bool							getFirstRequest();
+		int								getEpollFd() const;
 
 		// ### SETTERS ###
 		void							setTime(std::time_t time);
@@ -73,6 +75,7 @@ class Client : public Socket {
 		void 							setUploadPath(std::string uploadPath);
 		void 							setOriginalHeaders(const std::string &headers);
 		void							setFirstRequest(bool value);
+		void							setEpollFd(int fd);
 
 };
 

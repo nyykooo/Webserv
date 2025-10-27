@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/22 17:03:12 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/27 17:09:06 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,6 +82,10 @@ class WebServer
 		std::string							extractHostHeaderSimple(const std::string &rawRequest);
 		void								handleClientInput(Client *client, int i);
 		void								handleClientOutput(Client *client, int i);
+
+		Client								*findFd(int fd);
+		void								execCgiOp(int i, Client *client);
+		void								execFStreamOp(int i, Client *client);
 
 		// ### EXCEPTION ###
 		class WebServerErrorException: public std::exception {

@@ -42,35 +42,35 @@ void	HttpResponse::setCgiLocation(const std::string& location) {
 	}
 }
 
-static std::string readFd(int fd)
-{
-	const size_t bufSize = 4096;
-	char buffer[bufSize];
-	std::string result;
-	ssize_t bytesRead;
+// static std::string readFd(int fd)
+// {
+// 	const size_t bufSize = 4096;
+// 	char buffer[bufSize];
+// 	std::string result;
+// 	ssize_t bytesRead;
 
-	while (true)
-	{
-		bytesRead = read(fd, buffer, bufSize);
-		if (bytesRead > 0)
-		{
-			result.append(buffer, bytesRead);
-		}
-		else if (bytesRead == 0)
-		{
-			break;
-		}
-		else
-		{
-			std::stringstream ss;
-			ss << "Error reading fd: (" << fd << ")";
-			printLog(ss.str(), RED, std::cout);
-			return "";
-		}
-	}
+// 	while (true)
+// 	{
+// 		bytesRead = read(fd, buffer, bufSize);
+// 		if (bytesRead > 0)
+// 		{
+// 			result.append(buffer, bytesRead);
+// 		}
+// 		else if (bytesRead == 0)
+// 		{
+// 			break;
+// 		}
+// 		else
+// 		{
+// 			std::stringstream ss;
+// 			ss << "Error reading fd: (" << fd << ")";
+// 			printLog(ss.str(), RED, std::cout);
+// 			return "";
+// 		}
+// 	}
 
-	return result;
-}
+// 	return result;
+// }
 
 void HttpResponse::checkCgiProcess()
 {
@@ -86,23 +86,14 @@ void HttpResponse::checkCgiProcess()
 	else if (doneProcess == _cgiPid)
 	{
 		// filho terminou
-		_client->setProcessingState(CGI_COMPLETED);
 		int exitStatus = WEXITSTATUS(childrenStatus);
 		if (exitStatus == 0)
-		_resStatus = 200; // OK
+			_resStatus = 200; // OK
 		else
-			_resStatus = 500; // Internal Server Error
-		_response = readFd(_pipeOut); // Lê a saída do CGI
-		if (_response == "")
 			_resStatus = 500; // Internal Server Error
 		std::stringstream ss;
 		ss << "CGI process finished:\n\t-PID: " << _cgiPid << ";\n\t-Status: " << _resStatus;
 		printLog(ss.str(), WHITE, std::cout);
-		close(_pipeIn);
-		close(_pipeOut);
-		_pipeIn = -1;  // Reset pipeIn
-		_pipeOut = -1; // Reset pipeOut
-		_cgiPid = -1;  // Reset cgiPid
 		return;		   // Retorna para não bloquear o servidor
 	}
 }
@@ -123,6 +114,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	args[1] = const_cast<char *>(_script_name.c_str());
 	args[2] = NULL;
 
+	// signal(SIGPIPE, SIG_IGN); // ignore SIGPIPE to avoid crashes
 	// Create pipes for input (to CGI) and output (from CGI)
 	if (pipe(pipeInput) == -1 || pipe(pipeOutput) == -1)
 	{
@@ -130,6 +122,9 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		_resStatus = 500;
 		return;
 	}
+
+	fcntl(pipeInput[1], F_SETFL, O_NONBLOCK);
+	fcntl(pipeOutput[0], F_SETFL, O_NONBLOCK);
 
 	std::stringstream ss;
 	ss << "CGI execution:\n\t-interpreter: " << interpreter
@@ -208,7 +203,17 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 
 		// Store relevant ends
 		_pipeIn = pipeInput[1];
+		struct epoll_event ev_in;
+		ev_in.events = EPOLLOUT | EPOLLRDHUP | EPOLLHUP | EPOLLERR;
+		ev_in.data.fd = pipeInput[1];
+		epoll_ctl(_client->getEpollFd(), EPOLL_CTL_ADD, _pipeIn, &ev_in);
+
 		_pipeOut = pipeOutput[0];
+		struct epoll_event ev_out;
+		ev_out.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR;
+		ev_out.data.fd = pipeOutput[0];
+		epoll_ctl(_client->getEpollFd(), EPOLL_CTL_ADD, _pipeOut, &ev_out);
+
 
 		if (_req->getBody().size() > 0)
 		{
@@ -1036,7 +1041,7 @@ std::string HttpResponse::header(int requestType)
 	header << "Server: WebServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
 	header << "Content-Type: " << fileType << CRLF;
-	if (_req != NULL && _req->getParseStatus() == 200)
+	if (_req != NULL && _req->getParseStatus() == 200 && requestType == OK)
 	{
 		if (_req->session) {
 			if (fileType == "text/html")
@@ -1181,7 +1186,7 @@ const std::string HttpResponse::checkStatusCode()
 	return _resBody;
 }
 
-HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resContentLength(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0), _cgiStatusCode(0)
+HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resContentLength(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0), _cgiStatusCode(0), _bytesSent(0)
 {
 	_client = client;
 	_conf = client->_request->_config;
@@ -1449,4 +1454,50 @@ void HttpResponse::terminateCgiProcess(void)
 int HttpResponse::getCgiPid(void) const
 {
 	return (_cgiPid);
+}
+
+int	HttpResponse::getCgiInput(void) const
+{
+	return _pipeIn;
+}
+
+int HttpResponse::getCgiOuput(void) const
+{
+	return _pipeOut;
+}
+void HttpResponse::setCgiInput(int i)
+{
+	_pipeIn = i;
+}
+
+void HttpResponse::setCgiOuput(int i)
+{
+	_pipeOut = i;
+}
+
+
+std::size_t HttpResponse::getBodySent(void) const
+{
+	return _bytesSent;
+}
+
+void HttpResponse::setBodySent(int n)
+{
+	_bytesSent += n;
+}
+
+std::string HttpResponse::getPartialResponse() const
+{
+	return _partialResponse;
+}
+
+void HttpResponse::setResponseCgi(char *buffer, int bytesRead)
+{
+	_response.append(buffer, bytesRead);
+	std::cout << GREEN << "partialresponse" <<  _resBody << std::endl;
+}
+
+void HttpResponse::deletePartialResponse()
+{
+	_partialResponse.clear();
 }
