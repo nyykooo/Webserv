@@ -1,11 +1,11 @@
 #include "../includes/headers.hpp"
 
-HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL), _file(-1), _filePos(0), _rawUpload(false) {}
+HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL), _filePos(0), _rawUpload(false) {}
 
 
 HttpResponse::~HttpResponse() {
-	if (_file != -1)
-		close (_file);
+	if (_file.is_open())
+		_file.close();
 }
 
 void	HttpResponse::setHttpStatus(int status) {
@@ -250,7 +250,7 @@ std::size_t HttpResponse::getContentLength(void) const
 	return _resContentLength;
 }
 
-int HttpResponse::getFileStream(void)
+std::ifstream& HttpResponse::getFileStream(void)
 {
 	return _file;
 }
@@ -274,8 +274,8 @@ void HttpResponse::streamingFile(off_t fileSize, std::string contentType)
 
 void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
 {
-	_file = open(path.c_str(), O_RDONLY);
-	if (_file < 0)
+	_file.open(path.c_str());
+	if (!_file.is_open())
 	{
 		_resStatus = 404;
 		return;
@@ -286,29 +286,11 @@ void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
 		return streamingFile(fileSize, getContentType(path));
 	if (methodType == DELETE)
 		return;
+	std::stringstream ss;
 
-	std::string content;
-	char buffer[4096];
-	ssize_t bytesRead;
-
-	while ((bytesRead = read(_file, buffer, sizeof(buffer))) > 0)
-	{
-		content.append(buffer, bytesRead);
-	}
-
-	if (bytesRead < 0)
-	{
-		std::stringstream ss;
-		ss << "HttpResponse::openReg >> Error reading file '" << path
-		   << "': " << strerror(errno);
-		printLog(ss.str(), RED, std::cerr);
-		_resStatus = 500;
-		close(_file);
-		return;
-	}
-	_resBody = content;
+	ss << _file.rdbuf();
+	_resBody = ss.str();
 	_resContentLength = _resBody.size();
-	// _file.close(); -> we will close after streaming file is completed
 }
 
 void HttpResponse::setMimeTypes()
@@ -959,7 +941,6 @@ void HttpResponse::parseCgiScript() {
 	if (pos != std::string::npos) {
 		_cgiHeaders = _response.substr(0, pos);
 		_cgiBody = _response.substr(pos + 4);
-		std::cout << RED << "aqui: " << _cgiHeaders << std::endl << _cgiBody << RESET << std::endl;
 	}
 	else
 		_cgiHeaders = _response;
@@ -1052,7 +1033,7 @@ std::string HttpResponse::header(int requestType)
 	header << "Server: WebServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;
 	header << "Content-Type: " << fileType << CRLF;
-	if (_req != NULL && _req->getParseStatus() == 200)
+	if (_req != NULL && _req->getParseStatus() == 200 && requestType == OK)
 	{
 		if (_req->session) {
 			if (fileType == "text/html")
@@ -1111,7 +1092,6 @@ const std::string HttpResponse::checkErrorResponse(const std::string &page)
 	}
 	else if (errorPage == 0)
 	{
-		std::cout << RED << page << RESET << std::endl;
 		_resBody = page;
 		_resContentLength = _resBody.size();
 		_fileName = ".html";
@@ -1197,7 +1177,7 @@ const std::string HttpResponse::checkStatusCode()
 	return _resBody;
 }
 
-HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resContentLength(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0), _cgiStatusCode(0), _file(-1)
+HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resContentLength(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0), _cgiStatusCode(0)
 {
 	_client = client;
 	_conf = client->_request->_config;

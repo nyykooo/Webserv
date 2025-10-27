@@ -71,7 +71,7 @@ class HttpResponse {
 		int									_cgiHeadersFound;
 		int									_cgiStatusCode;
 
-		int									_file;
+		std::ifstream						_file;
 		std::size_t							_filePos;
 		bool								_rawUpload;
 
@@ -103,7 +103,7 @@ class HttpResponse {
 		const std::string		getMimeType(const std::string& fileExtension);
 		const Configuration&	getConfig(void) const;
 		int						getCgiPid(void) const;
-		int						getFileStream(void);
+		std::ifstream&			getFileStream(void);
 		std::size_t				getFilePos(void) const;
 		std::size_t				getContentLength(void) const;
 		int						getStatusCode(void) const;
