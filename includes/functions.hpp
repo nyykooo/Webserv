@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 21:14:08 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/23 17:57:34 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/28 15:29:30 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,10 +25,8 @@ void		printLog(std::string message, const char *color, std::ostream &stream);
 void		printLogNew(std::stringstream &ss, const char	*color, std::ostream &stream, bool clean);
 
 // ### UTILS ### 
-std::string toLower(const std::string &str);
-std::string removeSlashes(std::string path);
-
-std::string 		getContentType(const std::string &filePath);
+std::string			toLower(const std::string &str);
+std::string 		removeSlashes(std::string path);
 unsigned long long	validateRequestSize(std::string word, const char *tmpWord, char *endptr);
 
 #endif

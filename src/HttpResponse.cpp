@@ -282,8 +282,15 @@ void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
 	}
 	_resStatus = 200;
 	// streaming logic
-	if (fileSize > MAX_MEMORY_FILE_SIZE)
-		return streamingFile(fileSize, getContentType(path));
+	if (fileSize > MAX_MEMORY_FILE_SIZE) {
+		std::string contentType;
+		std::map<std::string, std::string>::const_iterator it = _mimeTypes.find(path);
+		if (it != _mimeTypes.end())
+			contentType = it->second;
+		else
+			contentType = "application/octet-stream";
+		return streamingFile(fileSize, contentType);
+	}
 	if (methodType == DELETE)
 		return;
 	std::stringstream ss;
