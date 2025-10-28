@@ -601,7 +601,7 @@ LocationBlock *HttpResponse::checkLocationBlock()
 void HttpResponse::handleDELETE()
 {
 	checkFile(DELETE);
-	if (_resStatus != 200)
+	if (_resStatus != -1)
 		return;
 	int removed = std::remove(_fileName.c_str());
 	if (removed == 0)
@@ -752,12 +752,15 @@ void	HttpResponse::buildFullPath() {
 	std::string locPath = removeSlashes(this->getFullPath());
 	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1, locPath.size());
 	std::size_t pos = locPath.find_last_of('/');
+	std::cout << RED << _newRoot << RESET << std::endl;
+	std::cout << YELLOW << _fullPath << RESET << std::endl;
 	if (pos != std::string::npos)
 		_fullPath = _newRoot + "/" + locPath.substr(0, pos);
 	else
 		_fullPath = _newRoot + "/" + locPath;
 	locPath = removeSlashes(this->getFullPath());
 	_fileName = _newRoot + "/" + locPath;
+	std::cout << CYAN << _fileName << RESET << std::endl;
 }
 
 void HttpResponse::execMethod()
