@@ -525,17 +525,19 @@ std::string HttpResponse::getFullPath()
 	std::string locPath = _req->getPath();
 	if (_block->getRoot().empty())
 		return (locPath);
-	if (_loc != NULL)
+	if (_block->isRootInsideLocation())
 	{
-		size_t locIndex = _req->getPath().find(_loc->getLocation());
+		size_t locIndex = _req->getPath().find(_block->getLocation());
 
 		if (locIndex == 0)
 		{
-			locPath = _req->getPath().substr(_loc->getLocation().size());
+			locPath = _req->getPath().substr(_block->getLocation().size());
 			if (locPath[0] == '/')
 				locPath.erase(0, 1);
 		}
 	}
+
+	std::cout << CYAN << "locPath: " << _block->getLocation() << RESET << std::endl;
 	return (locPath);
 }
 
@@ -750,10 +752,9 @@ void HttpResponse::setEnv()
 void	HttpResponse::buildFullPath() {
 	_newRoot = removeSlashes(_block->getRoot());
 	std::string locPath = removeSlashes(this->getFullPath());
-	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1, locPath.size());
+	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1);
 	std::size_t pos = locPath.find_last_of('/');
 	std::cout << RED << _newRoot << RESET << std::endl;
-	std::cout << YELLOW << _fullPath << RESET << std::endl;
 	if (pos != std::string::npos)
 		_fullPath = _newRoot + "/" + locPath.substr(0, pos);
 	else
@@ -767,7 +768,7 @@ void HttpResponse::execMethod()
 {
 	bool methodFound = false;
 	std::string root;
-	std::string method = _req->getMethod();
+	const std::string& method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
 
 	if (_resStatus == 400)
@@ -1017,21 +1018,6 @@ std::string HttpResponse::header(int requestType)
 
 	fileType = getMimeType(_fileName);
 	setHttpStatus(_resStatus);
-	if (requestType == REDIRECT)
-	{
-		_resBody = "<html>";
-		_resBody += "<head><title>";
-		_resBody += _httpStatus;
-		_resBody += "</title></head>";
-		_resBody += "<body>";
-		_resBody += "<center><h1>";
-		_resBody += _httpStatus;
-		_resBody += "</h1></center>";
-		_resBody += "<hr><center>WebServer/1.0</center>";
-		_resBody += "</body>";
-		_resBody += "</html>";
-		_resContentLength = _resBody.size();
-	}
 	header << "HTTP/1.1 " << _httpStatus << CRLF;
 	header << "Server: WebServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;

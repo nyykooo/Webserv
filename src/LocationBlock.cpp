@@ -93,6 +93,7 @@ void	parseRoot(std::string& line, LocationBlock& location) {
 		throw Configuration::WrongConfigFileException("no root defined.");
 	if (ss >> word)
 		throw Configuration::WrongConfigFileException("too many arguments when defining root.");
+	location.setRootInsideLocation(true);
 }
 
 void	parseAllowedMethods(std::string& line, LocationBlock& location) {

@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/25 16:32:37 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/28 14:51:20 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 // ######### LIFE CYCLE #########
 
-Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1),  _errorPage(NULL), _requestSize(1000000) {}
+Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1),  _errorPage(NULL), _requestSize(1000000), _rootInsideLocation(false) {}
 
 Block::Block(const Block& other): _errorPage(NULL)
 {
@@ -30,6 +30,7 @@ Block::Block(const Block& other): _errorPage(NULL)
 		_errorPage = new std::set<ErrorPageRule>(*other._errorPage);
 	_requestSize = other._requestSize;
 	_location = other._location;
+	_rootInsideLocation = other._rootInsideLocation;
 }
 
 Block::~Block() {
@@ -59,6 +60,7 @@ Block &Block::operator=(const Block &other)
 			_errorPage = new std::set<ErrorPageRule>(*other._errorPage);
 		_requestSize = other._requestSize;
 		_location = other._location;
+		_rootInsideLocation = other._rootInsideLocation;
 	}
 	return *this;
 }
@@ -68,6 +70,10 @@ Block &Block::operator=(const Block &other)
 void Block::setRoot(const std::string& root)
 {
 	_root = root;
+}
+
+void Block::setRootInsideLocation(bool value) {
+	_rootInsideLocation = value;
 }
 
 void Block::setAutoIndex(const std::string& value)
@@ -144,6 +150,10 @@ void	Block::setLocation(const std::string& location) {
 const std::string &Block::getRoot(void) const
 {
 	return _root;
+}
+
+bool Block::isRootInsideLocation() const {
+	return (_rootInsideLocation);
 }
 
 bool Block::getAutoIndex(void) const

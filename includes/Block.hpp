@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:26 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/25 16:33:01 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/28 14:49:38 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ class Block
 		std::set<ErrorPageRule>				*_errorPage;
 		long								_requestSize;
 		std::string							_location;
+		bool								_rootInsideLocation;
 		
 	public:
 		// ORTHODOX CANONICAL FORM
@@ -52,7 +53,8 @@ class Block
 		void	setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus);
 		void	setRequestSize(long reqSize);
 		void	setLocation(const std::string& location);
-		
+		void	setRootInsideLocation(bool value);
+				
 		// GETTERS
 		const std::string&							getRoot(void) const;
 		bool										getAutoIndex(void) const;
@@ -65,6 +67,7 @@ class Block
 		const std::set<ErrorPageRule>*				getErrorPage(void) const;
 		long										getRequestSize(void) const;
 		const std::string&							getLocation(void) const;
+		bool										isRootInsideLocation() const;
 };
 
 
