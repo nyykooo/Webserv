@@ -255,7 +255,7 @@ std::size_t HttpResponse::getContentLength(void) const
 	return _resContentLength;
 }
 
-std::ifstream &HttpResponse::getFileStream(void)
+std::ifstream& HttpResponse::getFileStream(void)
 {
 	return _file;
 }
@@ -279,7 +279,6 @@ void HttpResponse::streamingFile(off_t fileSize, std::string contentType)
 
 void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
 {
-	// std::ifstream file(path.c_str());
 	_file.open(path.c_str());
 	if (!_file.is_open())
 	{
@@ -288,8 +287,15 @@ void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
 	}
 	_resStatus = 200;
 	// streaming logic
-	if (fileSize > MAX_MEMORY_FILE_SIZE)
-		return streamingFile(fileSize, getContentType(path));
+	if (fileSize > MAX_MEMORY_FILE_SIZE) {
+		std::string contentType;
+		std::map<std::string, std::string>::const_iterator it = _mimeTypes.find(path);
+		if (it != _mimeTypes.end())
+			contentType = it->second;
+		else
+			contentType = "application/octet-stream";
+		return streamingFile(fileSize, contentType);
+	}
 	if (methodType == DELETE)
 		return;
 	std::stringstream ss;
@@ -297,7 +303,6 @@ void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
 	ss << _file.rdbuf();
 	_resBody = ss.str();
 	_resContentLength = _resBody.size();
-	// _file.close(); -> we will close after streaming file is completed
 }
 
 void HttpResponse::setMimeTypes()
@@ -532,17 +537,19 @@ std::string HttpResponse::getFullPath()
 	std::string locPath = _req->getPath();
 	if (_block->getRoot().empty())
 		return (locPath);
-	if (_loc != NULL)
+	if (_block->isRootInsideLocation())
 	{
-		size_t locIndex = _req->getPath().find(_loc->getLocation());
+		size_t locIndex = _req->getPath().find(_block->getLocation());
 
 		if (locIndex == 0)
 		{
-			locPath = _req->getPath().substr(_loc->getLocation().size());
+			locPath = _req->getPath().substr(_block->getLocation().size());
 			if (locPath[0] == '/')
 				locPath.erase(0, 1);
 		}
 	}
+
+	std::cout << CYAN << "locPath: " << _block->getLocation() << RESET << std::endl;
 	return (locPath);
 }
 
@@ -608,7 +615,7 @@ LocationBlock *HttpResponse::checkLocationBlock()
 void HttpResponse::handleDELETE()
 {
 	checkFile(DELETE);
-	if (_resStatus != 200)
+	if (_resStatus != -1)
 		return;
 	int removed = std::remove(_fileName.c_str());
 	if (removed == 0)
@@ -757,21 +764,23 @@ void HttpResponse::setEnv()
 void	HttpResponse::buildFullPath() {
 	_newRoot = removeSlashes(_block->getRoot());
 	std::string locPath = removeSlashes(this->getFullPath());
-	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1, locPath.size());
+	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1);
 	std::size_t pos = locPath.find_last_of('/');
+	std::cout << RED << _newRoot << RESET << std::endl;
 	if (pos != std::string::npos)
 		_fullPath = _newRoot + "/" + locPath.substr(0, pos);
 	else
 		_fullPath = _newRoot + "/" + locPath;
 	locPath = removeSlashes(this->getFullPath());
 	_fileName = _newRoot + "/" + locPath;
+	std::cout << CYAN << _fileName << RESET << std::endl;
 }
 
 void HttpResponse::execMethod()
 {
 	bool methodFound = false;
 	std::string root;
-	std::string method = _req->getMethod();
+	const std::string& method = _req->getMethod();
 	std::vector<std::string>::const_iterator it;
 
 	if (_resStatus == 400)
@@ -1022,21 +1031,6 @@ std::string HttpResponse::header(int requestType)
 
 	fileType = getMimeType(_fileName);
 	setHttpStatus(_resStatus);
-	if (requestType == REDIRECT)
-	{
-		_resBody = "<html>";
-		_resBody += "<head><title>";
-		_resBody += _httpStatus;
-		_resBody += "</title></head>";
-		_resBody += "<body>";
-		_resBody += "<center><h1>";
-		_resBody += _httpStatus;
-		_resBody += "</h1></center>";
-		_resBody += "<hr><center>WebServer/1.0</center>";
-		_resBody += "</body>";
-		_resBody += "</html>";
-		_resContentLength = _resBody.size();
-	}
 	header << "HTTP/1.1 " << _httpStatus << CRLF;
 	header << "Server: WebServer/1.0" << CRLF;
 	header << "Date: " << get_http_date() << CRLF;

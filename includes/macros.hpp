@@ -31,14 +31,6 @@
 
 # define CRLF "\r\n"
 
-# define HTTP_200 "200 OK"
-# define HTTP_204 "204 No Content"
-# define HTTP_301 "301 Moved Permanently"
-# define HTTP_302 "302 Found"
-# define HTTP_404 "404 Not Found"
-# define HTTP_405 "405 Method Not Allowed"
-# define HTTP_413 "413 Request Entity Too Large"
-
 # define CLIENT_TIMEOUT 10 // 10 seconds
 # define SESSION_TIMEOUT 300 // 5 minutes
 

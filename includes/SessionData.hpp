@@ -2,9 +2,9 @@
 
 class SessionData {
 	private:
-		std::time_t				_time;
-		std::string							_theme;
-		std::string							_sessionId;
+		std::time_t	_time;
+		std::string	_theme;
+		std::string	_sessionId;
 
 	public:
 		SessionData();

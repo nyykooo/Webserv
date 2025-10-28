@@ -108,40 +108,6 @@ std::string removeSlashes(std::string path) {
 	return (newPath);
 }
 
-// ### CONTENT TYPE ###
-std::string getContentType(const std::string &filePath)
-{
-	size_t dotPos = filePath.find_last_of('.');
-	if (dotPos == std::string::npos)
-	{
-		return "application/octet-stream";
-	}
-
-	std::string extension = filePath.substr(dotPos + 1);
-
-	if (extension == "html" || extension == "htm")
-		return "text/html";
-	if (extension == "css")
-		return "text/css";
-	if (extension == "js")
-		return "application/javascript";
-	if (extension == "jpg" || extension == "jpeg")
-		return "image/jpeg";
-	if (extension == "png")
-		return "image/png";
-	if (extension == "gif")
-		return "image/gif";
-	if (extension == "pdf")
-		return "application/pdf";
-	if (extension == "mp4")
-		return "video/mp4";
-	if (extension == "mp3")
-		return "audio/mpeg";
-	if (extension == "txt")
-		return "text/plain";
-
-	return "application/octet-stream";
-}
 
 unsigned long long validateRequestSize(std::string word, const char *tmpWord, char *endptr)
 {

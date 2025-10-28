@@ -903,7 +903,7 @@ bool WebServer::continueLargeFileStreaming(Client *client)
 	size_t newFilePos = client->_response->getFilePos() + bytesSent;
 	client->_response->setFilePos(newFilePos);
 
-return (newFilePos < client->_response->getContentLength());
+	return (newFilePos < client->_response->getContentLength());
 }
 
 std::string WebServer::extractHostHeaderSimple(const std::string &rawRequest)

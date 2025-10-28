@@ -4,15 +4,15 @@
 
 enum	RequestProcessingState
 {
-	RECEIVING, // server está recebendo dados do cliente
-	RECEIVING_LARGE,
-	PROCESSING, // server está processando a requisição do cliente
-	PROCESSING_LARGE, // server está processando a requisição do cliente, mas a PIZZA a ser preparada eh GRANDE
-	STREAMING, // server está servindo pedaço a pedaço da PIZZA GRANDE
-	COMPLETED, // server finalizou o processamento da requisição do cliente
-	CGI_PROCESSING, // server está processando uma requisição CGI
-	CGI_COMPLETED, // server finalizou o processamento da requisição CGI
-	SEND_DATA // Data is ready to be sent to the client -> processing state to send "chunks"
+	RECEIVING, // server is receiving data from the client
+	RECEIVING_LARGE, // server is receiving a large amount of data from the client
+	PROCESSING, // server is processing the client's request
+	PROCESSING_LARGE, // server is processing the client's request, but the PIZZA being prepared is LARGE
+	STREAMING, // server is serving the LARGE PIZZA piece by piece
+	COMPLETED, // server has finished processing the client's request
+	CGI_PROCESSING, // server is processing a CGI request
+	CGI_COMPLETED, // server has finished processing the CGI request
+	SEND_DATA // data is ready to be sent to the client -> processing state to send "chunks"
 };
 
 typedef enum 	e_method_type
