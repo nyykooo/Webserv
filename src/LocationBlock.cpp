@@ -191,12 +191,12 @@ void	parseDefaultFile(const std::string& line, LocationBlock& location) {
 
 	checkCurlyBrackets(line);
 	ss >> word;
-	if (ss >> word)
-		location.setDefaultFiles(word);
+	if (!(ss >> word))
+		throw Configuration::WrongConfigFileException("no default file defined.");
 	else
-		throw Configuration::WrongConfigFileException("no index defined.");
-	if (ss >> word)
-		throw Configuration::WrongConfigFileException("too many arguments when defining index.");	
+		location.setDefaultFiles(word);
+	while (ss >> word)
+		location.setDefaultFiles(word);	
 }
 
 void	parseCgiPath(const std::string& line, LocationBlock& location) {
