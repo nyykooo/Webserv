@@ -80,7 +80,6 @@ class HttpResponse {
 		std::string							_relativePath;
 		std::string							_fileAfterRelativePath;
 		size_t								_bytesSent;
-		std::string							_partialResponse;
 		
 		public:
 		
@@ -97,9 +96,8 @@ class HttpResponse {
 		void	setFilePos(std::size_t pos);
 		void	setNewUploadDir();
 		void	setCgiInput(int i);
-		void	setCgiOuput(int i);
+		void	setCgiOutput(int i);
 		void	setBodySent(int n);
-		void	deletePartialResponse(void);
 		void	setResponseCgi(char *buffer, int bytesRead);
 
 		//GETTERS
@@ -115,9 +113,8 @@ class HttpResponse {
 		std::size_t				getContentLength(void) const;
 		int						getStatusCode(void) const;
 		int						getCgiInput(void) const;
-		int						getCgiOuput(void) const;
+		int						getCgiOutput(void) const;
 		std::size_t				getBodySent(void) const;
-		std::string				getPartialResponse(void) const;
 		
 		// EXEC METHOD
 		void				startResponse();

@@ -6,10 +6,36 @@ Client *findClient(int client_fd, std::vector<Client *> &client_vec)
 	std::vector<Client *>::iterator it;
 	for (it = client_vec.begin(); it != client_vec.end(); ++it)
 	{
-		if ((*it)->getSocketFd() == client_fd)
+		if ((*it)->getSocketFd() == client_fd
+	)
 			return (*it);
 	}
 	return (NULL);
+}
+
+Client *findOwner(int fd, std::vector<Client *> &client_vec)
+{
+	std::vector<Client *>::iterator it;
+	for (it = client_vec.begin(); it != client_vec.end(); ++it)
+	{
+		if ((*it)->getSocketFd() == fd 
+			|| (*it)->_response->getCgiInput() == fd 
+			|| (*it)->_response->getCgiOutput() == fd)
+			return (*it);
+	}
+	return (NULL);
+}
+
+void static closeCgiFd(Client *client, int fd)
+{
+	// Invalidate fd references in response
+	if (client->_response->getCgiInput() == fd)
+		client->_response->setCgiInput(-1);
+	if (client->_response->getCgiOutput() == fd)
+		client->_response->setCgiOutput(-1);
+	
+	epoll_ctl(client->getEpollFd(), EPOLL_CTL_DEL, fd, NULL);
+	close(fd);
 }
 
 WebServer::WebServer()
@@ -315,7 +341,6 @@ static bool sendResponseToClient(Client *client)
 	std::stringstream _logger;
 	client->_response->setResponse(client->_response->checkStatusCode());
 	const char *buf = client->_response->getResponse().c_str();
-	std::cout << "sending buffer" << buf << std::endl;
 	size_t size = client->_response->getResponse().size();
 	size_t totalSent = client->_response->getFilePos();
 	int bytesToSend = size - totalSent;
@@ -390,97 +415,31 @@ void WebServer::deleteClient(int fd, int event)
 	}
 }
 
-Client *WebServer::findFd(int fd)
-{
-	std::vector<Client *>::iterator it;
-	for (it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
-	{
-		if ((*it)->_response->getCgiInput() == fd ||
-			(*it)->_response->getCgiOuput() == fd )
-			// ||
-			// (*it)->_response->getFileStream() == fd)
-			return (*it);
-	}
-	return (NULL);
-}
+void static readFromCgi(Client* client, uint32_t events) {
+    int fd = client->_response->getCgiOutput();
 
-// void WebServer::execFStreamOp(int i, Client *client)
-// {
-// 	int flags = _events[i].events;
+    if (events & EPOLLIN) {
+        char buf[4096];
+        ssize_t n = read(fd, buf, sizeof(buf));
+        if (n > 0)
+            client->_response->setResponseCgi(buf, n);
+    }
 
-// 	bool hasEpollIn = flags & EPOLLIN;
-// 	bool hasEpollOut = flags & EPOLLOUT;
-// 	bool alreadyDidOperation = false;
-
-// 	if (hasEpollIn && !alreadyDidOperation)
-// 	{
-// 		// exec read OP
-// 	}
-// 	if (hasEpollOut && !alreadyDidOperation)
-// 	{
-// 		// exec write OP
-// 	}
-// }
-
-void static readFromCgi(Client *client)
-{
-
-	std::cout << "hello" << std::endl;
-	const size_t bufSize = 4096;
-	char buffer[bufSize];
-	ssize_t bytesRead;
-
-	int fd = client->_response->getCgiOuput();
-	if (fd < 0)
-		return;
-
-	bytesRead = read(fd, buffer, bufSize);
-
-	if (bytesRead > 0) {
-		// ✅ Acumula os dados parciais
-		client->_response->setResponseCgi(buffer, bytesRead);
-
-		client->setProcessingState(CGI_COMPLETED);
-		// Remove do epoll e fecha o fd
-		epoll_ctl(client->getEpollFd(), EPOLL_CTL_DEL, fd, NULL);
-		close(fd);
-		client->_response->setCgiOuput(-1);
-
-		// Marca como pronto pra enviar ao cliente
-		client->setProcessingState(SEND_DATA);
-	}
-	else if (bytesRead < 0) {
-		std::stringstream ss;
-		ss << "Error reading CGI output (fd " << fd << "): " << strerror(errno);
-		printLog(ss.str(), RED, std::cout);
-	}
-	// const size_t bufSize = 4096;
-	// char buffer[bufSize];
-	// ssize_t bytesRead;
-
-	// bytesRead = read(client->_response->getCgiOuput(), buffer, bufSize);
-	// if (bytesRead < 0)
-	// {
-	// 	std::stringstream ss;
-	// 	ss << "Error reading fd: (" << client->_response->getCgiOuput() << ")";
-	// 	printLog(ss.str(), RED, std::cout);
-	// 	epoll_ctl(client->getEpollFd(), EPOLL_CTL_DEL, client->_response->getCgiOuput(), NULL);
-	// 	close(client->_response->getCgiOuput());
-	// 	return ;
-	// }
-	// else if (bytesRead > 0)
-	// 	client->_response->setPartialResponse(buffer, bytesRead);
-	// else if (bytesRead == 0)
-	// {
-	// 	client->_response->setResponse(client->_response->getPartialResponse());
-	// 	client->_response->deletePartialResponse();
-	// }
+    // The CGI process ended and closes their side of the pipe communication
+    if (events & (EPOLLRDHUP | EPOLLHUP)) {
+		std::cout << "WebServer >> readFromCgi >> inside EPOLLHUP or EPOLLRDHUP events" << std::endl;
+        // flush any remaining data one last time
+        char buf[4096];
+        ssize_t n;
+        while ((n = read(fd, buf, sizeof(buf))) > 0)
+            client->_response->setResponseCgi(buf, n);
+		closeCgiFd(client, fd);
+        client->setProcessingState(SEND_DATA);
+    }
 }
 
 void static writeToCgi(Client *client)
 {
-
-
     int fd = client->_response->getCgiInput();
     if (fd < 0) return;
 
@@ -488,100 +447,185 @@ void static writeToCgi(Client *client)
     size_t sent = client->_response->getBodySent();
 
     ssize_t n = write(fd, body.c_str() + sent, body.size() - sent);
-    if (n > 0) {
+    if (n > 0)
         client->_response->setBodySent(sent + n);
-        std::cout << BLUE << "BODY SENT TO CGI --> "
-                  << client->_request->getBody().substr(0, client->_response->getBodySent());
-    }
-    else if (n == -1) {
-            perror("write to CGI failed");
-            epoll_ctl(client->getEpollFd(), EPOLL_CTL_DEL, fd, NULL);
-            close(fd);
-            client->_response->setCgiInput(-1);
-            return;
-    }
+    else if (n == -1)
+		return closeCgiFd(client, fd);
 
-    // ✅ Só fecha e remove do epoll se todo o corpo foi enviado
-    if (client->_response->getBodySent() >= body.size()) {
-        epoll_ctl(client->getEpollFd(), EPOLL_CTL_DEL, fd, NULL);
-        close(fd);
-        client->_response->setCgiInput(-1);
-        std::cout << GREEN << "Finished sending body to CGI" << std::endl;
-    }
+    // Only closes and remove from epoll if all body is sent to CGI
+    if (client->_response->getBodySent() >= body.size())
+		closeCgiFd(client, fd);
 }
 
-void WebServer::execCgiOp(int i, Client *client)
+void WebServer::handleEpollErrEvent(int i)
 {
-	int flags = _events[i].events;
+    int fd = _events[i].data.fd;
 
-	bool hasEpollIn = flags & EPOLLIN;
-	bool hasEpollOut = flags & EPOLLOUT;
-	bool alreadyDidOperation = false;
+    if (_currentClient->getSocketFd() == fd) {
+        _logger << "Webserver >> handleEpollErrEvent >> client socket -> deleting client " << fd;
+        printLogNew(_logger, YELLOW, std::cerr, true);
+        return deleteClient(fd, 1);
+    }
 
-	std::cout << RED << "BOOL " << alreadyDidOperation << " | " << hasEpollIn << " | " << hasEpollOut << RESET << std::endl;
-	if (hasEpollIn && !alreadyDidOperation)
+    if (_currentClient->_response->getCgiInput() == fd
+        || _currentClient->_response->getCgiOutput() == fd) 
 	{
-		// exec read OP
-		readFromCgi(client);
-	}
-	if (hasEpollOut && !alreadyDidOperation)
-	{
-		// exec write OP
-		writeToCgi(client);
-	}
+        _logger << "Webserver >> handleEpollErrEvent >> CGI fd -> setting response status 500 for client " << _currentClient->getSocketFd();
+        printLogNew(_logger, YELLOW, std::cerr, true);
+		closeCgiFd(_currentClient, fd);
+        _currentClient->_response->setResStatus(500);
+        _currentClient->setProcessingState(SEND_DATA);
+        return;
+    }
+    _logger << "EPOLLERR on unknown fd " << fd;
+    printLogNew(_logger, RED, std::cerr, true);
+	epoll_ctl(_currentClient->getEpollFd(), EPOLL_CTL_DEL, fd, NULL);
+	close(fd);
+}
+void WebServer::handleEpollHupEvent(int i)
+{
+    int fd = _events[i].data.fd;
+
+    // EPOLLHUP: fully closed. If it's client socket, delete client.
+    if (_currentClient->getSocketFd() == fd) {
+        _logger << "Webserver >> handleEpollHupEvent >> client socket -> deleting client " << fd;
+        printLogNew(_logger, CYAN, std::cout, true);
+        deleteClient(fd, 1);
+        return;
+    }
+    // If it's CGI output (child stdout) treat as EOF: read remaining and finalize
+    if (_currentClient->_response->getCgiOutput() == fd) {
+        // Try to drain any remaining data once (readFromCgi should handle EOF and cleanup)
+        readFromCgi(_currentClient, _events[i].events);
+
+        // After EOF, move client to sending state if not already
+        if (_currentClient->getProcessingState() != SEND_DATA)
+            _currentClient->setProcessingState(SEND_DATA);
+        return;
+    }
+    // If it's CGI input (child stdin) a HUP is unusual, simply close and mark as failed
+    if (_currentClient->_response->getCgiInput() == fd) {
+		closeCgiFd(_currentClient, fd);
+        _currentClient->_response->setResStatus(500);
+        _currentClient->setProcessingState(SEND_DATA);
+        return;
+    }
+    // Generic: remove and close unknown fd
+    epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+    close(fd);
+}
+void WebServer::handleEpollRdHupEvent(int i)
+{
+	int fd = _events[i].data.fd;
+    _logger << "Webserver >> handleEpollRdHupEvent >> EPOLLRDHUP on fd: " << fd;
+    printLogNew(_logger, CYAN, std::cout, true);
+    _logger.str(""); _logger.clear();
+
+    // RDHUP: peer closed its write end (half-close). For sockets we can still send a response.
+    if (_currentClient->getSocketFd() == fd) {
+        // The client closed their write end (sent FIN). We should still finish handling,
+        // read any remaining request data if needed and then send response.
+        // Let existing input handling take care of it; simply mark/read as needed.
+        // If you keep per-socket state, you might set a flag here: client->remote_closed_write = true;
+        return;
+    }
+
+    // For CGI output FD: reader sees EOF soon. Drain and finalize (readFromCgi should handle)
+    if (_currentClient->_response->getCgiOutput() == fd) {
+        // read any remaining data and finalize
+        readFromCgi(_currentClient, _events[i].events);
+
+        // ensure closed if readFromCgi didn't close it
+        if (_currentClient->_response->getCgiOutput() == fd) 
+			closeCgiFd(_currentClient, fd);
+
+        if (_currentClient->getProcessingState() != SEND_DATA)
+            _currentClient->setProcessingState(SEND_DATA);
+        return;
+    }
+
+    // For CGI input FD: the child closed reading end (we can't send more). Close and mark 500.
+    if (_currentClient->_response->getCgiInput() == fd) {
+		closeCgiFd(_currentClient, fd);
+        _currentClient->_response->setResStatus(500);
+        _currentClient->setProcessingState(SEND_DATA);
+        return;
+    }
+
+    // Fallback: remove & close
+    epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+    close(fd);
+}
+void WebServer::handleEpollInEvent(int i)
+{
+    int fd = _events[i].data.fd;
+
+    // If event is a client socket: forward to existing client input handler
+    if (_currentClient && _currentClient->getSocketFd() == fd)
+       return handleClientInput(_currentClient, i);
+    // If event is a CGI output fd: read from it
+    if (_currentClient && _currentClient->_response->getCgiOutput() == fd)
+       return readFromCgi(_currentClient, _events[i].events);
+
+    // If event is some other fd you registered (e.g., file stream for large file),
+    // call the appropriate handler (streaming read). Add your handler as needed.
+    // Example placeholder:
+    // if (_currentClient && _currentClient->_response->getFileStreamFd() == fd) {
+    //     readFromFileAndQueueToClient(_currentClient);
+    //     return;
+    // }
+
+    // Unknown FD: log and remove
+    _logger << "EPOLLIN on unknown fd: " << fd;
+    printLogNew(_logger, RED, std::cerr, true);
+    epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+    close(fd);
+}
+void WebServer::handleEpollOutEvent(int i)
+{
+    int fd = _events[i].data.fd;
+	// If event is client socket: write data to client (existing handler)
+    if (_currentClient->getSocketFd() == fd) 
+        return handleClientOutput(_currentClient, i);
+
+    // If event is CGI input fd: pipe more request-body into CGI stdin
+    if (_currentClient->_response->getCgiInput() == fd){
+       return writeToCgi(_currentClient);}
+
+    // If event is a file -> client send (e.g. sendfile) and socket writable, call writer.
+    // Placeholder for file streaming/other writeable fds:
+    // if (_currentClient->_response->getSomeWriteFd() == fd) { ... }
+
+    _logger << "EPOLLOUT on unknown fd: " << fd;
+    printLogNew(_logger, RED, std::cerr, true);
+    epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+    close(fd);
 }
 
 void WebServer::treatExistingClient(int i)
 {
-	Client *client = findClient(_events[i].data.fd, _clients_vec);
-
-	if (!client)
-	{
-		Client *client = findFd(_events[i].data.fd);
-		if (!client)
-			return ;
-		if (client->_response->getCgiInput() == _events[i].data.fd || 
-			client->_response->getCgiOuput() == _events[i].data.fd)
-			execCgiOp(i, client);
-		// else if (client->_response->getFileStream() == _events[i].data.fd)
-		// 	execFStreamOp(i, client);
-		return;
-	}
-
-	int flags = _events[i].events;
-	if (flags & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
-	{
-		// Cliente desconectou ou houve erro
-		_logger << "Client disconnected or connection error - client socket fd: " << client->getSocketFd();
-		printLog(_logger.str(), RED, std::cout);
-		_logger.str("");
-		_logger.clear();
-		deleteClient(_events[i].data.fd, 1);
+	_currentClient = findOwner(_events[i].data.fd, _clients_vec); // update all places that call findClient to use this new method
+	if (!_currentClient)
 		return ;
-	}
-
+	uint32_t flags = _events[i].events;
 	bool hasEpollIn = flags & EPOLLIN;
 	bool hasEpollOut = flags & EPOLLOUT;
-	bool alreadyDidOperation = false;
+	bool hasEpollHup = flags & EPOLLHUP;
+	bool hasEpollRdHup = flags & EPOLLRDHUP;
+	bool hasEpollErr = flags & EPOLLERR;
 
-	if (hasEpollIn && !alreadyDidOperation)
-	{
-		handleClientInput(client, i);
-		alreadyDidOperation = true;
-	}
-	if (hasEpollOut && !alreadyDidOperation)
-	{
-		handleClientOutput(client, i);
-		alreadyDidOperation = true;
-	}
-	if (!alreadyDidOperation)
-	{
-		_logger << "No Operation executed. No EPOLLIN or EPOLLOUT - client socket fd: " << client->getSocketFd();
-		printLog(_logger.str(), YELLOW, std::cout);
-		_logger.str("");
-		_logger.clear();
-	}
+	if (hasEpollErr)
+		return handleEpollErrEvent(i);
+	if (hasEpollHup)
+		return handleEpollHupEvent(i);
+	if (hasEpollRdHup)
+		return handleEpollRdHupEvent(i);
+	if (hasEpollIn)
+		return handleEpollInEvent(i);
+	if (hasEpollOut)
+		return handleEpollOutEvent(i);
 }
+
 void WebServer::handleEvents(int event_count)
 {
 	for (int i = 0; i < event_count; ++i)
@@ -799,7 +843,7 @@ void WebServer::handleClientOutput(Client *client, int i)
 			client->setTime(std::time(NULL));
 			break;
 	case SEND_DATA:
-			_logger << "WebServer >> hanldeClientOutput >> sending data to client_fd: " << client->getSocketFd();
+			_logger << "WebServer >> hanldeClientOutput >> SEND_DATA to client_fd: " << client->getSocketFd();
 			printLogNew(_logger, CYAN, std::cout, true);
 			if (sendResponseToClient(client))
 				client->setProcessingState(COMPLETED);
@@ -807,7 +851,7 @@ void WebServer::handleClientOutput(Client *client, int i)
 	case CGI_PROCESSING:
 		client->_response->checkCgiProcess();
 		break;
-	case CGI_COMPLETED:
+	case CGI_COMPLETED: // avaliar a possibilidade de tirar esse processing state talvez nao seja mais usado
 		client->setProcessingState(SEND_DATA);
 		break;
 	case RECEIVING:

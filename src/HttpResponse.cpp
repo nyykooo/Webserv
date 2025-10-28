@@ -941,14 +941,14 @@ void HttpResponse::parseCgiHeaders() {
 			_cgiParsedHeaders.push_back(*it + CRLF);
 }
 
-void HttpResponse::parseCgiScript() {
+void HttpResponse::parseCgiScript()
+{
 	size_t pos;
 
 	pos  = _response.find("\r\n\r\n");
 	if (pos != std::string::npos) {
 		_cgiHeaders = _response.substr(0, pos);
 		_cgiBody = _response.substr(pos + 4);
-		std::cout << RED << "aqui: " << _cgiHeaders << std::endl << _cgiBody << RESET << std::endl;
 	}
 	else
 		_cgiHeaders = _response;
@@ -1100,7 +1100,6 @@ const std::string HttpResponse::checkErrorResponse(const std::string &page)
 	}
 	else if (errorPage == 0)
 	{
-		std::cout << RED << page << RESET << std::endl;
 		_resBody = page;
 		_resContentLength = _resBody.size();
 		_fileName = ".html";
@@ -1119,69 +1118,68 @@ const std::string HttpResponse::checkStatusCode()
 {
 	std::string fileContent;
 
-
 	switch (_resStatus)
 	{
-	case 200:
-		if (_cgiRequest)
-			return (cgiHeader());
-		else if (_method == DELETE || _method == POST)
+		case 200:
+			if (_cgiRequest)
+				return (cgiHeader());
+			else if (_method == DELETE || _method == POST)
+				return (header(OK));
+			return (header(OK) + _resBody);
+		case 206:
+			if (_method == DELETE || _method == POST)
+				return (header(OK));
+			return (header(OK) + _resBody);
+		case 201:
 			return (header(OK));
-		return (header(OK) + _resBody);
-	case 206:
-		if (_method == DELETE || _method == POST)
+		case 202:
 			return (header(OK));
-		return (header(OK) + _resBody);
-	case 201:
-		return (header(OK));
-	case 202:
-		return (header(OK));
-	case 204:
-		return (header(OK));
-	case 301:
-		return (header(REDIRECT));
-	case 302:
-		return (header(REDIRECT));
-	case 303:
-		return (header(REDIRECT));
-	case 304:
-		return (header(REDIRECT));
-	case 307:
-		return (header(REDIRECT));
-	case 308:
-		return (header(REDIRECT));
-	case 400:
-		return (checkErrorResponse(http_error_400_page));
-	case 403:
-		return (checkErrorResponse(http_error_403_page));
-	case 404:
-		return (checkErrorResponse(http_error_404_page));
-	case 405:
-		return (checkErrorResponse(http_error_405_page));
-	case 408:
-		return (checkErrorResponse(http_error_408_page));
-	case 409:
-		return (checkErrorResponse(http_error_409_page));
-	case 411:
-		return (checkErrorResponse(http_error_411_page));
-	case 413:
-		return (checkErrorResponse(http_error_413_page));
-	case 414:
-		return (checkErrorResponse(http_error_414_page));
-	case 415:
-		return (checkErrorResponse(http_error_415_page));
-	case 500:
-		return (checkErrorResponse(http_error_500_page));
-	case 501:
-		return (checkErrorResponse(http_error_501_page));
-	case 502:
-		return (checkErrorResponse(http_error_502_page));
-	case 503:
-		return (checkErrorResponse(http_error_503_page));
-	case 504:
-		return (checkErrorResponse(http_error_504_page));
-	case 505:
-		return (checkErrorResponse(http_error_505_page));
+		case 204:
+			return (header(OK));
+		case 301:
+			return (header(REDIRECT));
+		case 302:
+			return (header(REDIRECT));
+		case 303:
+			return (header(REDIRECT));
+		case 304:
+			return (header(REDIRECT));
+		case 307:
+			return (header(REDIRECT));
+		case 308:
+			return (header(REDIRECT));
+		case 400:
+			return (checkErrorResponse(http_error_400_page));
+		case 403:
+			return (checkErrorResponse(http_error_403_page));
+		case 404:
+			return (checkErrorResponse(http_error_404_page));
+		case 405:
+			return (checkErrorResponse(http_error_405_page));
+		case 408:
+			return (checkErrorResponse(http_error_408_page));
+		case 409:
+			return (checkErrorResponse(http_error_409_page));
+		case 411:
+			return (checkErrorResponse(http_error_411_page));
+		case 413:
+			return (checkErrorResponse(http_error_413_page));
+		case 414:
+			return (checkErrorResponse(http_error_414_page));
+		case 415:
+			return (checkErrorResponse(http_error_415_page));
+		case 500:
+			return (checkErrorResponse(http_error_500_page));
+		case 501:
+			return (checkErrorResponse(http_error_501_page));
+		case 502:
+			return (checkErrorResponse(http_error_502_page));
+		case 503:
+			return (checkErrorResponse(http_error_503_page));
+		case 504:
+			return (checkErrorResponse(http_error_504_page));
+		case 505:
+			return (checkErrorResponse(http_error_505_page));
 	}
 	return _resBody;
 }
@@ -1461,7 +1459,7 @@ int	HttpResponse::getCgiInput(void) const
 	return _pipeIn;
 }
 
-int HttpResponse::getCgiOuput(void) const
+int HttpResponse::getCgiOutput(void) const
 {
 	return _pipeOut;
 }
@@ -1470,7 +1468,7 @@ void HttpResponse::setCgiInput(int i)
 	_pipeIn = i;
 }
 
-void HttpResponse::setCgiOuput(int i)
+void HttpResponse::setCgiOutput(int i)
 {
 	_pipeOut = i;
 }
@@ -1486,18 +1484,7 @@ void HttpResponse::setBodySent(int n)
 	_bytesSent += n;
 }
 
-std::string HttpResponse::getPartialResponse() const
-{
-	return _partialResponse;
-}
-
 void HttpResponse::setResponseCgi(char *buffer, int bytesRead)
 {
 	_response.append(buffer, bytesRead);
-	std::cout << GREEN << "partialresponse" <<  _resBody << std::endl;
-}
-
-void HttpResponse::deletePartialResponse()
-{
-	_partialResponse.clear();
 }

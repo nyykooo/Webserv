@@ -33,7 +33,8 @@ class WebServer
 		std::vector<Configuration>							_configurations; // armazena as configurações do servidor
 		struct epoll_event									*_events; // é usado como buffer, recebe os eventos que aconteceram nos descritores monitorados
 		std::vector<SessionData *>							*_sessions;
-
+		Client												*_currentClient; // client being analyzed by the cicle
+		
 	public:
 		WebServer();
 		WebServer(std::vector<Configuration> conf);
@@ -70,6 +71,13 @@ class WebServer
 		int		receiveData(int client_fd);
 		bool	tryConnection(int i);
 		void	deleteClient(int fd, int event);
+
+
+		void	handleEpollInEvent(int i);
+		void	handleEpollOutEvent(int i);
+		void	handleEpollErrEvent(int i);
+		void	handleEpollHupEvent(int i);
+		void	handleEpollRdHupEvent(int i);
 
 		// ### AFTER REQUEST PARSING ###
 		int									getServerFdForClient(int client_fd);
