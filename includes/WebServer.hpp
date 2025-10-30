@@ -87,8 +87,8 @@ class WebServer
 		// ### streaming ###
 		int 								extractContentLength(const std::string& headers);
 		std::string							extractHostHeaderSimple(const std::string &rawRequest);
-		void								handleClientInput(Client *client, int i);
-		void								handleClientOutput(Client *client, int i);
+		void								handleClientInput(int i);
+		void								handleClientOutput();
 
 		Client								*findFd(int fd);
 		void								execCgiOp(int i, Client *client);
@@ -103,6 +103,12 @@ class WebServer
 				virtual ~WebServerErrorException() throw() {};
 				const char* what() const throw();
 		};
+
+
+		// new methods
+		void readFromFile();
+		void sendDataToClient();
+		void buildData();
 };
 
 #endif

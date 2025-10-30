@@ -14,12 +14,12 @@
 
 // ######### LIFE CYCLE #########
 
-Client::Client() : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0)
+Client::Client() : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0), _socketSize(-1)
 {
 	_time = std::time(NULL);
 }
 
-Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0), _firstRequest(true), _epoll_fd(-1)
+Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0), _firstRequest(true), _epoll_fd(-1), _socketSize(-1)
 {
 	_uploadFd = -1;
 	_uploadSize = 0;
@@ -30,7 +30,7 @@ Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _b
 	initClientSocket(server_fd);
 }
 
-Client::Client(const Client &other) : Socket(other), _time(other.getTime()), _fileFd(-1), _fileSize(0), _bytesSent(0), _epoll_fd(-1)
+Client::Client(const Client &other) : Socket(other), _time(other.getTime()), _fileFd(-1), _fileSize(0), _bytesSent(0), _epoll_fd(-1), _socketSize(-1)
 {
 	_response = NULL;
 	_request = NULL;
@@ -112,6 +112,12 @@ Client *Client::initClientSocket(int server_fd)
 
 	int keepalive = 1;
 	setsockopt(_socket_fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive));
+
+	unsigned int m = sizeof(_socketSize);
+	getsockopt(_socket_fd, SOL_SOCKET, SO_RCVBUF, (void *)&_socketSize, &m);
+
+	_bufferHighWatermark = _socketSize / 2; // large enough to deal with the read and write cost
+	_bufferLowWatermark = _socketSize / 8; // small enough so we can free EPOLLIN but not too small to avoid excessive reads
 
 	return this;
 }
@@ -206,6 +212,21 @@ bool Client::getFirstRequest() {
 int Client::getEpollFd() const 
 {
 	return _epoll_fd;
+}
+
+int	Client::getSocketSize() const
+{
+	return _socketSize;
+}
+
+size_t	Client::getBufferHighWatermark() const
+{
+	return _bufferHighWatermark;
+}
+
+size_t	Client::getBufferLowWatermark() const
+{
+	return _bufferLowWatermark;
 }
 
 // ######### SETTERS #########

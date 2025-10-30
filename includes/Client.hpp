@@ -29,6 +29,9 @@ class Client : public Socket {
 		std::string						_uploadPath;
 		bool							_firstRequest;
 		int								_epoll_fd;
+		int								_socketSize;
+		size_t							_bufferHighWatermark;
+		size_t							_bufferLowWatermark;
 
 	public:
 		// ### ATRIBUTES ###
@@ -63,6 +66,9 @@ class Client : public Socket {
 		const std::string 				&getOriginalHeaders() const;
 		bool							getFirstRequest();
 		int								getEpollFd() const;
+		int								getSocketSize() const;
+		size_t							getBufferHighWatermark() const;
+		size_t							getBufferLowWatermark() const;
 
 		// ### SETTERS ###
 		void							setTime(std::time_t time);

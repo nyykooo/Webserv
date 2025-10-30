@@ -1,11 +1,14 @@
 #include "../includes/headers.hpp"
 
-HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL), _filePos(0), _rawUpload(false) {}
+HttpResponse::HttpResponse() : _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _conf(NULL), _req(NULL), _file(-1), _filePos(0), _rawUpload(false), _headersSent(false) {}
 
 
 HttpResponse::~HttpResponse() {
-	if (_file.is_open())
-		_file.close();
+	if (_file > 0)
+	{
+		close(_file);
+		_file = -1;
+	}
 }
 
 void	HttpResponse::setHttpStatus(int status) {
@@ -255,7 +258,7 @@ std::size_t HttpResponse::getContentLength(void) const
 	return _resContentLength;
 }
 
-std::ifstream& HttpResponse::getFileStream(void)
+int HttpResponse::getFileStream(void) const
 {
 	return _file;
 }
@@ -274,35 +277,33 @@ void HttpResponse::streamingFile(off_t fileSize, std::string contentType)
 {
 	_resContentLength = fileSize;
 	_resContentType = contentType;
-	_client->setProcessingState(STREAMING);
 }
 
 void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
 {
-	_file.open(path.c_str());
-	if (!_file.is_open())
+	_file = open(path.c_str(), O_RDONLY | O_NONBLOCK);
+	if (_file == -1)
 	{
-		_resStatus = 404;
+		_resStatus = 500;
 		return;
 	}
+	
+	struct epoll_event ev_in;
+	ev_in.events = EPOLLIN;
+	ev_in.data.fd = _file;
+	epoll_ctl(_client->getEpollFd(), EPOLL_CTL_ADD, _file, &ev_in);
+
+	std::cout << "HttpResponse >> openReg >> file requested is open in fd: " << _file << " and registered in epoll" << std::endl;
 	_resStatus = 200;
-	// streaming logic
-	if (fileSize > MAX_MEMORY_FILE_SIZE) {
-		std::string contentType;
-		std::map<std::string, std::string>::const_iterator it = _mimeTypes.find(path);
-		if (it != _mimeTypes.end())
-			contentType = it->second;
-		else
-			contentType = "application/octet-stream";
-		return streamingFile(fileSize, contentType);
-	}
 	if (methodType == DELETE)
 		return;
-	std::stringstream ss;
-
-	ss << _file.rdbuf();
-	_resBody = ss.str();
-	_resContentLength = _resBody.size();
+	std::string contentType;
+	std::map<std::string, std::string>::const_iterator it = _mimeTypes.find(path);
+	if (it != _mimeTypes.end())
+		contentType = it->second;
+	else
+		contentType = "application/octet-stream";
+	return streamingFile(fileSize, contentType);
 }
 
 void HttpResponse::setMimeTypes()
@@ -1178,7 +1179,7 @@ const std::string HttpResponse::checkStatusCode()
 	return _resBody;
 }
 
-HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resContentLength(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0), _cgiStatusCode(0), _bytesSent(0)
+HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resContentLength(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0), _cgiStatusCode(0), _bytesSent(0), _headersSent(false)
 {
 	_client = client;
 	_conf = client->_request->_config;
@@ -1481,4 +1482,29 @@ void HttpResponse::setBodySent(int n)
 void HttpResponse::setResponseCgi(char *buffer, int bytesRead)
 {
 	_response.append(buffer, bytesRead);
+}
+
+
+void HttpResponse::setFileStream(int i)
+{
+	_file = i;
+}
+
+bool HttpResponse::getHeadersSent() const
+{
+	return _headersSent;
+}
+void HttpResponse::setHeadersSent(bool headersSent)
+{
+	_headersSent = headersSent;
+}
+
+bool HttpResponse::isFileOpen()
+{
+	return _file > 0;
+}
+
+std::string &HttpResponse::getResponseBuffer()
+{
+	return _resBuffer;
 }

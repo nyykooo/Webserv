@@ -71,7 +71,7 @@ class HttpResponse {
 		int									_cgiHeadersFound;
 		int									_cgiStatusCode;
 
-		std::ifstream						_file;
+		int									_file;
 		std::size_t							_filePos;
 		bool								_rawUpload;
 
@@ -80,7 +80,10 @@ class HttpResponse {
 		std::string							_relativePath;
 		std::string							_fileAfterRelativePath;
 		size_t								_bytesSent;
-		
+
+		bool								_headersSent;
+		std::string							_resBuffer;
+
 		public:
 		
 		//SETTERS
@@ -99,6 +102,9 @@ class HttpResponse {
 		void	setCgiOutput(int i);
 		void	setBodySent(int n);
 		void	setResponseCgi(char *buffer, int bytesRead);
+		void	setFileStream(int i);
+		void	setHasData(bool hasData);
+		void	setHeadersSent(bool headersSent);
 
 		//GETTERS
 		const std::string&		getResponse(void) const;
@@ -108,13 +114,15 @@ class HttpResponse {
 		const std::string		getMimeType(const std::string& fileExtension);
 		const Configuration&	getConfig(void) const;
 		int						getCgiPid(void) const;
-		std::ifstream&			getFileStream(void);
+		int						getFileStream(void) const;
 		std::size_t				getFilePos(void) const;
 		std::size_t				getContentLength(void) const;
 		int						getStatusCode(void) const;
 		int						getCgiInput(void) const;
 		int						getCgiOutput(void) const;
 		std::size_t				getBodySent(void) const;
+		bool					getHasData() const;
+		bool					getHeadersSent() const;
 		
 		// EXEC METHOD
 		void				startResponse();
@@ -161,6 +169,10 @@ class HttpResponse {
 		void	checkCgiProcess();
 		void 	terminateCgiProcess(void);
 		void	streamingFile(off_t fileSize, std::string contentType);
+
+		// file
+		bool isFileOpen();
+		std::string &getResponseBuffer();
 };
 
 #endif

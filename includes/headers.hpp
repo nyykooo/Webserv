@@ -41,7 +41,6 @@
 # include <cstdlib>
 # include <climits>
 
-
 # include "macros.hpp"
 # include "enums.hpp"
 # include "Socket.hpp"
