@@ -549,7 +549,7 @@ std::string HttpResponse::getFullPath()
 		}
 	}
 
-	std::cout << CYAN << "locPath: " << _block->getLocation() << RESET << std::endl;
+	//std::cout << CYAN << "locPath: " << _req->getPath() << RESET << std::endl;
 	return (locPath);
 }
 
@@ -766,14 +766,14 @@ void	HttpResponse::buildFullPath() {
 	std::string locPath = removeSlashes(this->getFullPath());
 	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1);
 	std::size_t pos = locPath.find_last_of('/');
-	std::cout << RED << _newRoot << RESET << std::endl;
+	//std::cout << RED << _newRoot << " " << locPath << RESET << std::endl;
 	if (pos != std::string::npos)
 		_fullPath = _newRoot + "/" + locPath.substr(0, pos);
 	else
 		_fullPath = _newRoot + "/" + locPath;
 	locPath = removeSlashes(this->getFullPath());
 	_fileName = _newRoot + "/" + locPath;
-	std::cout << CYAN << _fileName << RESET << std::endl;
+	//std::cout << CYAN << _fileName << RESET << std::endl;
 }
 
 void HttpResponse::execMethod()
@@ -1264,6 +1264,8 @@ void	HttpResponse::cleanUploadDir() {
 void	HttpResponse::doRawUpload() {
         _fileName = _newUploadDir + _fileAfterRelativePath;
 
+		//std::cout << YELLOW << _newUploadDir << RESET << std::endl;
+
         // Save file content
         if (!saveBodyToFile(_fileName, _req->getBody()))
 			_resStatus = 500;
@@ -1274,16 +1276,9 @@ void	HttpResponse::doRawUpload() {
 bool	HttpResponse::isRequestUpload() {
 	_contentType = parseContentType(_req->getHeaders());
 	size_t	pos = _contentType.find("multipart/form-data");
-	std::string location = _block->getLocation();
-	_relativePath = _req->getPath().substr(location.size());
-	if (_relativePath[0] == '/')
-		_relativePath.erase(0, 1);
-	size_t pos2 = _relativePath.find("/");
-	if (pos2 != std::string::npos) {
-		_fileAfterRelativePath = _relativePath.substr(pos2 + 1);
-		_relativePath = _relativePath.substr(0, pos2);
-	}
-
+	size_t pos2 = _fullPath.find_last_of("/");
+	if (pos2 != std::string::npos)
+		_fileAfterRelativePath = _fullPath.substr(pos2 + 1);
 	if (pos != std::string::npos) {
 		size_t pos2 = _contentType.find("boundary=");
 		if (pos2 == std::string::npos)
@@ -1378,8 +1373,6 @@ void	HttpResponse::setNewUploadDir() {
 			_newUploadDir = _newRoot + "/" + _block->getUploadDirectory();
 		else
 			_newUploadDir = _newRoot + "/" + _block->getUploadDirectory() + "/";
-		if (_relativePath != "")
-			_newUploadDir += _relativePath + "/";
 	}
 }
 
@@ -1398,17 +1391,16 @@ void HttpResponse::handlePOST()
 		return;
 	}
 	// Ver se upload dir existe no config.
-	std::string uploadDir = _block->getUploadDirectory();
-	if (uploadDir == "" || !isRequestUpload())
+	if (_block->getUploadDirectory() == "" || !isRequestUpload())
 	{
-		_resStatus = 405;
-		_resBody = http_error_405_page;
+		_resStatus = 403;
+		_resBody = http_error_403_page;
 		_resContentLength = _resBody.size();
 		return ;
 	}
 	cleanUploadDir();
 	setNewUploadDir(); // this sets the Upload Directory with the root
-	if (access(uploadDir.c_str(), W_OK) != 0)
+	if (access(_newUploadDir.c_str(), W_OK) != 0)
 	{
 		_resStatus = 500; // Internal Server Error
 		_resBody = http_error_500_page;
