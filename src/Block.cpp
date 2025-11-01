@@ -14,7 +14,7 @@
 
 // ######### LIFE CYCLE #########
 
-Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1), _errorPage(NULL), _requestSize(1000000), _rootInsideLocation(false) {}
+Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1), _requestSize(1000000), _rootInsideLocation(false) {}
 
 Block::Block(const Block& other)
 {
@@ -113,9 +113,7 @@ const std::string&	Block::getUploadDirectory() const {
 void	Block::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
 
 	ErrorPageRule rule(errorPage, errorPagePath, newStatus);
-	if (this->_errorPage == NULL)
-		this->_errorPage = new std::set<ErrorPageRule>();
-	this->_errorPage->insert(rule);
+	this->_errorPage.insert(rule);
 }
 
 void	Block::setRedirectStatusCode(int statusCode) {
@@ -173,7 +171,7 @@ const std::map<std::string, std::string>& Block::getCgiMap(void) const {
 	return (_cgiMap);
 }
 
-const std::set<ErrorPageRule>* Block::getErrorPage(void) const {
+const std::set<ErrorPageRule>& Block::getErrorPage(void) const {
 	return (_errorPage);
 }
 

@@ -878,11 +878,11 @@ const std::string HttpResponse::httpFileContent(int errorPage)
 
 int HttpResponse::openFile()
 {
-	if (!_block || _block->getErrorPage() == NULL)
+	if (!_block)
 		return (0);
-	std::set<ErrorPageRule>::const_iterator it = _block->getErrorPage()->begin();
+	std::set<ErrorPageRule>::const_iterator it = _block->getErrorPage().begin();
 
-	while (it != _block->getErrorPage()->end())
+	while (it != _block->getErrorPage().end())
 	{
 		if ((*it).error == _resStatus)
 		{
@@ -893,7 +893,7 @@ int HttpResponse::openFile()
 
 		it++;
 	}
-	if (it == _block->getErrorPage()->end())
+	if (it == _block->getErrorPage().end())
 	{
 		_fileName = ".html";
 		return (0);

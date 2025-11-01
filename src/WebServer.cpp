@@ -45,6 +45,7 @@ WebServer::WebServer()
 
 WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(conf)
 {
+try {
 	initEpoll();
 	_events = new struct epoll_event[MAX_EVENTS];
 
@@ -67,6 +68,12 @@ WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(co
 		}
 	}
 	_sessions = new std::vector<SessionData *>;
+    }
+    catch (...) {
+		if (_events)
+        	delete[] _events;
+        throw;
+    }
 }
 
 WebServer::WebServer(const WebServer &other)
@@ -95,6 +102,9 @@ WebServer &WebServer::operator=(const WebServer &other)
 
 WebServer::~WebServer()
 {
+	if (_events)
+		delete _events;
+	std::cout << " CARALHO " << std::endl;
 	for (std::vector<Client *>::iterator it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
 	{
 		close((*it)->getSocketFd());
