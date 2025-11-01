@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 18:24:43 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/11/01 14:27:22 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/11/01 14:43:35 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ class WebServer
 		std::vector<Configuration>							_configurations;
 		struct epoll_event									*_events;
 		std::vector<SessionData *>							*_sessions;
-		Client												*_currentClient; // client being analyzed by the cicle
+		Client												*_currentClient;
 		
 	public:
 		WebServer();
@@ -81,14 +81,14 @@ class WebServer
 
 		// ### AFTER REQUEST PARSING ###
 		Configuration* 						findConfigForRequestFast(const std::string& rawRequest, int client_fd);
-		bool								continueLargeFileStreaming(Client* client);
+		bool								continueLargeFileStreaming();
 
 
 		// ### streaming ###
 		int 								extractContentLength(const std::string& headers);
 		std::string							extractHostHeaderSimple(const std::string &rawRequest);
-		void								handleClientInput(Client *client, int i);
-		void								handleClientOutput(Client *client, int i);
+		void								handleClientInput(int i);
+		void								handleClientOutput(int i);
 
 		Client								*findFd(int fd);
 		void								execCgiOp(int i, Client *client);
