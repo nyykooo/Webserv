@@ -13,7 +13,8 @@ Configuration::Configuration(): Block() {
 	_allowedMethods.push_back("DELETE");
 }
 
-Configuration::~Configuration() {}
+Configuration::~Configuration() {
+}
 
 Configuration::Configuration(const Configuration& other): Block(other), _host(other._host), _serverName(other._serverName),
 	_locations(other._locations) {
@@ -25,7 +26,7 @@ Configuration::Configuration(const Configuration& other): Block(other), _host(ot
 	_redirectStatusCode = other._redirectStatusCode;
 	_cgiMap = other._cgiMap;
 	_uploadDirectory = other._uploadDirectory;
-	_errorPage = other._errorPage;
+	//_errorPage = other._errorPage;
 	_requestSize = other._requestSize;
 	_location = other._location;
 	_rootInsideLocation = other._rootInsideLocation;
@@ -407,7 +408,7 @@ void parseServer(std::ifstream& file, Configuration& confserv) {
 
 // ######### SETUP #########
 
-void	setup(const char* file, std::vector<Configuration>& confserv) {
+void	setup(const char* file, std::vector<Configuration> &confserv) {
 	std::string file1 = file;
 	std::ifstream	configFile(file);
 	std::string		line;

@@ -6,7 +6,7 @@
 /*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 14:51:13 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/27 17:38:38 by ncampbel         ###   ########.fr       */
+/*   Updated: 2025/11/01 16:31:36 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,6 +112,9 @@ Client *Client::initClientSocket(int server_fd)
 
 	int keepalive = 1;
 	setsockopt(_socket_fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive));
+
+	delete _res->ai_addr;
+	delete _res;
 
 	return this;
 }

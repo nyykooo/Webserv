@@ -224,8 +224,9 @@ void HttpRequest::parse_headers()
 			parse_requestline(header_line);
 			std::stringstream ss;
 			printLog(ss.str(), WHITE, std::cout);
-			if (_parseStatus != 200)
-				return ;
+			if (_parseStatus != 200){
+				_requestComplete = true;
+				return ;}
 		}
 	else {
 		_parseStatus = 400;

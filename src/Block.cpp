@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Block.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
+/*   By: ncampbel <ncampbel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/11/01 13:57:39 by discallow        ###   ########.fr       */
+/*   Updated: 2025/11/01 17:04:30 by ncampbel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,8 +32,7 @@ Block::Block(const Block& other)
 	_rootInsideLocation = other._rootInsideLocation;
 }
 
-Block::~Block() {
-}
+Block::~Block() {}
 
 Block &Block::operator=(const Block &other)
 {
