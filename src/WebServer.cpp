@@ -349,6 +349,7 @@ static bool sendResponseToClient(Client *client)
 	size_t size = client->_response->getResponse().size();
 	size_t totalSent = client->_response->getFilePos();
 	int bytesToSend = size - totalSent;
+	std::cout << buf << std::endl;
 	int sentBytes = send(client->getSocketFd(), buf + totalSent, bytesToSend, 0);
 	if (sentBytes < 0)
 	{
@@ -433,6 +434,7 @@ void static readFromCgi(Client* client, uint32_t events) {
         while ((n = read(fd, buf, sizeof(buf))) > 0)
             client->_response->setResponseCgi(buf, n);
 		closeCgiFd(client, fd);
+		client->_response->checkCgiProcess();
         client->setProcessingState(SEND_DATA);
     }
 }
