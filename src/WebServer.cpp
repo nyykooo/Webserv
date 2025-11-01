@@ -382,7 +382,7 @@ void WebServer::deleteClient(int fd, int event)
 		if ((*it)->getSocketFd() == fd)
 		{
 			_logger << "WebServer >> deleteClient >> Client disconected - client_fd: " << (*it)->getSocketFd();
-			printLogNew(_logger, RED, std::cerr, true);
+			printLogNew(_logger, GREEN, std::cout, true);
 			if (event == 0)
 			{
 				int x;
@@ -616,7 +616,7 @@ void WebServer::lookForTimeouts()
 		if ((*it)->checkTimeout())
 		{
 			_logger << "WebServer >> lookForTimeouts >> Client timeout detected - client_fd: " << (*it)->getSocketFd();
-			printLogNew(_logger, RED, std::cerr, true);
+			printLogNew(_logger, WHITE, std::cout, true);
 			int fd = (*it)->getSocketFd();
 			if ((*it)->getProcessingState() == CGI_PROCESSING)
 				(*it)->_response->terminateCgiProcess();
@@ -639,7 +639,7 @@ void WebServer::lookForTimeouts()
 		if ((*sit)->checkTimeout())
 		{
 			_logger << "WebServer >> lookForTimeouts >> Session timeout reached - sessionId " << (*sit)->getSessionId();
-			printLogNew(_logger, RED, std::cerr, true);
+			printLogNew(_logger, WHITE, std::cout, true);
 			delete (*sit);
         	sit = _sessions->erase(sit);
 		}
