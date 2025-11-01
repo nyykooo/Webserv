@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/31 14:22:14 by discallow        ###   ########.fr       */
+/*   Updated: 2025/11/01 13:57:39 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 // ######### LIFE CYCLE #########
 
-Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1), _requestSize(1000000), _rootInsideLocation(false) {}
+Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1), _errorPage(NULL), _requestSize(1000000), _rootInsideLocation(false) {}
 
 Block::Block(const Block& other)
 {
@@ -114,7 +114,8 @@ const std::string&	Block::getUploadDirectory() const {
 void	Block::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
 
 	ErrorPageRule rule(errorPage, errorPagePath, newStatus);
-	this->_errorPage = new std::set<ErrorPageRule>();
+	if (this->_errorPage == NULL)
+		this->_errorPage = new std::set<ErrorPageRule>();
 	this->_errorPage->insert(rule);
 }
 

@@ -539,7 +539,7 @@ std::string HttpResponse::getFullPath()
 		return (locPath);
 	if (_block->isRootInsideLocation())
 	{
-		size_t locIndex = _req->getPath().find(_block->getLocation());
+		size_t locIndex = locPath.find(_block->getLocation());
 
 		if (locIndex == 0)
 		{
@@ -548,7 +548,9 @@ std::string HttpResponse::getFullPath()
 				locPath.erase(0, 1);
 		}
 	}
-
+	else
+		if (locPath[0] == '/')
+			locPath.erase(0, 1);
 	//std::cout << CYAN << "locPath: " << _req->getPath() << RESET << std::endl;
 	return (locPath);
 }
