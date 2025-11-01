@@ -19,6 +19,7 @@ class Client;
 
 class HttpResponse {
 	private:
+		std::stringstream					_logger;
 		int									_resStatus;
 		std::string							_resHeader;
 		bool								_useNewLocation;

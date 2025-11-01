@@ -100,36 +100,6 @@ void	HttpResponse::setCgiLocation(const std::string& location) {
 	}
 }
 
-// static std::string readFd(int fd)
-// {
-// 	const size_t bufSize = 4096;
-// 	char buffer[bufSize];
-// 	std::string result;
-// 	ssize_t bytesRead;
-
-// 	while (true)
-// 	{
-// 		bytesRead = read(fd, buffer, bufSize);
-// 		if (bytesRead > 0)
-// 		{
-// 			result.append(buffer, bytesRead);
-// 		}
-// 		else if (bytesRead == 0)
-// 		{
-// 			break;
-// 		}
-// 		else
-// 		{
-// 			std::stringstream ss;
-// 			ss << "Error reading fd: (" << fd << ")";
-// 			printLog(ss.str(), RED, std::cout);
-// 			return "";
-// 		}
-// 	}
-
-// 	return result;
-// }
-
 void HttpResponse::checkCgiProcess()
 {
 	int doneProcess;
@@ -149,9 +119,8 @@ void HttpResponse::checkCgiProcess()
 			_resStatus = 200; // OK
 		else
 			_resStatus = 500; // Internal Server Error
-		std::stringstream ss;
-		ss << "CGI process finished:\n\t-PID: " << _cgiPid << ";\n\t-Status: " << _resStatus;
-		printLog(ss.str(), WHITE, std::cout);
+		_logger << "HttpResponse >> checkCgiProcess >> CGI process finished:\n\t-PID: " << _cgiPid << ";\n\t-Status: " << _resStatus;
+		printLogNew(_logger, WHITE, std::cout, true);
 		return;		   // Retorna para não bloquear o servidor
 	}
 }
@@ -176,7 +145,8 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	// Create pipes for input (to CGI) and output (from CGI)
 	if (pipe(pipeInput) == -1 || pipe(pipeOutput) == -1)
 	{
-		std::cerr << "Pipe error: " << strerror(errno) << std::endl;
+		_logger << "HttpResponse >> forkExecCgi >> Pipe error: " << strerror(errno);
+		printLogNew(_logger, RED, std::cerr, true);
 		_resStatus = 500;
 		return;
 	}
@@ -184,16 +154,16 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	fcntl(pipeInput[1], F_SETFL, O_NONBLOCK);
 	fcntl(pipeOutput[0], F_SETFL, O_NONBLOCK);
 
-	std::stringstream ss;
-	ss << "CGI execution:\n\t-interpreter: " << interpreter
+	_logger << "HttpResponse >> forkExecCgi >> CGI execution:\n\t-interpreter: " << interpreter
 	   << ";\n\t-script: " << _script_name;
-	printLog(ss.str(), WHITE, std::cout);
+	printLogNew(_logger, WHITE, std::cout, true);
 
 	// Fork the process
 	pid_t pid = fork();
 	if (pid < 0)
 	{
-		std::cerr << "Fork error: " << strerror(errno) << std::endl;
+		_logger << "HttpResponse >> forkExecCgi >> Fork error: " << strerror(errno);
+		printLogNew(_logger, RED, std::cerr, true);
 		_resStatus = 500;
 		close(pipeInput[0]); close(pipeInput[1]);
 		close(pipeOutput[0]); close(pipeOutput[1]);
@@ -211,7 +181,8 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		if (dup2(pipeInput[0], STDIN_FILENO) == -1 ||
 			dup2(pipeOutput[1], STDOUT_FILENO) == -1)
 		{
-			std::cerr << "dup2 error: " << strerror(errno) << std::endl;
+			_logger << "HttpResponse >> forkExecCgi >> dup2 error: " << strerror(errno);
+			printLogNew(_logger, RED, std::cerr, true);
 			exit(1);
 		}
 
@@ -223,7 +194,8 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		int debugFd = open("./cgi_debug.log", O_WRONLY | O_CREAT | O_APPEND, 0644);
 		if (debugFd == -1)
 		{
-			std::cerr << "Failed to open debug log file: " << strerror(errno) << std::endl;
+			_logger << "HttpResponse >> forkExecCgi >> Failed to open debug log file: " << strerror(errno);
+			printLogNew(_logger, RED, std::cerr, true);
 			exit(1);
 		}
 		dup2(debugFd, STDERR_FILENO);
@@ -235,23 +207,25 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		std::string path = _fullPath.substr(0, found);
 		if (chdir(path.c_str()) == -1)
 		{
-			std::cerr << "CGI Chdir error: " << strerror(errno) << " " << path << std::endl;
+			_logger << "HttpResponse >> forkExecCgi >> CGI Chdir error: " << strerror(errno) << " " << path;
+			printLogNew(_logger, RED, std::cerr, true);
 			exit(1);
 		}
 
 		// Execute the CGI
 		execve(interpreter.c_str(), const_cast<char **>(args), const_cast<char **>(_envp));
 
-		std::cerr << "CGI Execution error: " << strerror(errno) << std::endl;
+		_logger << "HttpResponse >> forkExecCgi >> CGI Execution error: " << strerror(errno);
+		printLogNew(_logger, RED, std::cerr, true);
 		exit(1);
 	}
 	// ------------------- PARENT PROCESS -------------------
 	else
 	{
 		_cgiPid = pid;
-		std::stringstream ss;
-		ss << "CGI process started:\n\t-PID: " << _cgiPid;
-		printLog(ss.str(), WHITE, std::cout);
+
+		_logger << "HttpResponse >> forkExecCgi >> CGI process started:\n\t-PID: " << _cgiPid;
+		printLogNew(_logger, WHITE, std::cout, true);
 
 		_client->setProcessingState(CGI_PROCESSING);
 
@@ -278,7 +252,8 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 			ssize_t bytesWritten = write(_pipeIn, _req->getBody().c_str(), _req->getBody().size());
 			if (bytesWritten == -1 || static_cast<size_t>(bytesWritten) != _req->getBody().size())
 			{
-				std::cerr << "Error writing request body to CGI stdin: " << strerror(errno) << std::endl;
+				_logger << "HttpResponse >> forkExecCgi >> Error writing request body to CGI stdin: " << strerror(errno) << std::endl;
+				printLogNew(_logger, RED, std::cerr, true);
 				close(_pipeIn);
 				close(_pipeOut);
 				_resStatus = 500;
@@ -535,12 +510,14 @@ void HttpResponse::setStatusTexts()
 
 static std::string createDirIndex(std::string path)
 {
+	std::stringstream _logger;
 	std::string dirIndex = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Directory Index</title></head><body><h1>Directory Index for " + path + "</h1><ul>";
 
 	DIR *dir = opendir(path.c_str());
 	if (!dir)
 	{
-		std::cerr << "Failed to open directory: " << strerror(errno) << std::endl;
+		_logger << "Failed to open directory: " << strerror(errno);
+		printLogNew(_logger, RED, std::cerr, true);
 		return "<p>Error opening directory.</p>";
 	}
 
@@ -609,14 +586,12 @@ std::string HttpResponse::getFullPath()
 	else
 		if (locPath[0] == '/')
 			locPath.erase(0, 1);
-	//std::cout << CYAN << "locPath: " << _req->getPath() << RESET << std::endl;
 	return (locPath);
 }
 
 void HttpResponse::checkFile(int methodType)
 {
 	struct stat st;
-	std::stringstream ss;
 
 	std::size_t pos = _fileName.find_last_of("?");
 	if (pos != std::string::npos)
@@ -624,13 +599,13 @@ void HttpResponse::checkFile(int methodType)
 
 	if (stat(_fileName.c_str(), &st) == -1)
 	{
-		ss << "stat error: " << strerror(errno) << " '" << _fileName << "'";
-		printLog(ss.str(), RED, std::cout);
+		_logger << "HttpResponse >> checkFile >> stat error: " << strerror(errno) << " '" << _fileName << "'";
+		printLogNew(_logger, RED, std::cerr, true);
 		_resStatus = 404;
 		return;
 	}
-	ss << "stat sucess - _fileName: " << " '" << _fileName << "'";
-	printLog(ss.str(), GREEN, std::cout);
+	_logger << "HttpResponse >> checkFile >> stat sucess - _fileName: " << " '" << _fileName << "'";
+	printLogNew(_logger, GREEN, std::cout, true);
 	if (_cgiRequest == true)
 	{
 		forkExecCgi(_cgiPath);
@@ -832,7 +807,6 @@ void	HttpResponse::buildFullPath() {
 		_fullPath = _newRoot + "/" + locPath;
 	locPath = removeSlashes(this->getFullPath());
 	_fileName = _newRoot + "/" + locPath;
-	//std::cout << CYAN << _fileName << RESET << std::endl;
 }
 
 void HttpResponse::execMethod()
@@ -1322,8 +1296,6 @@ void	HttpResponse::cleanUploadDir() {
 
 void	HttpResponse::doRawUpload() {
         _fileName = _newUploadDir + _fileAfterRelativePath;
-
-		//std::cout << YELLOW << _newUploadDir << RESET << std::endl;
 
         // Save file content
         if (!saveBodyToFile(_fileName, _req->getBody()))
