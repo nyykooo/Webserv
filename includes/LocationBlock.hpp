@@ -7,7 +7,6 @@ class LocationBlock : public Block
 	private:
 		bool													_exactMatchModifier;
 		static int												_locationCurlyBracketsCount;
-		std::string												_uploadDirectory;
 	public:
 
 		// SETTERS

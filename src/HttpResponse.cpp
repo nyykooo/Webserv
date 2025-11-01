@@ -766,7 +766,6 @@ void	HttpResponse::buildFullPath() {
 	std::string locPath = removeSlashes(this->getFullPath());
 	_scriptNameNico = locPath.substr(locPath.find_last_of('/') + 1);
 	std::size_t pos = locPath.find_last_of('/');
-	//std::cout << RED << _newRoot << " " << locPath << RESET << std::endl;
 	if (pos != std::string::npos)
 		_fullPath = _newRoot + "/" + locPath.substr(0, pos);
 	else
@@ -1381,7 +1380,6 @@ void HttpResponse::handlePOST()
 	checkFile(POST);
 	if (_cgiRequest)
 		return;
-	// O header content-type é necessário para o POST
 	std::string contentType = parseContentType(_req->getHeaders());
 	if (!_req->getBody().empty() && contentType.empty())
 	{
@@ -1393,8 +1391,8 @@ void HttpResponse::handlePOST()
 	// Ver se upload dir existe no config.
 	if (_block->getUploadDirectory() == "" || !isRequestUpload())
 	{
-		_resStatus = 403;
-		_resBody = http_error_403_page;
+		_resStatus = 405;
+		_resBody = http_error_405_page;
 		_resContentLength = _resBody.size();
 		return ;
 	}
@@ -1402,8 +1400,8 @@ void HttpResponse::handlePOST()
 	setNewUploadDir(); // this sets the Upload Directory with the root
 	if (access(_newUploadDir.c_str(), W_OK) != 0)
 	{
-		_resStatus = 500; // Internal Server Error
-		_resBody = http_error_500_page;
+		_resStatus = 403;
+		_resBody = http_error_403_page;
 		_resContentLength = _resBody.size();
 		return ;
 	}

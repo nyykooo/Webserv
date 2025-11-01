@@ -6,7 +6,7 @@
 /*   By: discallow <discallow@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 12:08:01 by ncampbel          #+#    #+#             */
-/*   Updated: 2025/10/28 14:51:20 by discallow        ###   ########.fr       */
+/*   Updated: 2025/10/31 14:22:14 by discallow        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,9 @@
 
 // ######### LIFE CYCLE #########
 
-Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1),  _errorPage(NULL), _requestSize(1000000), _rootInsideLocation(false) {}
+Block::Block(): _root(""), _autoIndex(false), _newLocation(""), _defaultFiles(), _redirectStatusCode(-1), _requestSize(1000000), _rootInsideLocation(false) {}
 
-Block::Block(const Block& other): _errorPage(NULL)
+Block::Block(const Block& other)
 {
 	_root = other._root;
 	_autoIndex = other._autoIndex;
@@ -26,18 +26,13 @@ Block::Block(const Block& other): _errorPage(NULL)
 	_redirectStatusCode = other._redirectStatusCode;
 	_cgiMap = other._cgiMap;
 	_uploadDirectory = other._uploadDirectory;
-	if (other._errorPage)
-		_errorPage = new std::set<ErrorPageRule>(*other._errorPage);
+	_errorPage = other._errorPage;
 	_requestSize = other._requestSize;
 	_location = other._location;
 	_rootInsideLocation = other._rootInsideLocation;
 }
 
 Block::~Block() {
-	if (_errorPage != NULL) {
-		delete _errorPage;
-		_errorPage = NULL;
-	}
 }
 
 Block &Block::operator=(const Block &other)
@@ -52,12 +47,7 @@ Block &Block::operator=(const Block &other)
 		_redirectStatusCode = other._redirectStatusCode;
 		_cgiMap = other._cgiMap;
 		_uploadDirectory = other._uploadDirectory;
-		if (_errorPage) {
-			delete _errorPage;
-			_errorPage = NULL;
-		}
-		if (other._errorPage)
-			_errorPage = new std::set<ErrorPageRule>(*other._errorPage);
+		_errorPage = other._errorPage;
 		_requestSize = other._requestSize;
 		_location = other._location;
 		_rootInsideLocation = other._rootInsideLocation;
@@ -124,8 +114,7 @@ const std::string&	Block::getUploadDirectory() const {
 void	Block::setErrorPage(int errorPage, const std::string& errorPagePath, int newStatus) {
 
 	ErrorPageRule rule(errorPage, errorPagePath, newStatus);
-	if (this->_errorPage == NULL)
-		this->_errorPage = new std::set<ErrorPageRule>();
+	this->_errorPage = new std::set<ErrorPageRule>();
 	this->_errorPage->insert(rule);
 }
 

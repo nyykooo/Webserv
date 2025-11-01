@@ -9,39 +9,29 @@ int LocationBlock::_locationCurlyBracketsCount = 0;
 LocationBlock::LocationBlock() : Block() {}
 
 
-LocationBlock::LocationBlock(const Configuration& other): _exactMatchModifier(false)  {
-	_root = other.getRoot(); 
-	_allowedMethods = other.getMethods();
-	_autoIndex = other.getAutoIndex();
-	_redirectStatusCode = other.getRedirectStatusCode();
-	_defaultFiles = other.getDefaultFiles();
-	_newLocation = other.getNewLocation();
-	_cgiMap = other.getCgiMap();
+LocationBlock::LocationBlock(const Configuration& other): Block(other)  {
+	_exactMatchModifier = false;
 }
 
 LocationBlock::~LocationBlock() {}
 
 LocationBlock::LocationBlock(const LocationBlock& other): Block(other), _exactMatchModifier(other._exactMatchModifier) {
-	_root = other.getRoot();
-	_allowedMethods = other.getMethods();
-	_autoIndex = other.getAutoIndex();
-	_redirectStatusCode = other.getRedirectStatusCode();
-	_defaultFiles = other.getDefaultFiles();
-	_cgiMap = other.getCgiMap();
-	_newLocation = other.getNewLocation();
 }
 
 LocationBlock& LocationBlock::operator=(const LocationBlock& other) {
 	if (this != &other) {
-		_root = other._root; 
-		_allowedMethods = other._allowedMethods;
+		_root = other._root;
 		_autoIndex = other._autoIndex;
-		_exactMatchModifier = other._exactMatchModifier;
-		_location = other._location;
-		_redirectStatusCode = other._redirectStatusCode;
-		_defaultFiles = other._defaultFiles;
 		_newLocation = other._newLocation;
+		_defaultFiles = other._defaultFiles;
+		_allowedMethods = other._allowedMethods;
+		_redirectStatusCode = other._redirectStatusCode;
 		_cgiMap = other._cgiMap;
+		_uploadDirectory = other._uploadDirectory;
+		_errorPage = other._errorPage;
+		_requestSize = other._requestSize;
+		_location = other._location;
+		_rootInsideLocation = other._rootInsideLocation;
 	}
 	return (*this);
 }

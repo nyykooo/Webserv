@@ -16,26 +16,35 @@ Configuration::Configuration(): Block() {
 Configuration::~Configuration() {}
 
 Configuration::Configuration(const Configuration& other): Block(other), _host(other._host), _serverName(other._serverName),
-	_locations(other._locations) {_root = other.getRoot();
-	_defaultFiles = other.getDefaultFiles();
-	_autoIndex = other.getAutoIndex();
-	_redirectStatusCode = other.getRedirectStatusCode();
-	_allowedMethods = other.getMethods();
+	_locations(other._locations) {
+	_root = other._root;
+	_autoIndex = other._autoIndex;
+	_newLocation = other._newLocation;
+	_defaultFiles = other._defaultFiles;
+	_allowedMethods = other._allowedMethods;
+	_redirectStatusCode = other._redirectStatusCode;
+	_cgiMap = other._cgiMap;
+	_uploadDirectory = other._uploadDirectory;
+	_errorPage = other._errorPage;
+	_requestSize = other._requestSize;
+	_location = other._location;
+	_rootInsideLocation = other._rootInsideLocation;
 }
 
 Configuration&	Configuration::operator=(const Configuration& other) {
 	if (this != &other) {
-		_host = other._host;
-		_serverName = other._serverName;
 		_root = other._root;
-		_defaultFiles = other._defaultFiles;
 		_autoIndex = other._autoIndex;
-		_requestSize = other._requestSize;
-		_redirectStatusCode = other._redirectStatusCode;
 		_newLocation = other._newLocation;
+		_defaultFiles = other._defaultFiles;
 		_allowedMethods = other._allowedMethods;
+		_redirectStatusCode = other._redirectStatusCode;
 		_cgiMap = other._cgiMap;
-		_locations = other._locations;
+		_uploadDirectory = other._uploadDirectory;
+		_errorPage = other._errorPage;
+		_requestSize = other._requestSize;
+		_location = other._location;
+		_rootInsideLocation = other._rootInsideLocation;
 	}
 	return (*this);
 }
