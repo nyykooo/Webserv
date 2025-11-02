@@ -43,7 +43,7 @@ WebServer::WebServer()
 	// THIS CLASS WILL NEVER BE DEFAULT CONSTRUCTED
 }
 
-WebServer::WebServer(const std::vector<Configuration> conf) : _configurations(conf)
+WebServer::WebServer(const std::vector<Configuration> conf) : _epoll_fd(-1), _configurations(conf)
 {
 try {
 	initEpoll();
@@ -72,7 +72,9 @@ try {
     catch (...) {
 		if (_events)
         	delete[] _events;
-        throw;
+		if (this->getEpollFd() != -1)
+			close(this->getEpollFd());
+		throw;
     }
 }
 
