@@ -22,6 +22,7 @@ SRC = src/main.cpp src/Socket.cpp src/HttpRequest.cpp \
 	   src/ErrorPageRule.cpp src/Block.cpp \
 	   src/SessionData.cpp \
 	   src/ErrorPages.cpp \
+	   src/Signals.cpp
 
 OBJ_DIR = obj
 

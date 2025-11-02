@@ -29,7 +29,7 @@ int	main(int argc, char** argv)
 			std::cerr << RED << "Wrong input. Usage: ./webserv [configuration_file]" << RESET << std::endl;
 			return (1);
 	}
-
+	setupSignals();
 	std::vector<Configuration>	configVector;
 	try	{
 		setup(configFile, configVector);

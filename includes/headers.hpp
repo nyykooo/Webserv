@@ -38,7 +38,6 @@
 # include <map>
 # include <set>
 # include <stdexcept>
-# include <cstdlib>
 # include <climits>
 
 
@@ -57,6 +56,7 @@
 # include "functions.hpp"
 # include "SessionData.hpp"
 # include "ErrorPages.hpp"
+# include "Signals.hpp"
 
 // utils 
 std::string toLower(const std::string &str);

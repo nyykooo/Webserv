@@ -1,5 +1,7 @@
 #include "../includes/headers.hpp"
 
+extern volatile sig_atomic_t g_shutdown;
+
 // ### STATIC FUNCTIONS ###
 Client *findClient(int client_fd, std::vector<Client *> &client_vec)
 {
@@ -654,26 +656,23 @@ void WebServer::lookForTimeouts()
 
 void WebServer::startServer()
 {
-	while (true)
+	while (!g_shutdown)
 	{
 		// Espera por novos eventos
 		int event_count = epoll_wait(_epoll_fd, _events, MAX_EVENTS, 100);
 		if (event_count < 0)
 		{
+			if (errno == EINTR) // Interrompido por sinal
+				continue;
 			_logger << "WebServer >> startServer >> Erro no epoll_wait" << strerror(errno) << std::endl;
 			printLogNew(_logger, RED, std::cerr, true);
 			return;
 		}
-		try
-		{
-			handleEvents(event_count);
-			lookForTimeouts();
-		}
-		catch (const std::exception &e) {
-			_logger << e.what() << '\n';
-			printLogNew(_logger, RED, std::cerr, true);
-		}
+		handleEvents(event_count);
+		lookForTimeouts();
 	}
+	_logger << "WebServer >> startServer >> Shutdown signal received";
+	printLogNew(_logger, YELLOW, std::cout, true);
 }
 
 static bool checkHostType(const std::string &host)
