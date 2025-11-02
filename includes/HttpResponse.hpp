@@ -81,6 +81,9 @@ class HttpResponse {
 		std::string							_relativePath;
 		std::string							_fileAfterRelativePath;
 		size_t								_bytesSent;
+
+		int									_pipeInput[2];
+		int									_pipeOutput[2];
 		
 		public:
 		

@@ -1,69 +1,29 @@
 #include "../includes/headers.hpp"
 
 HttpResponse::HttpResponse()
-: _resStatus(-1)
-, _resHeader()
-, _useNewLocation(false)
-, _pipeIn(-1)
-, _pipeOut(-1)
-, _cgiPid(-1)
-, _response()
-, _resBody()
-, _resContentLength(0)
-, _resContentType()
-, _fileName()
-, _conf(NULL)
-, _req(NULL)
-, _loc(NULL)
-, _client(NULL)
-, _block(NULL)
-, _method(-1)
-, _mimeTypes()
-, _httpStatus()
-, _statusTexts()
-, _fullPath()
-, _scriptNameNico()
-, _newRoot()
-, _clientSession()
-, _contentLength()
-, _contentType()
-, _gatewayInterface()
-, _pathInfo()
-, _queryString()
-, _remoteAddress()
-, _requestMethod()
-, _scriptName()
-, _serverName()
-, _serverPort()
-, _serverProtocol()
-, _serverSoftware()
-, _cgiPath()
-, _cgiRequest(false)
-, _envp(NULL)
-, _tempEnv()
-, _cgiParsedHeaders()
-, _cgiHeaders()
-, _cgiBody()
-, _cgiCookies()
-, _cgiContentType()
-, _cgiLocation()
-, _cgiContentLength()
-, _cgiHeadersFound(0)
-, _cgiStatusCode(0)
-, _file()
-, _filePos(0)
-, _rawUpload(false)
-, _newUploadDir()
-, _boundary()
-, _relativePath()
-, _fileAfterRelativePath()
-, _bytesSent(0)
-{
+: _resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _resContentLength(0), _conf(NULL), _req(NULL), _loc(NULL), _client(NULL), _block(NULL), 
+	_method(-1), _cgiRequest(false), _envp(NULL), _cgiHeadersFound(0), _cgiStatusCode(0), _filePos(0), _rawUpload(false), _bytesSent(0) {
+	_pipeInput[0] = _pipeInput[1] = -1;
+	_pipeOutput[0] = _pipeOutput[1] = -1;
 }
 
 HttpResponse::~HttpResponse() {
 	if (_file.is_open())
 		_file.close();
+	if (_envp) {
+			for (size_t i = 0; _envp[i] != NULL; i++)
+				delete[] _envp[i];
+			delete[] _envp;
+			_envp = NULL;
+	}
+	if (_pipeInput[0] != -1 && _pipeInput[0] != 0 && _pipeInput[0] != 1 && _pipeInput[0] != 2)
+		close(_pipeInput[0]);
+	if (_pipeInput[1] != -1 && _pipeInput[1] != 0 && _pipeInput[1] != 1 && _pipeInput[1] != 2)
+		close(_pipeInput[1]);
+	if (_pipeOutput[0] != -1 && _pipeOutput[0] != 0 && _pipeOutput[0] != 1 && _pipeOutput[0] != 2)
+		close(_pipeOutput[0]);
+	if (_pipeOutput[1] != -1 && _pipeOutput[1] != 0 && _pipeOutput[1] != 1 && _pipeOutput[1] != 2)
+		close(_pipeOutput[1]);
 }
 
 void	HttpResponse::setHttpStatus(int status) {
@@ -129,9 +89,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 {
 	_fileName = removeSlashes(_fileName);
 
-	char *args[3];
-	int pipeInput[2];
-	int pipeOutput[2];
+	char *args[3];	
 
 	std::string _script_name = _scriptNameNico.find_last_of('?') != std::string::npos
 									? _scriptNameNico.substr(0, _scriptNameNico.find_last_of('?'))
@@ -143,7 +101,7 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 
 	// signal(SIGPIPE, SIG_IGN); // ignore SIGPIPE to avoid crashes
 	// Create pipes for input (to CGI) and output (from CGI)
-	if (pipe(pipeInput) == -1 || pipe(pipeOutput) == -1)
+	if (pipe(_pipeInput) == -1 || pipe(_pipeOutput) == -1)
 	{
 		_logger << "HttpResponse >> forkExecCgi >> Pipe error: " << strerror(errno);
 		printLogNew(_logger, RED, std::cerr, true);
@@ -151,8 +109,8 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		return;
 	}
 
-	fcntl(pipeInput[1], F_SETFL, O_NONBLOCK);
-	fcntl(pipeOutput[0], F_SETFL, O_NONBLOCK);
+	fcntl(_pipeInput[1], F_SETFL, O_NONBLOCK);
+	fcntl(_pipeOutput[0], F_SETFL, O_NONBLOCK);
 
 	_logger << "HttpResponse >> forkExecCgi >> CGI execution:\n\t-interpreter: " << interpreter
 	   << ";\n\t-script: " << _script_name;
@@ -165,8 +123,8 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		_logger << "HttpResponse >> forkExecCgi >> Fork error: " << strerror(errno);
 		printLogNew(_logger, RED, std::cerr, true);
 		_resStatus = 500;
-		close(pipeInput[0]); close(pipeInput[1]);
-		close(pipeOutput[0]); close(pipeOutput[1]);
+		close(_pipeInput[0]); close(_pipeInput[1]);
+		close(_pipeOutput[0]); close(_pipeOutput[1]);
 		return;
 	}
 
@@ -174,12 +132,12 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 	if (pid == 0)
 	{
 		// Close unused ends
-		close(pipeInput[1]);
-		close(pipeOutput[0]);
+		close(_pipeInput[1]);
+		close(_pipeOutput[0]);
 
 		// Redirect stdin and stdout
-		if (dup2(pipeInput[0], STDIN_FILENO) == -1 ||
-			dup2(pipeOutput[1], STDOUT_FILENO) == -1)
+		if (dup2(_pipeInput[0], STDIN_FILENO) == -1 ||
+			dup2(_pipeOutput[1], STDOUT_FILENO) == -1)
 		{
 			_logger << "HttpResponse >> forkExecCgi >> dup2 error: " << strerror(errno);
 			printLogNew(_logger, RED, std::cerr, true);
@@ -187,8 +145,8 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		}
 
 		// Close originals after dup2
-		close(pipeInput[0]);
-		close(pipeOutput[1]);
+		close(_pipeInput[0]);
+		close(_pipeOutput[1]);
 
 		// Redirect stderr to debug log
 		int debugFd = open("./cgi_debug.log", O_WRONLY | O_CREAT | O_APPEND, 0644);
@@ -230,20 +188,20 @@ void HttpResponse::forkExecCgi(std::string interpreter)
 		_client->setProcessingState(CGI_PROCESSING);
 
 		// Close unused ends in the parent
-		close(pipeInput[0]);
-		close(pipeOutput[1]);
+		close(_pipeInput[0]);
+		close(_pipeOutput[1]);
 
 		// Store relevant ends
-		_pipeIn = pipeInput[1];
+		_pipeIn = _pipeInput[1];
 		struct epoll_event ev_in;
 		ev_in.events = EPOLLOUT | EPOLLRDHUP | EPOLLHUP | EPOLLERR;
-		ev_in.data.fd = pipeInput[1];
+		ev_in.data.fd = _pipeInput[1];
 		epoll_ctl(_client->getEpollFd(), EPOLL_CTL_ADD, _pipeIn, &ev_in);
 
-		_pipeOut = pipeOutput[0];
+		_pipeOut = _pipeOutput[0];
 		struct epoll_event ev_out;
 		ev_out.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR;
-		ev_out.data.fd = pipeOutput[0];
+		ev_out.data.fd = _pipeOutput[0];
 		epoll_ctl(_client->getEpollFd(), EPOLL_CTL_ADD, _pipeOut, &ev_out);
 
 
@@ -1211,9 +1169,12 @@ const std::string HttpResponse::checkStatusCode()
 	return _resBody;
 }
 
-HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resContentLength(0), _method(-1), _cgiRequest(false), _cgiHeadersFound(0), _cgiStatusCode(0), _bytesSent(0)
+HttpResponse::HttpResponse(Client *client) :
+	_resStatus(-1), _useNewLocation(false), _pipeIn(-1), _pipeOut(-1), _cgiPid(-1), _resContentLength(0), _conf(NULL), _req(NULL), _loc(NULL), _client(client), _block(NULL), 
+	_method(-1), _cgiRequest(false), _envp(NULL), _cgiHeadersFound(0), _cgiStatusCode(0), _filePos(0), _rawUpload(false), _bytesSent(0)
 {
-	_client = client;
+	_pipeInput[0] = _pipeInput[1] = -1;
+	_pipeOutput[0] = _pipeOutput[1] = -1;
 	_conf = client->_request->_config;
 	_req = client->_request;
 	_loc = checkLocationBlock();
@@ -1224,7 +1185,6 @@ HttpResponse::HttpResponse(Client *client) : _resStatus(-1), _cgiPid(0),  _resCo
 		_block = _conf;
 	setMimeTypes();
 	setEnv();
-	_filePos = 0;
 	if (_req->hasParseError()) {
 		_resStatus = _req->getParseStatus();
 		return ;
