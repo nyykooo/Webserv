@@ -102,9 +102,6 @@ WebServer &WebServer::operator=(const WebServer &other)
 
 WebServer::~WebServer()
 {
-	if (_events)
-		delete _events;
-	std::cout << " CARALHO " << std::endl;
 	for (std::vector<Client *>::iterator it = _clients_vec.begin(); it != _clients_vec.end(); ++it)
 	{
 		close((*it)->getSocketFd());

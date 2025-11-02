@@ -529,7 +529,6 @@ static std::string createDirIndex(std::string path)
 			dirIndex += "<li>" + std::string(entry->d_name) + "</li>";
 		}
 	}
-
 	dirIndex += "</ul></body></html>";
 	closedir(dir);
 	return dirIndex;
@@ -556,7 +555,7 @@ void HttpResponse::openDir(std::string path)
 	}
 	if (_block->getAutoIndex())
 	{
-
+		_fileName = ".html";
 		_resBody = createDirIndex(path);
 		_resContentLength = _resBody.size();
 		_resStatus = 200;
@@ -868,10 +867,12 @@ const std::string HttpResponse::httpFileContent(int errorPage)
 	}
 	if (bytesRead < 0)
 	{
+		close(errorPage);
 		_fileName = ".html";
 		_resStatus = 404;
 		return http_error_404_page;
 	}
+	close(errorPage);
 	return (result);
 }
 
@@ -890,7 +891,6 @@ int HttpResponse::openFile()
 				_resStatus = (*it).newError;
 			break;
 		}
-
 		it++;
 	}
 	if (it == _block->getErrorPage().end())
