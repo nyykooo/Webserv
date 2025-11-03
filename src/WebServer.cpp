@@ -73,9 +73,15 @@ try {
     }
     catch (...) {
 		if (_events)
-        	delete[] _events;
+			delete[] _events;
 		if (this->getEpollFd() != -1)
 			close(this->getEpollFd());
+		for (std::map<int, Server *>::iterator it = _servers_map.begin(); it != _servers_map.end(); ++it)
+		{
+			close(it->second->getSocketFd());
+			delete it->second;
+		}
+		_servers_map.clear();
 		throw;
     }
 }
@@ -350,7 +356,6 @@ static bool sendResponseToClient(Client *client)
 	size_t size = client->_response->getResponse().size();
 	size_t totalSent = client->_response->getFilePos();
 	int bytesToSend = size - totalSent;
-	std::cout << buf << std::endl;
 	int sentBytes = send(client->getSocketFd(), buf + totalSent, bytesToSend, 0);
 	if (sentBytes < 0)
 	{

@@ -558,6 +558,7 @@ void HttpResponse::checkFile(int methodType)
 	{
 		_logger << "HttpResponse >> checkFile >> stat error: " << strerror(errno) << " '" << _fileName << "'";
 		printLogNew(_logger, RED, std::cerr, true);
+		_fileName = ".html";
 		_resStatus = 404;
 		return;
 	}

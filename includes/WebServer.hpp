@@ -22,6 +22,7 @@ class WebServer
 		struct epoll_event									*_events;
 		std::vector<SessionData *>							*_sessions;
 		Client												*_currentClient;
+		Server												*_server;
 		
 	public:
 		WebServer();
