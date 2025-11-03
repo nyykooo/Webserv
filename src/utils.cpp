@@ -63,7 +63,7 @@ std::string get_http_date()
 }
 
 
-void	printLogNew(std::stringstream &ss, const char	*color, std::ostream &stream, bool clean)
+void	printLog(std::stringstream &ss, const char	*color, std::ostream &stream, bool clean)
 {
 	std::string message = ss.str();
 	std::string time = setTimeStamp();
@@ -73,12 +73,6 @@ void	printLogNew(std::stringstream &ss, const char	*color, std::ostream &stream,
 		ss.str("");
 		ss.clear();
 	}
-}
-
-void	printLog(std::string message, const char	*color, std::ostream &stream)
-{
-	std::string time = setTimeStamp();
-	stream << "[" + time + "]: " << color << message << RESET << std::endl;
 }
 
 std::string toLower(const std::string &str)

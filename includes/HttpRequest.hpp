@@ -30,6 +30,7 @@ class HttpRequest
 {
 	private:
 		// Attributes
+		std::stringstream					_logger;
 		int									_parseStatus;
 		long								_contentLength;
 		bool								_headersCompleted;

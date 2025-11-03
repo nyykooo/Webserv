@@ -222,8 +222,8 @@ void HttpRequest::parse_headers()
 
 	if (std::getline(stream, header_line) && !header_line.empty()) {
 			parse_requestline(header_line);
-			std::stringstream ss;
-			printLog(ss.str(), WHITE, std::cout);
+			_logger << "HttpRequest >> parse_headers >> Header line parsed: " << header_line;
+			printLog(_logger, WHITE, std::cout, true);
 			if (_parseStatus != 200){
 				_requestComplete = true;
 				return ;}
