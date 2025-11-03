@@ -277,6 +277,11 @@ void HttpResponse::streamingFile(off_t fileSize, std::string contentType)
 {
 	_resContentLength = fileSize;
 	_resContentType = contentType;
+	// change epoll event to start sending file to client
+	struct epoll_event ev;
+	ev.events = EPOLLOUT;
+	ev.data.fd = _client->getSocketFd();
+	epoll_ctl(_client->getEpollFd(), EPOLL_CTL_MOD, _client->getSocketFd(), &ev);
 }
 
 void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
@@ -287,11 +292,6 @@ void HttpResponse::openReg(std::string path, int methodType, off_t fileSize)
 		_resStatus = 500;
 		return;
 	}
-	
-	struct epoll_event ev_in;
-	ev_in.events = EPOLLIN;
-	ev_in.data.fd = _file;
-	epoll_ctl(_client->getEpollFd(), EPOLL_CTL_ADD, _file, &ev_in);
 
 	std::cout << "HttpResponse >> openReg >> file requested is open in fd: " << _file << " and registered in epoll" << std::endl;
 	_resStatus = 200;
@@ -1501,7 +1501,9 @@ void HttpResponse::setHeadersSent(bool headersSent)
 
 bool HttpResponse::isFileOpen()
 {
-	return _file > 0;
+	if (_file > 0)
+		return true;
+	return false;
 }
 
 std::string &HttpResponse::getResponseBuffer()

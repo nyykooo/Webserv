@@ -14,12 +14,12 @@
 
 // ######### LIFE CYCLE #########
 
-Client::Client() : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0), _socketSize(-1)
+Client::Client() : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0), _socketSize(-1), _shouldRead(true)
 {
 	_time = std::time(NULL);
 }
 
-Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0), _firstRequest(true), _epoll_fd(-1), _socketSize(-1)
+Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _bytesSent(0), _firstRequest(true), _epoll_fd(-1), _socketSize(-1), _shouldRead(true)
 {
 	_uploadFd = -1;
 	_uploadSize = 0;
@@ -30,7 +30,7 @@ Client::Client(int server_fd) : _state(RECEIVING), _fileFd(-1), _fileSize(0), _b
 	initClientSocket(server_fd);
 }
 
-Client::Client(const Client &other) : Socket(other), _time(other.getTime()), _fileFd(-1), _fileSize(0), _bytesSent(0), _epoll_fd(-1), _socketSize(-1)
+Client::Client(const Client &other) : Socket(other), _time(other.getTime()), _fileFd(-1), _fileSize(0), _bytesSent(0), _epoll_fd(-1), _socketSize(-1), _shouldRead(other.getShouldRead())
 {
 	_response = NULL;
 	_request = NULL;
@@ -60,6 +60,7 @@ Client &Client::operator=(const Client &other)
 			delete _request;
 			_request = NULL;
 		}
+		_shouldRead = other.getShouldRead();
 	}
 	return *this;
 }
@@ -285,4 +286,14 @@ void Client::setFirstRequest(bool value) {
 void Client::setEpollFd(int fd) 
 {
 	_epoll_fd = fd;
+}
+
+void Client::setShouldRead(bool read)
+{
+	_shouldRead = read;
+}
+
+bool Client::getShouldRead() const
+{
+	return _shouldRead;
 }

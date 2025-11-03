@@ -9,7 +9,7 @@ int LocationBlock::_locationCurlyBracketsCount = 0;
 LocationBlock::LocationBlock() : Block() {}
 
 
-LocationBlock::LocationBlock(const Configuration& other): _exactMatchModifier(false)  {
+LocationBlock::LocationBlock(const Configuration& other): Block(other), _exactMatchModifier(false)  {
 	_root = other.getRoot(); 
 	_allowedMethods = other.getMethods();
 	_autoIndex = other.getAutoIndex();

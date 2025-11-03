@@ -32,6 +32,7 @@ class Client : public Socket {
 		int								_socketSize;
 		size_t							_bufferHighWatermark;
 		size_t							_bufferLowWatermark;
+		bool							_shouldRead;
 
 	public:
 		// ### ATRIBUTES ###
@@ -69,6 +70,7 @@ class Client : public Socket {
 		int								getSocketSize() const;
 		size_t							getBufferHighWatermark() const;
 		size_t							getBufferLowWatermark() const;
+		bool							getShouldRead() const;
 
 		// ### SETTERS ###
 		void							setTime(std::time_t time);
@@ -82,6 +84,7 @@ class Client : public Socket {
 		void 							setOriginalHeaders(const std::string &headers);
 		void							setFirstRequest(bool value);
 		void							setEpollFd(int fd);
+		void							setShouldRead(bool read);
 
 };
 

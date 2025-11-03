@@ -35,7 +35,7 @@ void static closeResetClientMemberFd(Client *client, int fd)
 	if (client->_response->getCgiOutput() == fd)
 		client->_response->setCgiOutput(-1);
 	if (client->_response->getFileStream() == fd)
-		client->_response->setCgiOutput(-1);
+		client->_response->setFileStream(-1);
 	
 	epoll_ctl(client->getEpollFd(), EPOLL_CTL_DEL, fd, NULL);
 	close(fd);
@@ -354,6 +354,7 @@ static bool sendResponseToClient(Client *client)
 	std::stringstream _logger;
 	client->_response->setResponse(client->_response->checkStatusCode());
 	const char *buf = client->_response->getResponse().c_str();
+	std::cout << buf <<std::endl;
 	size_t size = client->_response->getResponse().size();
 	size_t totalSent = client->_response->getFilePos();
 	int bytesToSend = size - totalSent;
@@ -616,7 +617,8 @@ void WebServer::handleEpollOutEvent(int i)
 
 void WebServer::treatExistingClient(int i)
 {
-	_logger << "WebServer >> treatExistingClient >> Searching for client owner of event.data.fd: " << _events[i].data.fd;
+	// _logger << "WebServer >> treatExistingClient >> Searching for client owner of event.data.fd: " << _events[i].data.fd;
+	// printLogNew(_logger, WHITE, std::cout, true);
 	_currentClient = findOwner(_events[i].data.fd, _clients_vec); // update all places that call findClient to use this new method
 	if (!_currentClient)
 		return ;
@@ -643,7 +645,8 @@ void WebServer::handleEvents(int event_count)
 {
 	for (int i = 0; i < event_count; ++i)
 	{
-		_logger << "WebServer >> handleEvents >> treating event";
+		// _logger << "WebServer >> handleEvents >> treating event";
+		// printLogNew(_logger, WHITE, std::cout, true);
 		// check if this event is a new connection or not
 		bool server_found = tryConnection(i);
 		if (!server_found)
@@ -660,7 +663,7 @@ void WebServer::lookForTimeouts()
 	{
 		if ((*it)->checkTimeout())
 		{
-			_logger << "Client timeout detected - client_fd: " << (*it)->getSocketFd();
+			_logger << "Client timeout detected - client_fd: " << (*it)->getSocketFd(); // mudar para EPOLLOUT para enviar os dados e fechar a conexao?!
 			printLog(_logger.str(), RED, std::cout);
 			_logger.str("");
 			_logger.clear();
@@ -668,7 +671,7 @@ void WebServer::lookForTimeouts()
 			if ((*it)->getProcessingState() == CGI_PROCESSING)
 				(*it)->_response->terminateCgiProcess();
 			else if ((*it)->getProcessingState() == RECEIVING_LARGE)
-				(*it)->_response->setResStatus(408); // Request Timeout
+				(*it)->_response->setResStatus(408); // Request Timeout -> adicionar bool para marcar se o request foi finalizado
 			else
 				(*it)->_response->setResStatus(503); // Request Timeout
 			sendResponseToClient(*it);
@@ -785,6 +788,7 @@ void WebServer::handleClientInput(int i)
 				return setClientTime(_events[i].data.fd);
 			if (data == 1)
 			{
+				_currentClient->setProcessingState(PROCESSING);
 				_logger << "WebServer >> handleClientInput >> starting response PROCESSING for client_fd: " << _currentClient->getSocketFd();
 				printLogNew(_logger, CYAN, std::cout, true);
 				sendData(_events[i].data.fd);
@@ -812,8 +816,9 @@ void WebServer::handleClientOutput()
 	{
 		case SEND_DATA:
 		{
-			_logger << "WebServer >> hanldeClientOutput >> SEND_DATA to client_fd: " << _currentClient->getSocketFd();
-			printLogNew(_logger, CYAN, std::cout, true);
+			// _logger << "WebServer >> hanldeClientOutput >> SEND_DATA to client_fd: " << _currentClient->getSocketFd();
+			// printLogNew(_logger, CYAN, std::cout, true);
+			readFromFile();
 			buildData(); // will include headers if needed
 			sendDataToClient(); // sends whatever is on the buffer
 			break;
@@ -822,7 +827,7 @@ void WebServer::handleClientOutput()
 		{
 			_logger << "WebServer >> hanleClientOutput >> Invalid state for EPOLLOUT: " << _currentClient->getProcessingState() << " to client " << _currentClient->getSocketFd();
 			printLogNew(_logger, RED, std::cerr, true);
-			_currentClient->setProcessingState(COMPLETED);
+			// _currentClient->setProcessingState(COMPLETED);
 			break;
 		}
 	}
@@ -864,7 +869,7 @@ const char *WebServer::WebServerErrorException::what() const throw()
 
 void WebServer::readFromFile()
 {
-	_logger << "WebServer >> readFromFile >> Event EPOLLIN detected for file: " << _currentClient->_response->getFileStream();
+	// _logger << "WebServer >> readFromFile >> Event EPOLLIN detected for file: " << _currentClient->_response->getFileStream();
 	size_t bufferSize = 8192;
 	char buffer[bufferSize];
 	int fd = _currentClient->_response->getFileStream();
@@ -878,17 +883,14 @@ void WebServer::readFromFile()
 	std::string &resBuffer = _currentClient->_response->getResponseBuffer();
 	if (resBuffer.size() >= _currentClient->getBufferHighWatermark()) {
 		// resBuffer is too large, take a break reading
-		struct epoll_event ev;
-		ev.events = 0;
-		ev.data.fd = fd;
-		epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, fd, &ev);
+		_currentClient->setShouldRead(false);
 		return;
 	}
 
 	ssize_t bytesRead = read(fd, buffer, bufferSize);
 	if (bytesRead < 0) {
-		_logger << "WebServer >> readFromFile >> Error while reading file for client_fd: " << _currentClient->getSocketFd();
-		printLogNew(_logger, RED, std::cerr, true);
+		// _logger << "WebServer >> readFromFile >> Error while reading file for client_fd: " << _currentClient->getSocketFd();
+		// printLogNew(_logger, RED, std::cerr, true);
 		closeResetClientMemberFd(_currentClient, fd);
 		return;
 	}
@@ -902,12 +904,6 @@ void WebServer::readFromFile()
 
 	// Append data to buffer
 	resBuffer.append(buffer, bytesRead);
-
-	// Ativa o EPOLLOUT do socket para envio
-	struct epoll_event ev;
-	ev.events = EPOLLOUT;
-	ev.data.fd = _currentClient->getSocketFd();
-	epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _currentClient->getSocketFd(), &ev);
 }
 
 void WebServer::sendDataToClient()
@@ -915,12 +911,24 @@ void WebServer::sendDataToClient()
 	int sockFd = _currentClient->getSocketFd();
 	std::string &resBuffer = _currentClient->_response->getResponseBuffer();
 
+	if (resBuffer.empty() && !_currentClient->_response->isFileOpen()) 
+	{
+		// if file is closed means that we finished sending data to client and end EPOLLOUT event
+		struct epoll_event ev;
+		ev.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR;
+		ev.data.fd = sockFd;
+		epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, sockFd, &ev);
+		
+		_logger << "WebServer >> sendDataToClient >> Finished sending file to client_fd: " << sockFd;
+		printLogNew(_logger, CYAN, std::cout, true);
+		_currentClient->setProcessingState(RECEIVING);
+	}
 	if (resBuffer.empty())
 		return;
 
 	ssize_t sentBytes = send(sockFd, resBuffer.data(), resBuffer.size(), 0);
 	if (sentBytes <= 0) {
-		_logger << "Error sending data to client_fd: " << sockFd;
+		_logger << "WebServer >> sendDataToClient >> Error sending data to client_fd: " << sockFd;
 		printLogNew(_logger, RED, std::cerr, true);
 		deleteClient(_currentClient->getSocketFd(), 0); // delete and remove from epoll
 		return;
@@ -934,14 +942,7 @@ void WebServer::sendDataToClient()
 
 	if (resBuffer.size() < _currentClient->getBufferLowWatermark()) 
 	{
-		// if buffersize is small enough we add EPOLLIN to the file again
-		int fileFd = _currentClient->_response->getFileStream();
-		if (fileFd >= 0) {
-			struct epoll_event ev;
-			ev.events = EPOLLIN;
-			ev.data.fd = fileFd;
-			epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, fileFd, &ev);
-		}
+		_currentClient->setShouldRead(true);
 	}
 
 	if (resBuffer.empty() && !_currentClient->_response->isFileOpen()) 
