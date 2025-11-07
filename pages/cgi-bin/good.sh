@@ -1,9 +1,12 @@
 #!/bin/bash
 
-# Le o metodo HTTP
+# Disable any unintended stderr output
+exec 2>/dev/null
+
+# Read the HTTP method
 method="${REQUEST_METHOD:-GET}"
 
-# Função para parsear QUERY_STRING
+# Parse the query string (extract key=value)
 parse_query() {
     local query="$1"
     local key value
@@ -21,30 +24,53 @@ parse_query() {
     echo "${result[key]}"
 }
 
-# Pega o valor da chave 'key'
+# Extract ?key=... from QUERY_STRING
 string=$(parse_query "$QUERY_STRING")
 
-# Corpo HTML
-html="<!DOCTYPE html>
+# Build HTML table rows (skip PATH_INFO, real newlines, and HTML-escape values)
+env_table_rows=""
+while IFS='=' read -r name value; do
+    [[ "$name" == "PATH_INFO" ]] && continue
+    # Escape special HTML chars
+    value=$(printf '%s' "$value" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+    env_table_rows+="<tr><td><b>${name}</b></td><td>${value}</td></tr>
+"
+done < <(env | sort)
+
+# Build HTML document
+html="$(cat <<EOF
+<!DOCTYPE html>
 <html>
 <head>
-    <meta charset=\"UTF-8\">
-    <title>Bash CGI Test</title>
+    <meta charset="UTF-8">
+    <title>Bash CGI Environment Dump</title>
+    <style>
+        body { font-family: monospace; background: #fafafa; color: #222; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 4px 8px; vertical-align: top; }
+        th { background: #eee; }
+        h1 { color: #0055aa; }
+    </style>
 </head>
 <body>
-    <h1>QUERY STRING! $string</h1>
-    <p>REQUEST_METHOD: $method</p>
+    <h1>CGI Environment Variables</h1>
+    <hr>
+    <table>
+        <tr><th>Variable</th><th>Value</th></tr>
+        ${env_table_rows}
+    </table>
 </body>
-</html>"
+</html>
+EOF
+)"
 
-# Calcula tamanho em bytes
-length=$(echo -n "$html" | wc -c)
+# Compute content length (byte-accurate)
+length=$(printf "%s" "$html" | wc -c)
 
-# Cabeçalhos CGI
+# Send CGI headers
 printf "Content-Type: text/html; charset=utf-8\r\n"
 printf "Content-Length: %d\r\n" "$length"
-printf "\r\n" 
+printf "\r\n"
 
-# Corpo
+# Send body
 printf "%s" "$html"
-
