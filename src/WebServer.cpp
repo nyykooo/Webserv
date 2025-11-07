@@ -60,12 +60,12 @@ try {
 			registerEpollSocket(server);
 			_servers_map[server->getSocketFd()] = server;
 			_logger << "WebServer >> WebServer >> Server initialzed on IP and PORT: " << server->getIp() << ":" << server->getPort();
-			printLogNew(_logger, WHITE, std::cout, true);
+			printLog(_logger, WHITE, std::cout, true);
 		}
 		else
 		{
 			_logger << "WebServer >> WebServer >> Error initializing server on port: " << it->first;
-			printLogNew(_logger, RED, std::cerr, true);
+			printLog(_logger, RED, std::cerr, true);
 			throw WebServerErrorException(_logger.str());
 		}
 	}
@@ -148,7 +148,7 @@ int WebServer::initEpoll(void)
 	if (_epoll_fd == -1)
 	{
 		_logger << "WebServer >> initEpoll >> Error while creating epoll";
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		return -1;
 	}
 
@@ -158,7 +158,7 @@ int WebServer::initEpoll(void)
 	if (epoll_flags == -1)
 	{
 		_logger << "WebServer >> initEpoll >> Error obtaining flags from _epoll_fd";
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		close(_epoll_fd);
 		return -1;
 	}
@@ -167,7 +167,7 @@ int WebServer::initEpoll(void)
 	if (fcntl(_epoll_fd, F_SETFD, epoll_flags) == -1)
 	{
 		_logger << "WebServer >> initEpoll >> Error defining flags from _epoll_fd";
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		close(_epoll_fd);
 		return -1;
 	}
@@ -181,7 +181,7 @@ void WebServer::registerEpollSocket(Socket *socket)
 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, socket->getSocketFd(), &socket->getEvent()) == -1)
 	{
 		_logger << "WebServer >> registerEpollSocket >> Error to add socket to epoll";
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		freeaddrinfo(socket->getRes());
 		return;
 	}
@@ -200,7 +200,7 @@ void WebServer::handleNewClient(int server_fd)
 		_client_to_server_map[client_socket->getSocketFd()] = std::make_pair(server->getIp(), server->getPort()); // novidade, possível approach
 		client_socket->_server = server;
 		_logger << "WebServer >> handleNewClient >> New client conected - client_fd: " << client_socket->getSocketFd();
-		printLogNew(_logger, WHITE, std::cout, true);
+		printLog(_logger, WHITE, std::cout, true);
 		registerEpollSocket(client_socket);
 		client_socket->setEpollFd(_epoll_fd);
 	}
@@ -208,7 +208,7 @@ void WebServer::handleNewClient(int server_fd)
 	{
 		delete client_socket;
 		_logger << "WebServer >> handleNewClient >> Error creating new client: " << e.what();
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		return;
 	}
 }
@@ -310,7 +310,7 @@ int WebServer::receiveData(int client_fd)
 	if (!config)
 	{
 		_logger << "WebServer >> receiveData >> Configuration not found" << client_fd;
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		_partial_requests.erase(client_fd);
 		return -1;
 	}
@@ -342,7 +342,7 @@ int WebServer::receiveData(int client_fd)
 	{
 		_partial_requests.erase(client_fd);
 		_logger << "WebServer >> receiveData >> Error parsing HTTP request: " << e.what();
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		return -1;
 	}
 	return (1);
@@ -360,13 +360,13 @@ static bool sendResponseToClient(Client *client)
 	if (sentBytes < 0)
 	{
 		_logger << "WebServer >> sendResponseToClient >> Error sending body to client - client_fd: " << client->getSocketFd();
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		return true;
 	}
 	totalSent += sentBytes;
 
 	_logger << "WebServer >> sendResponseToClient >> Data sent to the client - client_fd: " << client->getSocketFd() << " " << totalSent;
-	printLogNew(_logger, WHITE, std::cout, true);
+	printLog(_logger, WHITE, std::cout, true);
 	client->_response->setFilePos(totalSent);
 	return (client->_response->getFilePos() >= size);
 }
@@ -398,7 +398,7 @@ void WebServer::deleteClient(int fd, int event)
 		if ((*it)->getSocketFd() == fd)
 		{
 			_logger << "WebServer >> deleteClient >> Client disconected - client_fd: " << (*it)->getSocketFd();
-			printLogNew(_logger, GREEN, std::cout, true);
+			printLog(_logger, GREEN, std::cout, true);
 			if (event == 0)
 			{
 				int x;
@@ -406,7 +406,7 @@ void WebServer::deleteClient(int fd, int event)
 				if (x == -1)
 				{
 					_logger << "WebServer >> deleteClient >> Error removing from EPOLL";
-					printLogNew(_logger, RED, std::cerr, true);
+					printLog(_logger, RED, std::cerr, true);
 				}
 			}
 			close((*it)->getSocketFd());
@@ -433,7 +433,7 @@ void static readFromCgi(Client* client, uint32_t events) {
     // The CGI process ended and closes their side of the pipe communication
     if (events & (EPOLLRDHUP | EPOLLHUP)) {
 		_logger << "WebServer >> readFromCgi >> inside EPOLLHUP or EPOLLRDHUP events";
-		printLogNew(_logger, WHITE, std::cout, true);
+		printLog(_logger, WHITE, std::cout, true);
         // flush any remaining data one last time
         char buf[4096];
         ssize_t n;
@@ -559,7 +559,7 @@ void WebServer::handleEpollInEvent(int i)
 
     // Unknown FD: log and remove
     _logger << "WebServer >> handleEpollInEvent >> EPOLLIN on unknown fd: " << fd;
-    printLogNew(_logger, RED, std::cerr, true);
+    printLog(_logger, RED, std::cerr, true);
     epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
     close(fd);
 }
@@ -575,7 +575,7 @@ void WebServer::handleEpollOutEvent(int i)
        return writeToCgi(_currentClient);}
 
     _logger << "WebServer >> handleEpollOutEvent >> EPOLLOUT on unknown fd: " << fd;
-    printLogNew(_logger, RED, std::cerr, true);
+    printLog(_logger, RED, std::cerr, true);
     epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
     close(fd);
 }
@@ -625,7 +625,7 @@ void WebServer::lookForTimeouts()
 		if ((*it)->checkTimeout())
 		{
 			_logger << "WebServer >> lookForTimeouts >> Client timeout detected - client_fd: " << (*it)->getSocketFd();
-			printLogNew(_logger, WHITE, std::cout, true);
+			printLog(_logger, WHITE, std::cout, true);
 			int fd = (*it)->getSocketFd();
 			if ((*it)->getProcessingState() == CGI_PROCESSING)
 				(*it)->_response->terminateCgiProcess();
@@ -648,7 +648,7 @@ void WebServer::lookForTimeouts()
 		if ((*sit)->checkTimeout())
 		{
 			_logger << "WebServer >> lookForTimeouts >> Session timeout reached - sessionId " << (*sit)->getSessionId();
-			printLogNew(_logger, WHITE, std::cout, true);
+			printLog(_logger, WHITE, std::cout, true);
 			delete (*sit);
         	sit = _sessions->erase(sit);
 		}
@@ -670,14 +670,14 @@ void WebServer::startServer()
 			if (errno == EINTR) // Interrompido por sinal
 				continue;
 			_logger << "WebServer >> startServer >> Erro no epoll_wait" << strerror(errno) << std::endl;
-			printLogNew(_logger, RED, std::cerr, true);
+			printLog(_logger, RED, std::cerr, true);
 			return;
 		}
 		handleEvents(event_count);
 		lookForTimeouts();
 	}
 	_logger << "WebServer >> startServer >> Shutdown signal received";
-	printLogNew(_logger, YELLOW, std::cout, true);
+	printLog(_logger, YELLOW, std::cout, true);
 }
 
 static bool checkHostType(const std::string &host)
@@ -757,7 +757,7 @@ void WebServer::handleClientInput(int i)
 	else
 	{
 		_logger << "WARNING: Client " << _currentClient->getSocketFd() << " with the state " << _currentClient->getProcessingState() << " received EPOLLIN (expected: RECEIVING)";
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		_currentClient->setProcessingState(RECEIVING);
 	}
 }
@@ -769,14 +769,14 @@ void WebServer::handleClientOutput(int i)
 	{
 	case PROCESSING:
 		_logger << "WebServer >> handleClientOutput >> starting response PROCESSING for client_fd: " << _currentClient->getSocketFd();
-		printLogNew(_logger, CYAN, std::cout, true);
+		printLog(_logger, CYAN, std::cout, true);
 		sendData(_events[i].data.fd);
 		if (_currentClient->getProcessingState() == PROCESSING)
 			_currentClient->setProcessingState(SEND_DATA);
 		else if (_currentClient->getProcessingState() == STREAMING)
 		{
 			_logger << "WebServer >> handleClientOutput >> starting reponse STREAMING for client_fd: " << _currentClient->getSocketFd();
-			printLogNew(_logger, CYAN, std::cout, true);
+			printLog(_logger, CYAN, std::cout, true);
 			sendResponseToClient(_currentClient);
 		}
 		break;
@@ -785,14 +785,14 @@ void WebServer::handleClientOutput(int i)
 		if (!continueLargeFileStreaming())
 		{
 			_logger << "WebServer >> handleClientOutput >> response streaming finished for client_fd: " << _currentClient->getSocketFd();
-			printLogNew(_logger, CYAN, std::cout, true);
+			printLog(_logger, CYAN, std::cout, true);
 			_events[i].events = EPOLLIN;
 			if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]) == 0)
 				_currentClient->setProcessingState(RECEIVING);
 			else
 			{
 				_logger << "WebServer >> handleClientOutput >> Error modifying client event " << _currentClient->getSocketFd() << " para EPOLLIN";
-				printLogNew(_logger, RED, std::cerr, true);
+				printLog(_logger, RED, std::cerr, true);
 				deleteClient(_events[i].data.fd, 0);
 				return ;
 			}
@@ -802,14 +802,14 @@ void WebServer::handleClientOutput(int i)
 
 	case COMPLETED:
 			_logger << "WebServer >> handleClientOutput >> request treatment COMPLETED for client_fd: " << _currentClient->getSocketFd();
-			printLogNew(_logger, CYAN, std::cout, true);
+			printLog(_logger, CYAN, std::cout, true);
 			_events[i].events = EPOLLIN;
 			if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, _events[i].data.fd, &_events[i]) == 0)
 				_currentClient->setProcessingState(RECEIVING);
 			else
 			{
 				_logger << "WebServer >> handleClientOutput >> Error modifying client event " << _currentClient->getSocketFd() << " to EPOLLIN";
-				printLogNew(_logger, RED, std::cerr, true);
+				printLog(_logger, RED, std::cerr, true);
 				deleteClient(_events[i].data.fd, 0);
 				return ;
 			}
@@ -817,7 +817,7 @@ void WebServer::handleClientOutput(int i)
 			break;
 	case SEND_DATA:
 			_logger << "WebServer >> hanldeClientOutput >> SEND_DATA to client_fd: " << _currentClient->getSocketFd();
-			printLogNew(_logger, CYAN, std::cout, true);
+			printLog(_logger, CYAN, std::cout, true);
 			if (sendResponseToClient(_currentClient))
 			{
 				_currentClient->setBytesSent(0);
@@ -833,11 +833,11 @@ void WebServer::handleClientOutput(int i)
 		break;
 	case RECEIVING:
 		_logger << "WebServer >> handleClientOutput >> Warning: EPOLLOUT to client in RECEIVING state";
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		break;
 	default:
 		_logger << "WebServer >> handleClientOutput >> Invalid state: " << _currentClient->getProcessingState() << " to client " << _currentClient->getSocketFd();
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		_currentClient->setProcessingState(COMPLETED);
 		break;
 	}
@@ -852,7 +852,7 @@ bool WebServer::continueLargeFileStreaming()
 
 	if (!file.is_open()) {
 		_logger << "WebServer >> continueLargeFileStreaming >> Error while openning file for client_fd: " << _currentClient->getSocketFd() ;
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		return false;
 	}
 
@@ -863,7 +863,7 @@ bool WebServer::continueLargeFileStreaming()
 		if (file.bad())
 		{
 			_logger << "WebServer >> continueLargeFileStreaming >> Error while reading file for client_fd: " << _currentClient->getSocketFd() ;
-			printLogNew(_logger, RED, std::cerr, true);
+			printLog(_logger, RED, std::cerr, true);
 		}
 		_currentClient->resetFileStreaming();
 		return false;
@@ -872,7 +872,7 @@ bool WebServer::continueLargeFileStreaming()
 	ssize_t bytesSent = send(_currentClient->getSocketFd(), buffer, bytesRead, 0);
 	if (bytesSent <= 0) {
 		_logger << "WebServer >> continueLargeFileStreaming >> Error while sending data for client_fd: " << _currentClient->getSocketFd() ;
-		printLogNew(_logger, RED, std::cerr, true);
+		printLog(_logger, RED, std::cerr, true);
 		_currentClient->resetFileStreaming();
 		return false;
 	}

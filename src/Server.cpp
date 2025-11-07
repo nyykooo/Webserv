@@ -30,7 +30,7 @@ Server &Server::operator=(const Server &other) {
 Server::~Server() {
 	std::stringstream ss;
 	ss << "‼️ WARNING: Server is down! ‼️\n";
-	printLog(ss.str(), RED, std::cout);
+	printLog(ss, RED, std::cerr, true);
 }
 
 // ######### INIT SERVER SOCKET #########

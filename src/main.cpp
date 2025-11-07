@@ -37,7 +37,9 @@ int	main(int argc, char** argv)
 		webServer.startServer();
 	}
 	catch (const std::exception& e) {
-		printLog(e.what(), RED, std::cerr);
+		std::stringstream logger;
+		logger << "Main >> ERROR: >> " << e.what();
+		printLog(logger, RED, std::cerr, true);
 		return (1);
 	}
 }
